@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(request: Request) {
   try {
@@ -8,25 +8,25 @@ export async function GET(request: Request) {
     const dataFim = searchParams.get('dataFim');
 
     // Filtrar transações por período
-    let transacoesQuery = supabase.from('transacao_financeira').select('*');
-    
+    let transacoesQuery = supabaseAdmin.from('transacao_financeira').select('*');
+
     if (dataInicio && dataFim) {
       transacoesQuery = transacoesQuery.gte('data', dataInicio).lte('data', dataFim);
     }
 
     const { data: transacoes, error: transacoesError } = await transacoesQuery;
-    
+
     if (transacoesError) throw transacoesError;
 
     // Filtrar locações por período para cálculos adicionais
-    let locacoesQuery = supabase.from('locacao').select('*');
-    
+    let locacoesQuery = supabaseAdmin.from('locacao').select('*');
+
     if (dataInicio && dataFim) {
       locacoesQuery = locacoesQuery.gte('data_evento', dataInicio).lte('data_evento', dataFim);
     }
 
     const { data: locacoes, error: locacoesError } = await locacoesQuery;
-    
+
     if (locacoesError) throw locacoesError;
 
     // Cálculos
@@ -54,6 +54,13 @@ export async function GET(request: Request) {
 
     const numeroLocacoes = (locacoes || []).length;
     const ticketMedio = numeroLocacoes > 0 ? entradaLocacao / numeroLocacoes : 0;
+
+    // Contar número de brinquedos
+    const { data: brinquedos } = await supabaseAdmin
+      .from('brinquedo')
+      .select('id', { count: 'exact', head: true });
+
+    const numeroBrinquedos = brinquedos?.length || 0;
 
     // Dados para gráfico de evolução mensal (últimos 12 meses)
     const dadosGrafico = [];
@@ -99,7 +106,7 @@ export async function GET(request: Request) {
       
       const inicioAnterior = new Date(inicioAtual.getTime() - diasPeriodo * 24 * 60 * 60 * 1000);
       
-      const { data: transacoesAnterior } = await supabase
+      const { data: transacoesAnterior } = await supabaseAdmin
         .from('transacao_financeira')
         .select('*')
         .gte('data', inicioAnterior.toISOString().split('T')[0])
@@ -131,6 +138,7 @@ export async function GET(request: Request) {
       margemLucro,
       totalCuidadores,
       numeroLocacoes,
+      numeroBrinquedos,
       ticketMedio,
       dadosGrafico,
       comparativo,
