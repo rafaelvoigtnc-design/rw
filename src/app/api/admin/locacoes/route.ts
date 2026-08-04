@@ -63,9 +63,11 @@ export async function POST(request: Request) {
       observacoes,
     } = await request.json();
 
+    console.log('Dados recebidos:', { cliente_id, cliente_novo, data_evento, horario_inicio, horario_fim, brinquedos });
+
     // Se for cliente novo, cadastrar primeiro
     let finalClienteId = cliente_id;
-    if (cliente_novo) {
+    if (cliente_novo && (cliente_novo.nome || cliente_novo.telefone)) {
       const { data: novoCliente, error: clienteError } = await supabaseAdmin
         .from('cliente')
         .insert({
@@ -79,45 +81,50 @@ export async function POST(request: Request) {
         .select()
         .single();
 
-      if (clienteError) throw clienteError;
+      if (clienteError) {
+        console.error('Erro ao criar cliente:', clienteError);
+        throw clienteError;
+      }
       finalClienteId = novoCliente.id;
     }
 
     // Verificar conflitos para cada brinquedo
     const conflitos: Array<{ brinquedo: string; locacaoExistente: string }> = [];
 
-    for (const brinquedo of brinquedos) {
-      const { data: locacoesExistentes } = await supabaseAdmin
-        .from('locacao_item')
-        .select(`
-          locacao_id,
-          brinquedo_id,
-          locacao (
-            data_evento,
-            horario_inicio,
-            horario_fim,
-            id
-          )
-        `)
-        .eq('brinquedo_id', brinquedo.brinquedo_id)
-        .eq('locacao.data_evento', data_evento);
-
-      if (locacoesExistentes) {
-        for (const item of locacoesExistentes) {
-          const locacao = item.locacao as any;
-          if (locacao) {
-            const temConflito = verificarConflito(
+    if (brinquedos && brinquedos.length > 0) {
+      for (const brinquedo of brinquedos) {
+        const { data: locacoesExistentes } = await supabaseAdmin
+          .from('locacao_item')
+          .select(`
+            locacao_id,
+            brinquedo_id,
+            locacao (
+              data_evento,
               horario_inicio,
               horario_fim,
-              locacao.horario_inicio,
-              locacao.horario_fim
-            );
+              id
+            )
+          `)
+          .eq('brinquedo_id', brinquedo.brinquedo_id)
+          .eq('locacao.data_evento', data_evento);
 
-            if (temConflito) {
-              conflitos.push({
-                brinquedo: brinquedo.nome,
-                locacaoExistente: `Locação #${item.locacao_id} das ${locacao.horario_inicio} às ${locacao.horario_fim}`,
-              });
+        if (locacoesExistentes) {
+          for (const item of locacoesExistentes) {
+            const locacao = item.locacao as any;
+            if (locacao) {
+              const temConflito = verificarConflito(
+                horario_inicio,
+                horario_fim,
+                locacao.horario_inicio,
+                locacao.horario_fim
+              );
+
+              if (temConflito) {
+                conflitos.push({
+                  brinquedo: brinquedo.nome,
+                  locacaoExistente: `Locação #${item.locacao_id} das ${locacao.horario_inicio} às ${locacao.horario_fim}`,
+                });
+              }
             }
           }
         }
@@ -135,6 +142,7 @@ export async function POST(request: Request) {
     }
 
     // Criar locação
+    console.log('Criando locação com cliente_id:', finalClienteId);
     const { data: locacao, error: locacaoError } = await supabaseAdmin
       .from('locacao')
       .insert({
@@ -155,15 +163,22 @@ export async function POST(request: Request) {
       .select()
       .single();
 
-    if (locacaoError) throw locacaoError;
+    if (locacaoError) {
+      console.error('Erro ao criar locação:', locacaoError);
+      throw locacaoError;
+    }
+
+    console.log('Locação criada com sucesso:', locacao.id);
 
     // Criar itens da locação
-    for (const brinquedo of brinquedos) {
-      await supabaseAdmin.from('locacao_item').insert({
-        id: crypto.randomUUID(),
-        locacao_id: locacao.id,
-        brinquedo_id: brinquedo.brinquedo_id,
-      });
+    if (brinquedos && brinquedos.length > 0) {
+      for (const brinquedo of brinquedos) {
+        await supabaseAdmin.from('locacao_item').insert({
+          id: crypto.randomUUID(),
+          locacao_id: locacao.id,
+          brinquedo_id: brinquedo.brinquedo_id,
+        });
+      }
     }
 
     // Gerar transação financeira automaticamente se pago ou parcial
