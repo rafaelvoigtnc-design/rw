@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UsuarioAdmin {
+  id         String   @id @default(cuid())
+  nome       String
+  email      String   @unique
+  senha_hash String
+  criado_em  DateTime @default(now())
+}
+
+model Cliente {
+  id         String   @id @default(cuid())
+  nome       String
+  telefone   String
+  email      String   @unique
+  senha_hash String
+  endereco   String
+  criado_em  DateTime @default(now())
+
+  carrinho_itens      CarrinhoItem[]
+  locacoes            Locacao[]
+  avaliacoes          Avaliacao[]
+  favoritos           Favorito[]
+}
+
+model Categoria {
+  id          String      @id @default(cuid())
+  nome        String      @unique
+  icone       String?
+  brinquedos  Brinquedo[]
+}
+
+model Brinquedo {
+  id             String              @id @default(cuid())
+  nome           String
+  categoria_id   String
+  descricao      String
+  fotos          String[]
+  dimensoes      String
+  faixa_etaria   String
+  preco_periodo  Float
+  status         BrinquedoStatus     @default(DISPONIVEL)
+  tema_layout    TemaLayout
+  criado_em      DateTime            @default(now())
+
+  categoria      Categoria           @relation(fields: [categoria_id], references: [id])
+  carrinho_itens CarrinhoItem[]
+  locacao_itens  LocacaoItem[]
+  favoritos      Favorito[]
+}
+
+model CarrinhoItem {
+  id              String    @id @default(cuid())
+  cliente_id      String
+  brinquedo_id    String
+  data_adicionado DateTime @default(now())
+
+  cliente   Cliente   @relation(fields: [cliente_id], references: [id])
+  brinquedo Brinquedo @relation(fields: [brinquedo_id], references: [id])
+}
+
+model Locacao {
+  id                String               @id @default(cuid())
+  cliente_id        String
+  data_evento       DateTime
+  horario_inicio    String
+  horario_fim       String
+  endereco          String
+  valor_total       Float
+  sinal_pago        Float                @default(0)
+  status_pagamento  StatusPagamento      @default(PENDENTE)
+  status_locacao    StatusLocacao        @default(ORCAMENTO)
+  cuidador_nome     String?
+  cuidador_valor    Float?
+  observacoes       String?
+  criado_em         DateTime             @default(now())
+
+  cliente          Cliente         @relation(fields: [cliente_id], references: [id])
+  locacao_itens    LocacaoItem[]
+  transacoes       TransacaoFinanceira[]
+}
+
+model LocacaoItem {
+  id          String   @id @default(cuid())
+  locacao_id  String
+  brinquedo_id String
+
+  locacao  Locacao   @relation(fields: [locacao_id], references: [id])
+  brinquedo Brinquedo @relation(fields: [brinquedo_id], references: [id])
+}
+
+model Promocao {
+  id          String   @id @default(cuid())
+  titulo      String
+  descricao   String
+  data_inicio DateTime
+  data_fim    DateTime
+  ativa       Boolean  @default(true)
+  criado_em   DateTime @default(now())
+}
+
+model Avaliacao {
+  id                     String   @id @default(cuid())
+  cliente_id             String
+  texto                  String
+  nota                   Int
+  foto                   String?
+  aprovado_para_exibir   Boolean  @default(false)
+  criado_em              DateTime @default(now())
+
+  cliente Cliente @relation(fields: [cliente_id], references: [id])
+}
+
+model Favorito {
+  id          String   @id @default(cuid())
+  cliente_id  String
+  brinquedo_id String
+  criado_em   DateTime @default(now())
+
+  cliente   Cliente   @relation(fields: [cliente_id], references: [id])
+  brinquedo Brinquedo @relation(fields: [brinquedo_id], references: [id])
+
+  @@unique([cliente_id, brinquedo_id])
+}
+
+model TransacaoFinanceira {
+  id          String              @id @default(cuid())
+  tipo        TipoTransacao
+  categoria   String
+  valor       Float
+  data        DateTime            @default(now())
+  descricao   String
+  locacao_id  String?
+  criado_em   DateTime            @default(now())
+
+  locacao Locacao? @relation(fields: [locacao_id], references: [id])
+}
+
+enum BrinquedoStatus {
+  DISPONIVEL
+  MANUTENCAO
+  APOSENTADO
+}
+
+enum TemaLayout {
+  INFANTIL_LUDICO
+  AVENTURA_ACAO
+  ESPORTE_COMPETICAO
+  AGUA_DIVERSAO
+  FESTA_ELEGANTE
+  CLASSICO_DIVERTIDO
+}
+
+enum StatusPagamento {
+  PENDENTE
+  PARCIAL
+  PAGO
+}
+
+enum StatusLocacao {
+  ORCAMENTO
+  CONFIRMADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+enum TipoTransacao {
+  ENTRADA_LOCACAO
+  INJECAO_CAPITAL
+  GASTO
+  INVESTIMENTO
+}
+
+model Banner {
+  id            String   @id @default(uuid())
+  titulo        String
+  subtitulo     String
+  descricao     String
+  botao_primario String
+  link_primario  String
+  botao_secundario String?
+  link_secundario  String?
+  gradiente     String
+  imagem        String?
+  badge         String?
+  ativo         Boolean  @default(true)
+  ordem         Int      @default(0)
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  @@map("banners")
+}
