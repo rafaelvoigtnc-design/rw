@@ -106,6 +106,19 @@ button, a, input, select, textarea {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Garantir contraste adequado em inputs e selects */
+input, select, textarea {
+  color: #111827 !important;
+}
+
+input::placeholder {
+  color: #6b7280 !important;
+}
+
+select option {
+  color: #111827 !important;
+}
+
 .card-hover {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
