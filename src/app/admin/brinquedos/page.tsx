@@ -13,15 +13,6 @@ interface Brinquedo {
   faixa_etaria: string;
   preco_periodo: number;
   status: string;
-  categoria_id: string;
-  categoria?: {
-    nome: string;
-  };
-}
-
-interface Categoria {
-  id: string;
-  nome: string;
 }
 
 const TEMAS = [
@@ -36,7 +27,6 @@ const TEMAS = [
 export default function AdminBrinquedos() {
   const router = useRouter();
   const [brinquedos, setBrinquedos] = useState<Brinquedo[]>([]);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [editando, setEditando] = useState<Brinquedo | null>(null);
@@ -49,7 +39,6 @@ export default function AdminBrinquedos() {
     faixa_etaria: '',
     preco_periodo: 0,
     status: 'DISPONIVEL',
-    categoria_id: '',
   });
 
   useEffect(() => {
@@ -58,14 +47,9 @@ export default function AdminBrinquedos() {
 
   const fetchData = async () => {
     try {
-      const [brinqRes, catRes] = await Promise.all([
-        fetch('/api/admin/brinquedos'),
-        fetch('/api/categorias'),
-      ]);
-      const brinqData = await brinqRes.json();
-      const catData = await catRes.json();
-      setBrinquedos(brinqData);
-      setCategorias(catData);
+      const response = await fetch('/api/admin/brinquedos');
+      const data = await response.json();
+      setBrinquedos(data);
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
     } finally {
@@ -97,7 +81,6 @@ export default function AdminBrinquedos() {
           faixa_etaria: '',
           preco_periodo: 0,
           status: 'DISPONIVEL',
-          categoria_id: '',
         });
         fetchData();
       }
@@ -117,7 +100,6 @@ export default function AdminBrinquedos() {
       faixa_etaria: brinquedo.faixa_etaria,
       preco_periodo: brinquedo.preco_periodo,
       status: brinquedo.status,
-      categoria_id: brinquedo.categoria_id,
     });
     setMostrarFormulario(true);
   };
@@ -368,23 +350,6 @@ export default function AdminBrinquedos() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-                <select
-                  value={formData.categoria_id}
-                  onChange={(e) => setFormData({ ...formData, categoria_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                  required
-                >
-                  <option value="">Selecione uma categoria</option>
-                  {categorias.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.nome}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <div className="flex gap-2">
                 <button
                   type="submit"
@@ -412,9 +377,6 @@ export default function AdminBrinquedos() {
                   Nome
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Categoria
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Tema
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -430,9 +392,6 @@ export default function AdminBrinquedos() {
                 <tr key={brinquedo.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{brinquedo.nome}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{brinquedo.categoria?.nome}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">

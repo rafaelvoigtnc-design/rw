@@ -5,12 +5,7 @@ export async function GET() {
   try {
     const { data, error } = await supabase
       .from('brinquedo')
-      .select(`
-        *,
-        categoria (
-          nome
-        )
-      `)
+      .select('*')
       .order('nome');
 
     if (error) throw error;
@@ -27,16 +22,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { 
-      nome, 
-      descricao, 
-      fotos, 
-      tema_layout, 
-      dimensoes, 
-      faixa_etaria, 
-      preco_periodo, 
-      status,
-      categoria_id 
+    const {
+      nome,
+      descricao,
+      fotos,
+      tema_layout,
+      dimensoes,
+      faixa_etaria,
+      preco_periodo,
+      status
     } = await request.json();
 
     const { data, error } = await supabase
@@ -51,7 +45,6 @@ export async function POST(request: Request) {
         faixa_etaria,
         preco_periodo,
         status: status || 'DISPONIVEL',
-        categoria_id,
       })
       .select()
       .single();

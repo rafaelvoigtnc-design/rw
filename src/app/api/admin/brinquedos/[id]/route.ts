@@ -6,16 +6,15 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { 
-      nome, 
-      descricao, 
-      fotos, 
-      tema_layout, 
-      dimensoes, 
-      faixa_etaria, 
-      preco_periodo, 
-      status,
-      categoria_id 
+    const {
+      nome,
+      descricao,
+      fotos,
+      tema_layout,
+      dimensoes,
+      faixa_etaria,
+      preco_periodo,
+      status
     } = await request.json();
 
     const { data, error } = await supabase
@@ -29,7 +28,6 @@ export async function PUT(
         faixa_etaria,
         preco_periodo,
         status,
-        categoria_id,
       })
       .eq('id', params.id)
       .select()
