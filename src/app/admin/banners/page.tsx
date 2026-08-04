@@ -297,11 +297,11 @@ function BannerForm({
     }
   );
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Converter para base64
+    // Converter para base64 para salvar no banco
     const reader = new FileReader();
     reader.onloadend = () => {
       setFormData({ ...formData, imagem: reader.result as string });

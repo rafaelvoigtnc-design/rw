@@ -22,6 +22,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const body = await request.json();
+    console.log('Dados recebidos para criar brinquedo:', body);
+
     const {
       nome,
       descricao,
@@ -30,7 +33,7 @@ export async function POST(request: Request) {
       dimensoes,
       faixa_etaria,
       status
-    } = await request.json();
+    } = body;
 
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
@@ -47,13 +50,17 @@ export async function POST(request: Request) {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Erro Supabase ao criar brinquedo:', error);
+      throw error;
+    }
 
+    console.log('Brinquedo criado com sucesso:', data);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Erro ao criar brinquedo:', error);
     return NextResponse.json(
-      { error: 'Erro ao criar brinquedo' },
+      { error: 'Erro ao criar brinquedo', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

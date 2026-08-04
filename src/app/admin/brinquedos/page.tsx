@@ -133,26 +133,13 @@ export default function AdminBrinquedos() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const formDataUpload = new FormData();
-    formDataUpload.append('file', file);
-
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formDataUpload,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setFormData({ ...formData, fotos: [...formData.fotos, data.url] });
-      } else {
-        const error = await response.json();
-        alert(error.error || 'Erro ao fazer upload');
-      }
-    } catch (error) {
-      console.error('Erro ao fazer upload:', error);
-      alert('Erro ao fazer upload');
-    }
+    // Converter para base64 para salvar no banco
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setFormData({ ...formData, fotos: [...formData.fotos, base64String] });
+    };
+    reader.readAsDataURL(file);
   };
 
   if (loading) {
