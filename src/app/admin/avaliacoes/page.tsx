@@ -183,7 +183,7 @@ export default function AdminAvaliacoes() {
                   </div>
                 </div>
 
-                <p className="text-gray-700 mb-4 italic">"{avaliacao.texto}"</p>
+                <p className="text-gray-700 mb-4 italic">&ldquo;{avaliacao.texto}&rdquo;</p>
 
                 {avaliacao.foto && (
                   <div className="mb-4">

@@ -69,7 +69,7 @@ export default function DepoimentosHome() {
           </div>
           
           <p className="text-secondary-gray-700 mb-6 leading-relaxed italic">
-            "{avaliacao.texto}"
+            &ldquo;{avaliacao.texto}&rdquo;
           </p>
           
           <div className="flex items-center gap-3">

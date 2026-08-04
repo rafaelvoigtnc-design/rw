@@ -118,7 +118,7 @@ export default function TestimonialsCarousel() {
                 </div>
                 
                 <p className="text-lg text-gray-700 italic mb-6 max-w-2xl mx-auto">
-                  "{avaliacao.texto}"
+                  &ldquo;{avaliacao.texto}&rdquo;
                 </p>
                 
                 <div className="text-center">

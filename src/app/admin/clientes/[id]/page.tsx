@@ -263,7 +263,7 @@ export default function AdminClienteDetalhes() {
                     ))}
                     <span className="text-sm text-gray-500">({avaliacao.nota}/5)</span>
                   </div>
-                  <p className="text-gray-700 italic">"{avaliacao.texto}"</p>
+                  <p className="text-gray-700 italic">&ldquo;{avaliacao.texto}&rdquo;</p>
                   {avaliacao.foto && (
                     <img
                       src={avaliacao.foto}
