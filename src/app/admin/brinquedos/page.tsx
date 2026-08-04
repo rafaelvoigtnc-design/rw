@@ -57,17 +57,24 @@ export default function AdminBrinquedos() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Enviando dados do brinquedo:', formData);
+
     try {
       const url = editando ? `/api/admin/brinquedos/${editando.id}` : '/api/admin/brinquedos';
       const method = editando ? 'PUT' : 'POST';
-      
+
+      console.log('Fazendo requisição para:', url, 'Método:', method);
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
+      console.log('Response status:', response.status);
+
       if (response.ok) {
+        console.log('Brinquedo salvo com sucesso');
         setMostrarFormulario(false);
         setEditando(null);
         setFormData({
@@ -80,9 +87,14 @@ export default function AdminBrinquedos() {
           status: 'DISPONIVEL',
         });
         fetchData();
+      } else {
+        const errorData = await response.json();
+        console.error('Erro ao salvar brinquedo:', errorData);
+        alert(`Erro ao salvar brinquedo: ${errorData.error || errorData.details || 'Erro desconhecido'}`);
       }
     } catch (error) {
       console.error('Erro ao salvar brinquedo:', error);
+      alert('Erro ao salvar brinquedo. Verifique o console para mais detalhes.');
     }
   };
 

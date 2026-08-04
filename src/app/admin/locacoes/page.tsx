@@ -81,6 +81,10 @@ export default function AdminLocacoes() {
     e.preventDefault();
     setConflitos([]);
 
+    console.log('Tentando criar locação');
+    console.log('FormData:', formData);
+    console.log('Usar cliente novo:', usarClienteNovo);
+
     try {
       const payload = {
         ...formData,
@@ -88,13 +92,18 @@ export default function AdminLocacoes() {
         cliente_novo: usarClienteNovo ? formData.cliente_novo : null,
       };
 
+      console.log('Payload enviado:', payload);
+
       const response = await fetch('/api/admin/locacoes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
+      console.log('Response status:', response.status);
+
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
         if (data.conflitos) {
