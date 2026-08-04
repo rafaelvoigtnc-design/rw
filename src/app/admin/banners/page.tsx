@@ -297,6 +297,18 @@ function BannerForm({
     }
   );
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Converter para base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData({ ...formData, imagem: reader.result as string });
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
@@ -418,26 +430,43 @@ function BannerForm({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            URL da Imagem
+            Imagem
           </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={formData.imagem}
-              onChange={(e) => setFormData({ ...formData, imagem: e.target.value })}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-              placeholder="https://..."
-            />
-            {formData.imagem && (
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+              />
               <button
                 type="button"
-                onClick={() => onEditImage(formData.imagem || '')}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2"
+                onClick={() => setFormData({ ...formData, imagem: '' })}
+                className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
               >
-                <ImageIcon className="w-4 h-4" />
-                <span className="hidden md:inline">Editar</span>
+                Limpar
               </button>
-            )}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={formData.imagem}
+                onChange={(e) => setFormData({ ...formData, imagem: e.target.value })}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                placeholder="Ou cole URL da imagem..."
+              />
+              {formData.imagem && (
+                <button
+                  type="button"
+                  onClick={() => onEditImage(formData.imagem || '')}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                  <span className="hidden md:inline">Editar</span>
+                </button>
+              )}
+            </div>
           </div>
           {formData.imagem && (
             <img

@@ -115,16 +115,16 @@ export default function AdminCalendario() {
           <div className="flex justify-between items-center">
             <button
               onClick={mesAnterior}
-              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-gray-900"
             >
               ← Anterior
             </button>
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-xl font-semibold text-gray-900">
               {mesAtual.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
             </h2>
             <button
               onClick={proximoMes}
-              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-gray-900"
             >
               Próximo →
             </button>
@@ -136,7 +136,7 @@ export default function AdminCalendario() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="grid grid-cols-7 gap-2 mb-4">
               {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dia) => (
-                <div key={dia} className="text-center font-semibold text-gray-700">
+                <div key={dia} className="text-center font-semibold text-gray-900">
                   {dia}
                 </div>
               ))}
@@ -145,7 +145,7 @@ export default function AdminCalendario() {
             <div className="grid grid-cols-7 gap-2">
               {getDiasDoMes(mesAtual).map((dia, index) => {
                 if (!dia) {
-                  return <div key={index} className="h-24 bg-gray-50 rounded" />;
+                  return <div key={index} className="h-24 bg-gray-100 rounded" />;
                 }
 
                 const locacoesDoDia = getLocacoesDoDia(dia);
@@ -156,11 +156,11 @@ export default function AdminCalendario() {
                   <div
                     key={index}
                     onClick={() => setDiaSelecionado(dia)}
-                    className={`h-24 border rounded p-2 cursor-pointer hover:bg-gray-50 ${
-                      isHoje ? 'border-emerald-500 border-2' : 'border-gray-200'
+                    className={`h-24 border rounded p-2 cursor-pointer hover:bg-gray-100 ${
+                      isHoje ? 'border-emerald-500 border-2' : 'border-gray-300'
                     }`}
                   >
-                    <div className="font-semibold text-sm mb-1">{dia.getDate()}</div>
+                    <div className="font-semibold text-sm mb-1 text-gray-900">{dia.getDate()}</div>
                     <div className="space-y-1">
                       {locacoesDoDia.slice(0, 3).map((locacao) => (
                         <div
@@ -171,7 +171,7 @@ export default function AdminCalendario() {
                         </div>
                       ))}
                       {locacoesDoDia.length > 3 && (
-                        <div className="text-xs text-gray-500">+{locacoesDoDia.length - 3}</div>
+                        <div className="text-xs text-gray-900">+{locacoesDoDia.length - 3}</div>
                       )}
                     </div>
                   </div>
@@ -184,12 +184,12 @@ export default function AdminCalendario() {
         {/* Detalhes do Dia Selecionado */}
         {diaSelecionado && (
           <div className="bg-white rounded-lg shadow p-6 mt-6">
-            <h3 className="text-lg font-semibold mb-4">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">
               Locações em {formatarData(diaSelecionado)}
             </h3>
-            
+
             {getLocacoesDoDia(diaSelecionado).length === 0 ? (
-              <p className="text-gray-500">Nenhuma locação neste dia.</p>
+              <p className="text-gray-900">Nenhuma locação neste dia.</p>
             ) : (
               <div className="space-y-4">
                 {getLocacoesDoDia(diaSelecionado).map((locacao) => (
@@ -199,8 +199,8 @@ export default function AdminCalendario() {
                         <p className="font-semibold text-gray-900">
                           {locacao.horario_inicio} - {locacao.horario_fim}
                         </p>
-                        <p className="text-sm text-gray-600">{locacao.cliente.nome}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm text-gray-900">{locacao.cliente.nome}</p>
+                        <p className="text-xs text-gray-900">
                           {locacao.locacao_item.map(item => item.brinquedo.nome).join(', ')}
                         </p>
                       </div>
