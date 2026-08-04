@@ -11,7 +11,6 @@ interface Brinquedo {
   tema_layout: string;
   dimensoes: string;
   faixa_etaria: string;
-  preco_periodo: number;
   status: string;
 }
 
@@ -37,7 +36,6 @@ export default function AdminBrinquedos() {
     tema_layout: 'classico_divertido',
     dimensoes: '',
     faixa_etaria: '',
-    preco_periodo: 0,
     status: 'DISPONIVEL',
   });
 
@@ -79,7 +77,6 @@ export default function AdminBrinquedos() {
           tema_layout: 'classico_divertido',
           dimensoes: '',
           faixa_etaria: '',
-          preco_periodo: 0,
           status: 'DISPONIVEL',
         });
         fetchData();
@@ -98,7 +95,6 @@ export default function AdminBrinquedos() {
       tema_layout: brinquedo.tema_layout,
       dimensoes: brinquedo.dimensoes,
       faixa_etaria: brinquedo.faixa_etaria,
-      preco_periodo: brinquedo.preco_periodo,
       status: brinquedo.status,
     });
     setMostrarFormulario(true);
@@ -324,30 +320,17 @@ export default function AdminBrinquedos() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Preço por Período (uso interno)</label>
-                  <input
-                    type="number"
-                    value={formData.preco_periodo}
-                    onChange={(e) => setFormData({ ...formData, preco_periodo: parseFloat(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                  >
-                    <option value="DISPONIVEL">Disponível</option>
-                    <option value="INDISPONIVEL">Indisponível</option>
-                    <option value="MANUTENCAO">Em Manutenção</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                >
+                  <option value="DISPONIVEL">Disponível</option>
+                  <option value="INDISPONIVEL">Indisponível</option>
+                  <option value="MANUTENCAO">Em Manutenção</option>
+                </select>
               </div>
 
               <div className="flex gap-2">

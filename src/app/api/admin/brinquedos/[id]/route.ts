@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function PUT(
   request: Request,
@@ -13,11 +13,10 @@ export async function PUT(
       tema_layout,
       dimensoes,
       faixa_etaria,
-      preco_periodo,
       status
     } = await request.json();
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('brinquedo')
       .update({
         nome,
@@ -26,7 +25,6 @@ export async function PUT(
         tema_layout,
         dimensoes,
         faixa_etaria,
-        preco_periodo,
         status,
       })
       .eq('id', params.id)
