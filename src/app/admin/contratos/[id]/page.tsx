@@ -96,7 +96,7 @@ export default function VisualizarContrato({ params }: { params: { id: string } 
   const clausulasPadrao = [
     {
       titulo: '1. DO OBJETO',
-      conteudo: `O presente contrato tem como objeto a locação de brinquedos e itens para festas, conforme descrição na locação nº ${contrato?.locacao_id}, para o evento realizado em ${contrato?.local_evento} na data ${contrato?.formatarData ? formatarData(contrato.data_evento) : ''}.`,
+      conteudo: `O presente contrato tem como objeto a locação de brinquedos e itens para festas, conforme descrição na locação nº ${contrato?.locacao_id}, para o evento realizado em ${contrato?.local_evento} na data ${formatarData(contrato.data_evento)}.`,
     },
     {
       titulo: '2. DO VALOR E FORMA DE PAGAMENTO',
