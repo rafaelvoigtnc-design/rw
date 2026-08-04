@@ -13,6 +13,9 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "RW Brinquedos - Locação de Brinquedos e Itens de Festa",
   description: "Aluguel de brinquedos infantis e itens para festas",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
