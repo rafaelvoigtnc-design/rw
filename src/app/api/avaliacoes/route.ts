@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { verifyToken } from '@/lib/auth';
 
 export async function GET() {
   try {
@@ -17,7 +16,7 @@ export async function GET() {
 
     if (error) throw error;
 
-    return NextResponse.json(data);
+    return NextResponse.json(data || []);
   } catch (error) {
     console.error('Erro ao buscar avaliações:', error);
     return NextResponse.json(
@@ -29,26 +28,47 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const token = request.headers.get('cookie')?.match(/client_token=([^;]+)/)?.[1];
+    const { texto, nota } = await request.json();
+
+    // Verificar se há token de cliente
+    const cookieHeader = request.headers.get('cookie');
+    const token = cookieHeader?.match(/client_token=([^;]+)/)?.[1];
+
     if (!token) {
-      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Você precisa estar logado para deixar um depoimento' },
+        { status: 401 }
+      );
     }
 
-    const payload = await verifyToken(token);
-    const clienteId = payload.id;
+    // Verificar o token e obter o cliente_id
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/api/cliente/perfil`, {
+      headers: {
+        cookie: cookieHeader,
+      },
+    });
 
-    const { brinquedoId, nota, texto, foto } = await request.json();
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: 'Erro ao verificar autenticação' },
+        { status: 401 }
+      );
+    }
 
+    const clienteData = await response.json();
+    const clienteId = clienteData.id;
+
+    // Criar avaliação
     const { data, error } = await supabase
       .from('avaliacao')
       .insert({
         id: crypto.randomUUID(),
         cliente_id: clienteId,
-        brinquedo_id: brinquedoId,
-        nota,
         texto,
-        foto: foto || null,
+        nota,
         aprovado_para_exibir: false,
+        exibir_no_home: false,
+        criado_em: new Date().toISOString(),
       })
       .select()
       .single();

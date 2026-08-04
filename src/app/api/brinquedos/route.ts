@@ -4,25 +4,14 @@ import { supabase } from '@/lib/supabase';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const categoria = searchParams.get('categoria');
     const faixaEtaria = searchParams.get('faixaEtaria');
     const busca = searchParams.get('busca');
+    const ordenacao = searchParams.get('ordenacao') || 'nome';
 
     let query = supabase
       .from('brinquedo')
-      .select(`
-        *,
-        categoria (
-          id,
-          nome,
-          icone
-        )
-      `)
+      .select('*')
       .eq('status', 'DISPONIVEL');
-
-    if (categoria) {
-      query = query.eq('categoria_id', categoria);
-    }
 
     if (faixaEtaria) {
       query = query.eq('faixa_etaria', faixaEtaria);
@@ -32,7 +21,15 @@ export async function GET(request: Request) {
       query = query.ilike('nome', `%${busca}%`);
     }
 
-    const { data, error } = await query.order('criado_em', { ascending: false });
+    if (ordenacao === 'nome') {
+      query = query.order('nome', { ascending: true });
+    } else if (ordenacao === 'nome_desc') {
+      query = query.order('nome', { ascending: false });
+    } else if (ordenacao === 'avaliacao') {
+      query = query.order('avaliacao_media', { ascending: false, nullsFirst: false });
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 

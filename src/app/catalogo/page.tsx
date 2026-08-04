@@ -12,23 +12,12 @@ interface Brinquedo {
   nome: string;
   fotos: string[];
   faixa_etaria: string;
-  categoria: {
-    id: string;
-    nome: string;
-  };
   avaliacao_media?: number;
-}
-
-interface Categoria {
-  id: string;
-  nome: string;
 }
 
 export default function Catalogo() {
   const [brinquedos, setBrinquedos] = useState<Brinquedo[]>([]);
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filtroCategoria, setFiltroCategoria] = useState('');
   const [filtroFaixaEtaria, setFiltroFaixaEtaria] = useState('');
   const [busca, setBusca] = useState('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -40,11 +29,6 @@ export default function Catalogo() {
   const faixasEtarias = ['0-2 anos', '3-5 anos', '6-8 anos', '9-12 anos', 'Todas idades'];
 
   useEffect(() => {
-    fetch('/api/categorias')
-      .then(res => res.json())
-      .then(data => setCategorias(data))
-      .catch(error => console.error('Erro ao buscar categorias:', error));
-
     fetchBrinquedos();
 
     const token = document.cookie.match(/client_token=([^;]+)/)?.[1];
@@ -52,11 +36,10 @@ export default function Catalogo() {
       setIsLoggedIn(true);
       fetchFavoritos();
     }
-  }, [filtroCategoria, filtroFaixaEtaria, busca, ordenacao]);
+  }, [filtroFaixaEtaria, busca, ordenacao]);
 
   const fetchBrinquedos = () => {
     const params = new URLSearchParams();
-    if (filtroCategoria) params.append('categoria', filtroCategoria);
     if (filtroFaixaEtaria) params.append('faixaEtaria', filtroFaixaEtaria);
     if (busca) params.append('busca', busca);
     params.append('ordenacao', ordenacao);
@@ -124,7 +107,7 @@ export default function Catalogo() {
     setBusca('');
   };
 
-  const hasActiveFilters = filtroCategoria || filtroFaixaEtaria || busca;
+  const hasActiveFilters = filtroFaixaEtaria || busca;
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
@@ -170,28 +153,9 @@ export default function Catalogo() {
                       value={busca}
                       onChange={(e) => setBusca(e.target.value)}
                       placeholder="Nome do brinquedo..."
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 bg-gray-50"
+                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 bg-gray-50 text-gray-900"
                     />
                   </div>
-                </div>
-
-                {/* Categoria */}
-                <div>
-                  <label className="block text-sm font-medium text-secondary-gray-700 mb-2">
-                    Categoria
-                  </label>
-                  <select
-                    value={filtroCategoria}
-                    onChange={(e) => setFiltroCategoria(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 bg-gray-50"
-                  >
-                    <option value="">Todas as categorias</option>
-                    {categorias.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.nome}
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 {/* Faixa Etária */}
@@ -202,7 +166,7 @@ export default function Catalogo() {
                   <select
                     value={filtroFaixaEtaria}
                     onChange={(e) => setFiltroFaixaEtaria(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 bg-gray-50"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 bg-gray-50 text-gray-900"
                   >
                     <option value="">Todas as faixas etárias</option>
                     {faixasEtarias.map((faixa) => (
@@ -221,11 +185,10 @@ export default function Catalogo() {
                   <select
                     value={ordenacao}
                     onChange={(e) => setOrdenacao(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 bg-gray-50"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 bg-gray-50 text-gray-900"
                   >
                     <option value="nome">Nome (A-Z)</option>
                     <option value="nome_desc">Nome (Z-A)</option>
-                    <option value="categoria">Categoria</option>
                     <option value="avaliacao">Avaliação</option>
                   </select>
                 </div>

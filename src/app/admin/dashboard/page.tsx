@@ -130,13 +130,13 @@ export default function AdminDashboard() {
                   type="date"
                   value={dataInicio}
                   onChange={(e) => setDataInicio(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md"
+                  className="px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                 />
                 <input
                   type="date"
                   value={dataFim}
                   onChange={(e) => setDataFim(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md"
+                  className="px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                 />
               </>
             )}

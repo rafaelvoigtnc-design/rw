@@ -18,6 +18,11 @@ interface Avaliacao {
 export default function Depoimentos() {
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [formData, setFormData] = useState({
+    texto: '',
+    nota: 5,
+  });
 
   useEffect(() => {
     fetch('/api/avaliacoes')
@@ -31,6 +36,31 @@ export default function Depoimentos() {
         setLoading(false);
       });
   }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/avaliacoes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        alert('Depoimento enviado com sucesso! Aguarde aprovação.');
+        setMostrarFormulario(false);
+        setFormData({ texto: '', nota: 5 });
+        // Recarregar avaliações
+        const data = await response.json();
+        setAvaliacoes([...avaliacoes, data]);
+      } else {
+        alert('Erro ao enviar depoimento');
+      }
+    } catch (error) {
+      console.error('Erro ao enviar depoimento:', error);
+      alert('Erro ao enviar depoimento');
+    }
+  };
 
   const formatarData = (data: string) => {
     return new Date(data).toLocaleDateString('pt-BR', {
@@ -50,11 +80,77 @@ export default function Depoimentos() {
           <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">
             Depoimentos
           </h1>
-          <p className="text-xl text-white/90 max-w-2xl">
+          <p className="text-xl text-white/90 max-w-2xl mb-6">
             O que nossos clientes dizem sobre nossos serviços
           </p>
+          <button
+            onClick={() => setMostrarFormulario(true)}
+            className="bg-white text-primary-orange-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+          >
+            + Deixar meu Depoimento
+          </button>
         </div>
       </section>
+
+      {/* Formulário de Depoimento */}
+      {mostrarFormulario && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-900">Deixe seu Depoimento</h2>
+              <button
+                onClick={() => setMostrarFormulario(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Seu Depoimento</label>
+                <textarea
+                  value={formData.texto}
+                  onChange={(e) => setFormData({ ...formData, texto: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                  rows={4}
+                  required
+                  placeholder="Conte sua experiência com nossos serviços..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nota</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((nota) => (
+                    <button
+                      key={nota}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, nota })}
+                      className={`text-2xl ${nota <= formData.nota ? 'text-yellow-400' : 'text-gray-300'}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="bg-primary-orange-500 text-white px-4 py-2 rounded-md hover:bg-primary-orange-600"
+                >
+                  Enviar Depoimento
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMostrarFormulario(false)}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
