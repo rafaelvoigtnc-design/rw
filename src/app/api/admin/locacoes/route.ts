@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // Função para verificar conflito de horários
 function verificarConflito(horaInicio1: string, horaFim1: string, horaInicio2: string, horaFim2: string): boolean {
@@ -14,7 +14,7 @@ function verificarConflito(horaInicio1: string, horaFim1: string, horaInicio2: s
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('locacao')
       .select(`
         *,
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     // Se for cliente novo, cadastrar primeiro
     let finalClienteId = cliente_id;
     if (cliente_novo) {
-      const { data: novoCliente, error: clienteError } = await supabase
+      const { data: novoCliente, error: clienteError } = await supabaseAdmin
         .from('cliente')
         .insert({
           id: crypto.randomUUID(),
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
     const conflitos: Array<{ brinquedo: string; locacaoExistente: string }> = [];
 
     for (const brinquedo of brinquedos) {
-      const { data: locacoesExistentes } = await supabase
+      const { data: locacoesExistentes } = await supabaseAdmin
         .from('locacao_item')
         .select(`
           locacao_id,
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
     }
 
     // Criar locação
-    const { data: locacao, error: locacaoError } = await supabase
+    const { data: locacao, error: locacaoError } = await supabaseAdmin
       .from('locacao')
       .insert({
         id: crypto.randomUUID(),
@@ -159,7 +159,7 @@ export async function POST(request: Request) {
 
     // Criar itens da locação
     for (const brinquedo of brinquedos) {
-      await supabase.from('locacao_item').insert({
+      await supabaseAdmin.from('locacao_item').insert({
         id: crypto.randomUUID(),
         locacao_id: locacao.id,
         brinquedo_id: brinquedo.brinquedo_id,
@@ -169,8 +169,8 @@ export async function POST(request: Request) {
     // Gerar transação financeira automaticamente se pago ou parcial
     if (status_pagamento === 'pago' || status_pagamento === 'parcial') {
       const valorTransacao = valor_total - (cuidador_valor || 0);
-      
-      await supabase.from('transacao_financeira').insert({
+
+      await supabaseAdmin.from('transacao_financeira').insert({
         id: crypto.randomUUID(),
         tipo: 'entrada_locacao',
         valor: valorTransacao,

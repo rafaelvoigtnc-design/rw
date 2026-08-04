@@ -222,7 +222,7 @@ export default function AdminLocacoes() {
                         ...formData,
                         cliente_novo: { ...formData.cliente_novo, nome: e.target.value },
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                       required
                     />
                     <input
@@ -233,7 +233,7 @@ export default function AdminLocacoes() {
                         ...formData,
                         cliente_novo: { ...formData.cliente_novo, telefone: e.target.value },
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                       required
                     />
                     <input
@@ -244,7 +244,7 @@ export default function AdminLocacoes() {
                         ...formData,
                         cliente_novo: { ...formData.cliente_novo, email: e.target.value },
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                       required
                     />
                     <input
@@ -255,7 +255,7 @@ export default function AdminLocacoes() {
                         ...formData,
                         cliente_novo: { ...formData.cliente_novo, endereco: e.target.value },
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                       required
                     />
                   </div>
@@ -263,7 +263,7 @@ export default function AdminLocacoes() {
                   <select
                     value={formData.cliente_id}
                     onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                     required
                   >
                     <option value="">Selecione um cliente</option>
@@ -277,14 +277,14 @@ export default function AdminLocacoes() {
               </div>
 
               {/* Data e Horários */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Data do Evento</label>
                   <input
                     type="date"
                     value={formData.data_evento}
                     onChange={(e) => setFormData({ ...formData, data_evento: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                     required
                   />
                 </div>
@@ -294,7 +294,7 @@ export default function AdminLocacoes() {
                     type="time"
                     value={formData.horario_inicio}
                     onChange={(e) => setFormData({ ...formData, horario_inicio: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                     required
                   />
                 </div>
@@ -304,7 +304,7 @@ export default function AdminLocacoes() {
                     type="time"
                     value={formData.horario_fim}
                     onChange={(e) => setFormData({ ...formData, horario_fim: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                     required
                   />
                 </div>
@@ -317,7 +317,7 @@ export default function AdminLocacoes() {
                   type="text"
                   value={formData.endereco}
                   onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                   required
                 />
               </div>
@@ -327,7 +327,7 @@ export default function AdminLocacoes() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Brinquedos</label>
                 <select
                   onChange={(e) => adicionarBrinquedo(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 text-gray-900"
                 >
                   <option value="">Adicionar brinquedo...</option>
                   {brinquedos.map((brinquedo) => (
@@ -336,12 +336,12 @@ export default function AdminLocacoes() {
                     </option>
                   ))}
                 </select>
-                
+
                 {formData.brinquedos.length > 0 && (
                   <div className="space-y-2">
                     {formData.brinquedos.map((brinquedo) => (
                       <div key={brinquedo.brinquedo_id} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                        <span className="text-sm">{brinquedo.nome}</span>
+                        <span className="text-sm text-gray-900">{brinquedo.nome}</span>
                         <button
                           type="button"
                           onClick={() => removerBrinquedo(brinquedo.brinquedo_id)}
@@ -356,14 +356,14 @@ export default function AdminLocacoes() {
               </div>
 
               {/* Valores */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Valor Total</label>
                   <input
                     type="number"
                     value={formData.valor_total}
                     onChange={(e) => setFormData({ ...formData, valor_total: parseFloat(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                     required
                   />
                 </div>
@@ -373,20 +373,20 @@ export default function AdminLocacoes() {
                     type="number"
                     value={formData.valor_sinal}
                     onChange={(e) => setFormData({ ...formData, valor_sinal: parseFloat(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                     required
                   />
                 </div>
               </div>
 
               {/* Status */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status Pagamento</label>
                   <select
                     value={formData.status_pagamento}
                     onChange={(e) => setFormData({ ...formData, status_pagamento: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                   >
                     <option value="pendente">Pendente</option>
                     <option value="parcial">Parcial</option>
@@ -398,7 +398,7 @@ export default function AdminLocacoes() {
                   <select
                     value={formData.status_locacao}
                     onChange={(e) => setFormData({ ...formData, status_locacao: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                   >
                     <option value="confirmada">Confirmada</option>
                     <option value="em_andamento">Em Andamento</option>
@@ -409,14 +409,14 @@ export default function AdminLocacoes() {
               </div>
 
               {/* Cuidador */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Cuidador (opcional)</label>
                   <input
                     type="text"
                     value={formData.cuidador_nome}
                     onChange={(e) => setFormData({ ...formData, cuidador_nome: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                   />
                 </div>
                 <div>
@@ -425,7 +425,7 @@ export default function AdminLocacoes() {
                     type="number"
                     value={formData.cuidador_valor}
                     onChange={(e) => setFormData({ ...formData, cuidador_valor: parseFloat(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                   />
                 </div>
               </div>
@@ -436,7 +436,7 @@ export default function AdminLocacoes() {
                 <textarea
                   value={formData.observacoes}
                   onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                   rows={3}
                 />
               </div>
