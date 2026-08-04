@@ -30,9 +30,34 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Proteger rotas /cliente exceto /cliente/login e /cliente/registro
+  if (path.startsWith('/cliente') && path !== '/cliente/login' && path !== '/cliente/registro') {
+    const token = request.cookies.get('client_token')?.value;
+
+    if (!token) {
+      return NextResponse.redirect(new URL('/cliente/login', request.url));
+    }
+
+    const payload = await verifyToken(token);
+    if (!payload || payload.type !== 'client') {
+      return NextResponse.redirect(new URL('/cliente/login', request.url));
+    }
+  }
+
+  // Redirecionar /cliente/login para /catalogo se já estiver logado
+  if (path === '/cliente/login') {
+    const token = request.cookies.get('client_token')?.value;
+    if (token) {
+      const payload = await verifyToken(token);
+      if (payload && payload.type === 'client') {
+        return NextResponse.redirect(new URL('/catalogo', request.url));
+      }
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: '/admin/:path*',
+  matcher: ['/admin/:path*', '/cliente/:path*'],
 };

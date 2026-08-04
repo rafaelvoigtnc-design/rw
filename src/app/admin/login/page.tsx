@@ -89,12 +89,6 @@ export default function AdminLogin() {
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
-
-        <div className="mt-6 text-center text-sm text-gray-600">
-          <p>Credenciais padrão:</p>
-          <p className="font-mono text-xs mt-1">Email: admin@rwbrinquedos.com</p>
-          <p className="font-mono text-xs">Senha: admin123</p>
-        </div>
       </div>
     </div>
   );
