@@ -47,7 +47,14 @@ export default function AdminBrinquedos() {
     try {
       const response = await fetch('/api/admin/brinquedos');
       const data = await response.json();
-      setBrinquedos(data);
+
+      // Converter fotos de JSON string para array
+      const brinquedosComFotos = data.map((b: any) => ({
+        ...b,
+        fotos: typeof b.fotos === 'string' ? JSON.parse(b.fotos) : (b.fotos || [])
+      }));
+
+      setBrinquedos(brinquedosComFotos);
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
     } finally {
@@ -103,7 +110,7 @@ export default function AdminBrinquedos() {
     setFormData({
       nome: brinquedo.nome,
       descricao: brinquedo.descricao,
-      fotos: brinquedo.fotos,
+      fotos: Array.isArray(brinquedo.fotos) ? brinquedo.fotos : [],
       tema_layout: brinquedo.tema_layout,
       dimensoes: brinquedo.dimensoes,
       faixa_etaria: brinquedo.faixa_etaria,

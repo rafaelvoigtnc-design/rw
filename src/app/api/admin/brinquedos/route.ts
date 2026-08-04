@@ -35,13 +35,18 @@ export async function POST(request: Request) {
       status
     } = body;
 
+    // Converter fotos para JSON string se for array
+    const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
+
+    console.log('Fotos para salvar:', fotosParaSalvar);
+
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
       .insert({
         id: crypto.randomUUID(),
         nome,
         descricao,
-        fotos: fotos || [],
+        fotos: fotosParaSalvar,
         tema_layout,
         dimensoes,
         faixa_etaria,

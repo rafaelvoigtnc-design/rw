@@ -6,6 +6,10 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log('Atualizando brinquedo ID:', params.id);
+    const body = await request.json();
+    console.log('Dados recebidos para atualização:', body);
+
     const {
       nome,
       descricao,
@@ -14,14 +18,19 @@ export async function PUT(
       dimensoes,
       faixa_etaria,
       status
-    } = await request.json();
+    } = body;
+
+    // Converter fotos para JSON string se for array
+    const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
+
+    console.log('Fotos para salvar:', fotosParaSalvar);
 
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
       .update({
         nome,
         descricao,
-        fotos,
+        fotos: fotosParaSalvar,
         tema_layout,
         dimensoes,
         faixa_etaria,
@@ -31,13 +40,17 @@ export async function PUT(
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Erro Supabase ao atualizar brinquedo:', error);
+      throw error;
+    }
 
+    console.log('Brinquedo atualizado com sucesso:', data);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Erro ao atualizar brinquedo:', error);
     return NextResponse.json(
-      { error: 'Erro ao atualizar brinquedo' },
+      { error: 'Erro ao atualizar brinquedo', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
@@ -48,18 +61,23 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { error } = await supabase
+    console.log('Deletando brinquedo ID:', params.id);
+    const { error } = await supabaseAdmin
       .from('brinquedo')
       .delete()
       .eq('id', params.id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Erro Supabase ao deletar brinquedo:', error);
+      throw error;
+    }
 
+    console.log('Brinquedo deletado com sucesso');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Erro ao deletar brinquedo:', error);
     return NextResponse.json(
-      { error: 'Erro ao deletar brinquedo' },
+      { error: 'Erro ao deletar brinquedo', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
