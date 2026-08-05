@@ -23,7 +23,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log('Dados recebidos para criar brinquedo:', body);
+    console.log('Dados recebidos para criar brinquedo:', JSON.stringify(body, null, 2));
 
     const {
       nome,
@@ -48,20 +48,19 @@ export async function POST(request: Request) {
     const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
 
     console.log('Fotos para salvar:', fotosParaSalvar);
-    console.log('Tamanho do payload:', JSON.stringify(body).length, 'bytes');
 
     const brinquedoData = {
       id: crypto.randomUUID(),
-      nome,
-      descricao,
+      nome: nome.trim(),
+      descricao: descricao.trim(),
       fotos: fotosParaSalvar,
-      tema_layout,
-      dimensoes,
-      faixa_etaria,
+      tema_layout: tema_layout || 'classico_divertido',
+      dimensoes: dimensoes || '',
+      faixa_etaria: faixa_etaria || '',
       status: status || 'DISPONIVEL',
     };
 
-    console.log('Dados para inserir no Supabase:', brinquedoData);
+    console.log('Dados para inserir no Supabase:', JSON.stringify(brinquedoData, null, 2));
 
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
@@ -70,7 +69,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      console.error('Erro Supabase ao criar brinquedo:', error);
+      console.error('Erro Supabase ao criar brinquedo:', JSON.stringify(error, null, 2));
       return NextResponse.json(
         { error: 'Erro ao criar brinquedo no banco de dados', details: error.message },
         { status: 500 }

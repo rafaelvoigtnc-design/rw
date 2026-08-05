@@ -145,9 +145,9 @@ export default function AdminBrinquedos() {
   };
 
   const adicionarFoto = () => {
-    const url = prompt('Digite a URL da foto:');
-    if (url) {
-      setFormData({ ...formData, fotos: [...formData.fotos, url] });
+    const url = prompt('Digite a URL da foto (ex: https://exemplo.com/imagem.jpg):');
+    if (url && url.trim()) {
+      setFormData({ ...formData, fotos: [...formData.fotos, url.trim()] });
     }
   };
 
@@ -158,31 +158,7 @@ export default function AdminBrinquedos() {
     });
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setFormData({ ...formData, fotos: [...formData.fotos, data.url] });
-      } else {
-        const errorData = await response.json();
-        alert(`Erro ao fazer upload: ${errorData.error}`);
-      }
-    } catch (error) {
-      console.error('Erro ao fazer upload:', error);
-      alert('Erro ao fazer upload da imagem');
-    }
-  };
+  // Upload removido - usar apenas URLs externas
 
   if (loading) {
     return <div className="p-8">Carregando...</div>;
@@ -295,15 +271,6 @@ export default function AdminBrinquedos() {
                     >
                       + Adicionar URL
                     </button>
-                    <label className="text-blue-600 hover:text-blue-800 cursor-pointer">
-                      + Fazer Upload
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/jpg,image/png,image/webp"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                      />
-                    </label>
                   </div>
                 </div>
               </div>
