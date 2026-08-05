@@ -11,6 +11,7 @@ export async function POST(request: Request) {
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
       .insert({
+        id: crypto.randomUUID(),
         nome: String(nome),
         descricao: String(descricao),
         fotos: '[]',
