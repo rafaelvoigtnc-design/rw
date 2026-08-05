@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,29 +31,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Criar diretório de uploads se não existir
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
-    }
-
     // Gerar nome único do arquivo
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
-    const fileExtension = path.extname(file.name);
-    const fileName = `${timestamp}-${randomString}${fileExtension}`;
-    const filePath = path.join(uploadDir, fileName);
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${timestamp}-${randomString}.${fileExtension}`;
 
-    // Converter File para Buffer e salvar
+    // Converter File para Buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
 
-    // Retornar URL do arquivo
-    const fileUrl = `/uploads/${fileName}`;
+    // Fazer upload para Supabase Storage
+    const { data, error } = await supabaseAdmin.storage
+      .from('brinquedos')
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (error) {
+      console.error('Erro ao fazer upload para Supabase:', error);
+      return NextResponse.json(
+        { error: 'Erro ao fazer upload do arquivo para o storage' },
+        { status: 500 }
+      );
+    }
+
+    // Obter URL pública do arquivo
+    const { data: { publicUrl } } = supabaseAdmin.storage
+      .from('brinquedos')
+      .getPublicUrl(fileName);
 
     return NextResponse.json({
-      url: fileUrl,
+      url: publicUrl,
       fileName: fileName,
     });
   } catch (error) {

@@ -35,6 +35,14 @@ export async function POST(request: Request) {
       status
     } = body;
 
+    // Validar campos obrigatórios
+    if (!nome || !descricao) {
+      return NextResponse.json(
+        { error: 'Nome e descrição são obrigatórios' },
+        { status: 400 }
+      );
+    }
+
     // Converter fotos para JSON string se for array
     const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
 
