@@ -47,9 +47,8 @@ export async function POST(request: Request) {
     // Converter fotos para JSON string se for array
     const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
 
-    // Versão simplificada sem campos opcionais que podem causar problemas
+    // Versão simplificada - deixar o Supabase gerar o ID automaticamente
     const brinquedoData = {
-      id: crypto.randomUUID(),
       nome: nome.trim(),
       descricao: descricao.trim(),
       fotos: fotosParaSalvar,
