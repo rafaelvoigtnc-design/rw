@@ -33,6 +33,8 @@ export async function PUT(
       dimensoes,
       faixa_etaria,
       status,
+      categoria_id: null, // Mantém null para consistência
+      preco_periodo: 0, // Mantém 0 para consistência
     };
 
     const { data, error } = await supabaseAdmin
