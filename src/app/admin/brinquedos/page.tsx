@@ -102,14 +102,10 @@ export default function AdminBrinquedos() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Temporariamente não enviar fotos
+    // Enviar apenas nome e descricao para teste
     const dadosParaEnviar = {
       nome: formData.nome,
       descricao: formData.descricao,
-      tema_layout: formData.tema_layout,
-      dimensoes: formData.dimensoes,
-      faixa_etaria: formData.faixa_etaria,
-      status: formData.status,
     };
 
     try {
@@ -250,62 +246,6 @@ export default function AdminBrinquedos() {
                   rows={3}
                   required
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fotos</label>
-                <div className="space-y-4">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                    <input
-                      type="file"
-                      id="foto-upload"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      disabled={uploading}
-                    />
-                    <label
-                      htmlFor="foto-upload"
-                      className="flex flex-col items-center justify-center cursor-pointer"
-                    >
-                      {uploading ? (
-                        <p className="text-gray-500">Fazendo upload...</p>
-                      ) : (
-                        <>
-                          <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <p className="mt-2 text-sm text-gray-600">Clique para selecionar imagens</p>
-                          <p className="text-xs text-gray-500">PNG, JPG até 5MB</p>
-                        </>
-                      )}
-                    </label>
-                  </div>
-
-                  {formData.fotos.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {formData.fotos.map((foto, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={foto}
-                            alt={`Foto ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-md border border-gray-300"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removerFoto(index)}
-                            className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
 
               <div>
