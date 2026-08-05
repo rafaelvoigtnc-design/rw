@@ -28,7 +28,11 @@ export async function POST(request: Request) {
 
     const {
       nome,
-      descricao
+      descricao,
+      tema_layout,
+      dimensoes,
+      faixa_etaria,
+      status
     } = body;
 
     // Validar campos obrigatórios
@@ -39,13 +43,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Versão MINIMA absoluta - apenas nome e descricao
+    // Versão ultra simplificada - apenas nome e descricao
     const brinquedoData = {
-      nome,
-      descricao,
+      nome: String(nome),
+      descricao: String(descricao),
+      fotos: '[]',
+      tema_layout: String(tema_layout || 'CLASSICO_DIVERTIDO'),
+      dimensoes: String(dimensoes || ''),
+      faixa_etaria: String(faixa_etaria || ''),
+      status: String(status || 'DISPONIVEL'),
     };
 
-    console.log('Dados para inserir (MINIMO):', brinquedoData);
+    console.log('Dados para inserir:', brinquedoData);
 
     const { data, error } = await supabaseAdmin
       .from('brinquedo')

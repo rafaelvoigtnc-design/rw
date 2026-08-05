@@ -102,10 +102,14 @@ export default function AdminBrinquedos() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Enviar apenas nome e descricao para teste
+    // Temporariamente não enviar fotos
     const dadosParaEnviar = {
       nome: formData.nome,
       descricao: formData.descricao,
+      tema_layout: formData.tema_layout,
+      dimensoes: formData.dimensoes,
+      faixa_etaria: formData.faixa_etaria,
+      status: formData.status,
     };
 
     try {
@@ -246,6 +250,11 @@ export default function AdminBrinquedos() {
                   rows={3}
                   required
                 />
+              </div>
+
+              {/* Upload de imagens temporariamente desativado */}
+              <div className="text-sm text-gray-500 bg-yellow-50 p-3 rounded-md">
+                Upload de imagens temporariamente desativado para manutenção.
               </div>
 
               <div>
