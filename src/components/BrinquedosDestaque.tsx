@@ -20,7 +20,7 @@ export default function BrinquedosDestaque() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/brinquedos?home=true')
+    fetch('/api/brinquedos')
       .then(res => res.json())
       .then(data => {
         setBrinquedos(data.slice(0, 8)); // Mostrar 8 brinquedos

@@ -24,6 +24,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    console.log('Dados recebidos:', body);
+
     const {
       nome,
       descricao,
@@ -33,8 +35,7 @@ export async function POST(request: Request) {
       faixa_etaria,
       status,
       preco_periodo,
-      categoria_id,
-      mostrar_home
+      categoria_id
     } = body;
 
     // Validar campos obrigatórios
@@ -48,14 +49,7 @@ export async function POST(request: Request) {
     // Converter fotos para JSON string se for array
     const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
 
-    // Tentar verificar se o campo mostrar_home existe
-    const { data: testBrinquedo, error: testError } = await supabaseAdmin
-      .from('brinquedo')
-      .select('id')
-      .limit(1)
-      .single();
-
-    const brinquedoData: any = {
+    const brinquedoData = {
       id: crypto.randomUUID(),
       nome: nome.trim(),
       descricao: descricao.trim(),
@@ -68,10 +62,7 @@ export async function POST(request: Request) {
       categoria_id: categoria_id || null,
     };
 
-    // Só adicionar mostrar_home se não houver erro no teste (campo existe)
-    if (!testError || testError.code !== 'PGRST116') {
-      brinquedoData.mostrar_home = mostrar_home || false;
-    }
+    console.log('Dados para inserir:', brinquedoData);
 
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
@@ -82,11 +73,12 @@ export async function POST(request: Request) {
     if (error) {
       console.error('Erro Supabase ao criar brinquedo:', error);
       return NextResponse.json(
-        { error: 'Erro ao criar brinquedo no banco de dados', details: error.message },
+        { error: 'Erro ao criar brinquedo no banco de dados', details: error.message, code: error.code },
         { status: 500 }
       );
     }
 
+    console.log('Brinquedo criado com sucesso:', data);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Erro ao criar brinquedo:', error);

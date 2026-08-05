@@ -17,8 +17,7 @@ export async function PUT(
       tema_layout,
       dimensoes,
       faixa_etaria,
-      status,
-      mostrar_home
+      status
     } = body;
 
     // Converter fotos para JSON string se for array
@@ -26,14 +25,7 @@ export async function PUT(
 
     console.log('Fotos para salvar:', fotosParaSalvar);
 
-    // Tentar verificar se o campo mostrar_home existe
-    const { data: testBrinquedo, error: testError } = await supabaseAdmin
-      .from('brinquedo')
-      .select('id')
-      .limit(1)
-      .single();
-
-    const updateData: any = {
+    const updateData = {
       nome,
       descricao,
       fotos: fotosParaSalvar,
@@ -42,11 +34,6 @@ export async function PUT(
       faixa_etaria,
       status,
     };
-
-    // Só adicionar mostrar_home se não houver erro no teste (campo existe)
-    if (!testError || testError.code !== 'PGRST116') {
-      updateData.mostrar_home = mostrar_home;
-    }
 
     const { data, error } = await supabaseAdmin
       .from('brinquedo')

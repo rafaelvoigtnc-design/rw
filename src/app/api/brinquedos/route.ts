@@ -7,17 +7,11 @@ export async function GET(request: Request) {
     const faixaEtaria = searchParams.get('faixaEtaria');
     const busca = searchParams.get('busca');
     const ordenacao = searchParams.get('ordenacao') || 'nome';
-    const home = searchParams.get('home');
 
     let query = supabase
       .from('brinquedo')
       .select('*')
       .eq('status', 'DISPONIVEL');
-
-    // Se for para a home, filtrar por mostrar_home
-    if (home === 'true') {
-      query = query.eq('mostrar_home', true);
-    }
 
     if (faixaEtaria) {
       query = query.eq('faixa_etaria', faixaEtaria);

@@ -12,7 +12,6 @@ interface Brinquedo {
   dimensoes: string;
   faixa_etaria: string;
   status: string;
-  mostrar_home: boolean;
 }
 
 const TEMAS = [
@@ -39,7 +38,6 @@ export default function AdminBrinquedos() {
     dimensoes: '',
     faixa_etaria: '',
     status: 'DISPONIVEL',
-    mostrar_home: false,
   });
 
   useEffect(() => {
@@ -55,7 +53,6 @@ export default function AdminBrinquedos() {
       const brinquedosComFotos = data.map((b: any) => ({
         ...b,
         fotos: typeof b.fotos === 'string' ? JSON.parse(b.fotos) : (b.fotos || []),
-        mostrar_home: b.mostrar_home || false,
       }));
 
       setBrinquedos(brinquedosComFotos);
@@ -131,7 +128,6 @@ export default function AdminBrinquedos() {
           dimensoes: '',
           faixa_etaria: '',
           status: 'DISPONIVEL',
-          mostrar_home: false,
         });
         fetchData();
       } else {
@@ -154,7 +150,6 @@ export default function AdminBrinquedos() {
       dimensoes: brinquedo.dimensoes,
       faixa_etaria: brinquedo.faixa_etaria,
       status: brinquedo.status,
-      mostrar_home: brinquedo.mostrar_home || false,
     });
     setMostrarFormulario(true);
   };
@@ -215,7 +210,6 @@ export default function AdminBrinquedos() {
                 dimensoes: '',
                 faixa_etaria: '',
                 status: 'DISPONIVEL',
-                mostrar_home: false,
               });
               setMostrarFormulario(true);
             }}
@@ -359,19 +353,6 @@ export default function AdminBrinquedos() {
                 </select>
               </div>
 
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="mostrar_home"
-                  checked={formData.mostrar_home}
-                  onChange={(e) => setFormData({ ...formData, mostrar_home: e.target.checked })}
-                  className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                />
-                <label htmlFor="mostrar_home" className="ml-2 block text-sm text-gray-900">
-                  Mostrar na Home
-                </label>
-              </div>
-
               <div className="flex gap-2">
                 <button
                   type="submit"
@@ -402,9 +383,6 @@ export default function AdminBrinquedos() {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Home
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
                 </th>
               </tr>
@@ -432,17 +410,6 @@ export default function AdminBrinquedos() {
                     }`}>
                       {brinquedo.status}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {brinquedo.mostrar_home ? (
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                        Sim
-                      </span>
-                    ) : (
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                        Não
-                      </span>
-                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
