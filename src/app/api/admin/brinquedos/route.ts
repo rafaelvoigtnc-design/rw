@@ -43,8 +43,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Versão ultra simplificada - apenas nome e descricao
+    // Versão com todos os campos obrigatórios
     const brinquedoData = {
+      id: crypto.randomUUID(),
       nome: String(nome),
       descricao: String(descricao),
       fotos: '[]',
@@ -52,6 +53,8 @@ export async function POST(request: Request) {
       dimensoes: String(dimensoes || ''),
       faixa_etaria: String(faixa_etaria || ''),
       status: String(status || 'DISPONIVEL'),
+      categoria_id: null,
+      preco_periodo: 0,
     };
 
     console.log('Dados para inserir:', brinquedoData);
