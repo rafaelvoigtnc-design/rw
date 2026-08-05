@@ -102,27 +102,23 @@ export default function AdminBrinquedos() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Temporariamente não enviar fotos
+    // Usar API de teste para ver o erro detalhado
     const dadosParaEnviar = {
       nome: formData.nome,
       descricao: formData.descricao,
-      tema_layout: formData.tema_layout,
-      dimensoes: formData.dimensoes,
-      faixa_etaria: formData.faixa_etaria,
-      status: formData.status,
     };
 
     try {
-      const url = editando ? `/api/admin/brinquedos/${editando.id}` : '/api/admin/brinquedos';
-      const method = editando ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
+      const response = await fetch('/api/admin/test-simple-insert', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dadosParaEnviar),
       });
 
-      if (response.ok) {
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Brinquedo criado com sucesso! (teste)');
         setMostrarFormulario(false);
         setEditando(null);
         setFormData({
@@ -136,8 +132,8 @@ export default function AdminBrinquedos() {
         });
         fetchData();
       } else {
-        const errorData = await response.json();
-        alert(`Erro ao salvar brinquedo: ${errorData.error || errorData.details || 'Erro desconhecido'}`);
+        alert(`ERRO DETALHADO: ${result.error}\nCódigo: ${result.code}\nDetalhes: ${JSON.stringify(result.details)}`);
+        console.error('Erro completo:', result);
       }
     } catch (error) {
       console.error('Erro ao salvar brinquedo:', error);
