@@ -25,6 +25,11 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     console.log('Dados recebidos:', body);
+    console.log('Variáveis de ambiente:', {
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Configurada' : 'Não configurada',
+      supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Configurada' : 'Não configurada',
+      serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Configurada' : 'Não configurada',
+    });
 
     const {
       nome,
@@ -34,8 +39,7 @@ export async function POST(request: Request) {
       dimensoes,
       faixa_etaria,
       status,
-      preco_periodo,
-      categoria_id
+      preco_periodo
     } = body;
 
     // Validar campos obrigatórios
@@ -59,10 +63,17 @@ export async function POST(request: Request) {
       faixa_etaria: faixa_etaria || '',
       status: status || 'DISPONIVEL',
       preco_periodo: preco_periodo || 0,
-      categoria_id: categoria_id || null,
     };
 
     console.log('Dados para inserir:', brinquedoData);
+
+    // Primeiro, testar a conexão
+    const { data: testData, error: testError } = await supabaseAdmin
+      .from('brinquedo')
+      .select('id')
+      .limit(1);
+
+    console.log('Teste de conexão:', { testData, testError });
 
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
@@ -72,8 +83,9 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('Erro Supabase ao criar brinquedo:', error);
+      console.error('Detalhes completos do erro:', JSON.stringify(error, null, 2));
       return NextResponse.json(
-        { error: 'Erro ao criar brinquedo no banco de dados', details: error.message, code: error.code },
+        { error: 'Erro ao criar brinquedo no banco de dados', details: error.message, code: error.code, fullError: error },
         { status: 500 }
       );
     }
