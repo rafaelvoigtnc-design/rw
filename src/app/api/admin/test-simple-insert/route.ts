@@ -19,6 +19,7 @@ export async function POST(request: Request) {
         dimensoes: '',
         faixa_etaria: '',
         status: 'DISPONIVEL',
+        categoria_id: null, // Temporariamente null, vamos ver se funciona
       })
       .select();
 
