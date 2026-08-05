@@ -64,7 +64,17 @@ export default function AdminBrinquedos() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Enviando dados do brinquedo:', formData);
+    
+    // Limpar fotos em base64 (remover fotos que começam com data:)
+    const fotosLimpas = formData.fotos.filter(foto => !foto.startsWith('data:'));
+    
+    const dadosParaEnviar = {
+      ...formData,
+      fotos: fotosLimpas
+    };
+    
+    console.log('Enviando dados do brinquedo:', dadosParaEnviar);
+    console.log('Tamanho do payload:', JSON.stringify(dadosParaEnviar).length, 'bytes');
 
     try {
       const url = editando ? `/api/admin/brinquedos/${editando.id}` : '/api/admin/brinquedos';
@@ -75,7 +85,7 @@ export default function AdminBrinquedos() {
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dadosParaEnviar),
       });
 
       console.log('Response status:', response.status);
@@ -152,13 +162,26 @@ export default function AdminBrinquedos() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Converter para base64 para salvar no banco
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      setFormData({ ...formData, fotos: [...formData.fotos, base64String] });
-    };
-    reader.readAsDataURL(file);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFormData({ ...formData, fotos: [...formData.fotos, data.url] });
+      } else {
+        const errorData = await response.json();
+        alert(`Erro ao fazer upload: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      alert('Erro ao fazer upload da imagem');
+    }
   };
 
   if (loading) {
@@ -194,9 +217,7 @@ export default function AdminBrinquedos() {
                 tema_layout: 'classico_divertido',
                 dimensoes: '',
                 faixa_etaria: '',
-                preco_periodo: 0,
                 status: 'DISPONIVEL',
-                categoria_id: '',
               });
               setMostrarFormulario(true);
             }}
