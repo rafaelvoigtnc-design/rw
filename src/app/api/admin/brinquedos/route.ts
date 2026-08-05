@@ -25,11 +25,6 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     console.log('Dados recebidos:', body);
-    console.log('Variáveis de ambiente:', {
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Configurada' : 'Não configurada',
-      supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Configurada' : 'Não configurada',
-      serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Configurada' : 'Não configurada',
-    });
 
     const {
       nome,
@@ -38,8 +33,7 @@ export async function POST(request: Request) {
       tema_layout,
       dimensoes,
       faixa_etaria,
-      status,
-      preco_periodo
+      status
     } = body;
 
     // Validar campos obrigatórios
@@ -53,6 +47,7 @@ export async function POST(request: Request) {
     // Converter fotos para JSON string se for array
     const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
 
+    // Versão simplificada sem campos opcionais que podem causar problemas
     const brinquedoData = {
       id: crypto.randomUUID(),
       nome: nome.trim(),
@@ -62,18 +57,9 @@ export async function POST(request: Request) {
       dimensoes: dimensoes || '',
       faixa_etaria: faixa_etaria || '',
       status: status || 'DISPONIVEL',
-      preco_periodo: preco_periodo || 0,
     };
 
     console.log('Dados para inserir:', brinquedoData);
-
-    // Primeiro, testar a conexão
-    const { data: testData, error: testError } = await supabaseAdmin
-      .from('brinquedo')
-      .select('id')
-      .limit(1);
-
-    console.log('Teste de conexão:', { testData, testError });
 
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
@@ -85,7 +71,7 @@ export async function POST(request: Request) {
       console.error('Erro Supabase ao criar brinquedo:', error);
       console.error('Detalhes completos do erro:', JSON.stringify(error, null, 2));
       return NextResponse.json(
-        { error: 'Erro ao criar brinquedo no banco de dados', details: error.message, code: error.code, fullError: error },
+        { error: 'Erro ao criar brinquedo no banco de dados', details: error.message, code: error.code },
         { status: 500 }
       );
     }
