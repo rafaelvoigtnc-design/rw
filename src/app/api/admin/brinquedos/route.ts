@@ -47,24 +47,24 @@ export async function POST(request: Request) {
     // Converter fotos para JSON string se for array
     const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
 
-    // Versão simplificada - deixar o Supabase gerar o ID automaticamente
+    // Usar exatamente os mesmos campos que funcionam na edição
     const brinquedoData = {
-      nome: nome.trim(),
-      descricao: descricao.trim(),
+      nome,
+      descricao,
       fotos: fotosParaSalvar,
-      tema_layout: tema_layout || 'CLASSICO_DIVERTIDO',
-      dimensoes: dimensoes || '',
-      faixa_etaria: faixa_etaria || '',
-      status: status || 'DISPONIVEL',
+      tema_layout,
+      dimensoes,
+      faixa_etaria,
+      status,
     };
 
     console.log('Dados para inserir:', brinquedoData);
 
+    // Tentar sem .single() primeiro
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
       .insert(brinquedoData)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error('Erro Supabase ao criar brinquedo:', error);
@@ -76,7 +76,8 @@ export async function POST(request: Request) {
     }
 
     console.log('Brinquedo criado com sucesso:', data);
-    return NextResponse.json(data);
+    // Retornar o primeiro item do array
+    return NextResponse.json(data[0]);
   } catch (error) {
     console.error('Erro ao criar brinquedo:', error);
     return NextResponse.json(
