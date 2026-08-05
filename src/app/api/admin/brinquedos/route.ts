@@ -43,35 +43,40 @@ export async function POST(request: Request) {
       );
     }
 
-    // Versão ultra simplificada - apenas nome e descricao
-    const brinquedoData = {
-      nome: String(nome),
-      descricao: String(descricao),
-      fotos: '[]',
-      tema_layout: String(tema_layout || 'CLASSICO_DIVERTIDO'),
-      dimensoes: String(dimensoes || ''),
-      faixa_etaria: String(faixa_etaria || ''),
-      status: String(status || 'DISPONIVEL'),
-    };
-
-    console.log('Dados para inserir:', brinquedoData);
-
+    // Tentar inserção com SQL direto via Supabase
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
-      .insert(brinquedoData)
-      .select();
+      .insert({
+        nome: String(nome),
+        descricao: String(descricao),
+        fotos: '[]',
+        tema_layout: String(tema_layout || 'CLASSICO_DIVERTIDO'),
+        dimensoes: String(dimensoes || ''),
+        faixa_etaria: String(faixa_etaria || ''),
+        status: String(status || 'DISPONIVEL'),
+      })
+      .select('id, nome, descricao')
+      .single();
 
     if (error) {
       console.error('Erro Supabase ao criar brinquedo:', error);
-      console.error('Detalhes completos do erro:', JSON.stringify(error, null, 2));
+      console.error('Código do erro:', error.code);
+      console.error('Mensagem do erro:', error.message);
+      console.error('Detalhes:', error.details);
+      
       return NextResponse.json(
-        { error: 'Erro ao criar brinquedo no banco de dados', details: error.message, code: error.code },
+        { 
+          error: 'Erro ao criar brinquedo no banco de dados', 
+          details: error.message, 
+          code: error.code,
+          hint: error.hint
+        },
         { status: 500 }
       );
     }
 
     console.log('Brinquedo criado com sucesso:', data);
-    return NextResponse.json(data[0]);
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Erro ao criar brinquedo:', error);
     return NextResponse.json(
