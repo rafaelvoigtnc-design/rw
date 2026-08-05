@@ -37,6 +37,7 @@ export async function POST(request: Request) {
 
     // Validar campos obrigatórios
     if (!nome || !descricao) {
+      console.error('Campos obrigatórios faltando');
       return NextResponse.json(
         { error: 'Nome e descrição são obrigatórios' },
         { status: 400 }
@@ -47,25 +48,33 @@ export async function POST(request: Request) {
     const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
 
     console.log('Fotos para salvar:', fotosParaSalvar);
+    console.log('Tamanho do payload:', JSON.stringify(body).length, 'bytes');
+
+    const brinquedoData = {
+      id: crypto.randomUUID(),
+      nome,
+      descricao,
+      fotos: fotosParaSalvar,
+      tema_layout,
+      dimensoes,
+      faixa_etaria,
+      status: status || 'DISPONIVEL',
+    };
+
+    console.log('Dados para inserir no Supabase:', brinquedoData);
 
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
-      .insert({
-        id: crypto.randomUUID(),
-        nome,
-        descricao,
-        fotos: fotosParaSalvar,
-        tema_layout,
-        dimensoes,
-        faixa_etaria,
-        status: status || 'DISPONIVEL',
-      })
+      .insert(brinquedoData)
       .select()
       .single();
 
     if (error) {
       console.error('Erro Supabase ao criar brinquedo:', error);
-      throw error;
+      return NextResponse.json(
+        { error: 'Erro ao criar brinquedo no banco de dados', details: error.message },
+        { status: 500 }
+      );
     }
 
     console.log('Brinquedo criado com sucesso:', data);
