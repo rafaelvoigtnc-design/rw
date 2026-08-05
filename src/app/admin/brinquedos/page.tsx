@@ -12,6 +12,7 @@ interface Brinquedo {
   dimensoes: string;
   faixa_etaria: string;
   status: string;
+  mostrar_home: boolean;
 }
 
 const TEMAS = [
@@ -29,6 +30,7 @@ export default function AdminBrinquedos() {
   const [loading, setLoading] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [editando, setEditando] = useState<Brinquedo | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     nome: '',
     descricao: '',
@@ -37,6 +39,7 @@ export default function AdminBrinquedos() {
     dimensoes: '',
     faixa_etaria: '',
     status: 'DISPONIVEL',
+    mostrar_home: false,
   });
 
   useEffect(() => {
@@ -51,7 +54,8 @@ export default function AdminBrinquedos() {
       // Converter fotos de JSON string para array
       const brinquedosComFotos = data.map((b: any) => ({
         ...b,
-        fotos: typeof b.fotos === 'string' ? JSON.parse(b.fotos) : (b.fotos || [])
+        fotos: typeof b.fotos === 'string' ? JSON.parse(b.fotos) : (b.fotos || []),
+        mostrar_home: b.mostrar_home || false,
       }));
 
       setBrinquedos(brinquedosComFotos);
@@ -62,25 +66,53 @@ export default function AdminBrinquedos() {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    const novasFotos = [...formData.fotos];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', file);
+
+        const response = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: formDataUpload,
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Erro ao fazer upload');
+        }
+
+        const data = await response.json();
+        novasFotos.push(data.url);
+      }
+
+      setFormData({ ...formData, fotos: novasFotos });
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      alert('Erro ao fazer upload das imagens');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Limpar fotos em base64 (remover fotos que começam com data:)
-    const fotosLimpas = formData.fotos.filter(foto => !foto.startsWith('data:'));
-    
+
     const dadosParaEnviar = {
       ...formData,
-      fotos: fotosLimpas
+      fotos: formData.fotos,
     };
-    
-    console.log('Enviando dados do brinquedo:', dadosParaEnviar);
-    console.log('Tamanho do payload:', JSON.stringify(dadosParaEnviar).length, 'bytes');
 
     try {
       const url = editando ? `/api/admin/brinquedos/${editando.id}` : '/api/admin/brinquedos';
       const method = editando ? 'PUT' : 'POST';
-
-      console.log('Fazendo requisição para:', url, 'Método:', method);
 
       const response = await fetch(url, {
         method,
@@ -88,10 +120,7 @@ export default function AdminBrinquedos() {
         body: JSON.stringify(dadosParaEnviar),
       });
 
-      console.log('Response status:', response.status);
-
       if (response.ok) {
-        console.log('Brinquedo salvo com sucesso');
         setMostrarFormulario(false);
         setEditando(null);
         setFormData({
@@ -102,16 +131,16 @@ export default function AdminBrinquedos() {
           dimensoes: '',
           faixa_etaria: '',
           status: 'DISPONIVEL',
+          mostrar_home: false,
         });
         fetchData();
       } else {
         const errorData = await response.json();
-        console.error('Erro ao salvar brinquedo:', errorData);
         alert(`Erro ao salvar brinquedo: ${errorData.error || errorData.details || 'Erro desconhecido'}`);
       }
     } catch (error) {
       console.error('Erro ao salvar brinquedo:', error);
-      alert('Erro ao salvar brinquedo. Verifique o console para mais detalhes.');
+      alert('Erro ao salvar brinquedo');
     }
   };
 
@@ -125,13 +154,14 @@ export default function AdminBrinquedos() {
       dimensoes: brinquedo.dimensoes,
       faixa_etaria: brinquedo.faixa_etaria,
       status: brinquedo.status,
+      mostrar_home: brinquedo.mostrar_home || false,
     });
     setMostrarFormulario(true);
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja deletar este brinquedo?')) return;
-    
+
     try {
       const response = await fetch(`/api/admin/brinquedos/${id}`, {
         method: 'DELETE',
@@ -144,21 +174,12 @@ export default function AdminBrinquedos() {
     }
   };
 
-  const adicionarFoto = () => {
-    const url = prompt('Digite a URL da foto (ex: https://exemplo.com/imagem.jpg):');
-    if (url && url.trim()) {
-      setFormData({ ...formData, fotos: [...formData.fotos, url.trim()] });
-    }
-  };
-
   const removerFoto = (index: number) => {
     setFormData({
       ...formData,
       fotos: formData.fotos.filter((_, i) => i !== index),
     });
   };
-
-  // Upload removido - usar apenas URLs externas
 
   if (loading) {
     return <div className="p-8">Carregando...</div>;
@@ -194,6 +215,7 @@ export default function AdminBrinquedos() {
                 dimensoes: '',
                 faixa_etaria: '',
                 status: 'DISPONIVEL',
+                mostrar_home: false,
               });
               setMostrarFormulario(true);
             }}
@@ -233,50 +255,62 @@ export default function AdminBrinquedos() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Fotos</label>
-                <div className="space-y-2">
-                  {formData.fotos.map((foto, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      {foto && (
-                        <img 
-                          src={foto} 
-                          alt={`Foto ${index + 1}`} 
-                          className="w-16 h-16 object-cover rounded-md border border-gray-300"
-                        />
-                      )}
-                      <input
-                        type="text"
-                        value={foto}
-                        onChange={(e) => {
-                          const novasFotos = [...formData.fotos];
-                          novasFotos[index] = e.target.value;
-                          setFormData({ ...formData, fotos: novasFotos });
-                        }}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                        placeholder="URL da foto"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removerFoto(index)}
-                        className="text-red-600 hover:text-red-800 px-2 py-1"
-                      >
-                        Remover
-                      </button>
-                    </div>
-                  ))}
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={adicionarFoto}
-                      className="text-emerald-600 hover:text-emerald-800"
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    <input
+                      type="file"
+                      id="foto-upload"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploading}
+                    />
+                    <label
+                      htmlFor="foto-upload"
+                      className="flex flex-col items-center justify-center cursor-pointer"
                     >
-                      + Adicionar URL
-                    </button>
+                      {uploading ? (
+                        <p className="text-gray-500">Fazendo upload...</p>
+                      ) : (
+                        <>
+                          <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="mt-2 text-sm text-gray-600">Clique para selecionar imagens</p>
+                          <p className="text-xs text-gray-500">PNG, JPG até 5MB</p>
+                        </>
+                      )}
+                    </label>
                   </div>
+
+                  {formData.fotos.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {formData.fotos.map((foto, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={foto}
+                            alt={`Foto ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-md border border-gray-300"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removerFoto(index)}
+                            className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tema Visual</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tema do Layout</label>
                 <select
                   value={formData.tema_layout}
                   onChange={(e) => setFormData({ ...formData, tema_layout: e.target.value })}
@@ -290,28 +324,26 @@ export default function AdminBrinquedos() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Dimensões</label>
-                  <input
-                    type="text"
-                    value={formData.dimensoes}
-                    onChange={(e) => setFormData({ ...formData, dimensoes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Dimensões</label>
+                <input
+                  type="text"
+                  value={formData.dimensoes}
+                  onChange={(e) => setFormData({ ...formData, dimensoes: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                  placeholder="Ex: 3m x 3m x 2m"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Faixa Etária</label>
-                  <input
-                    type="text"
-                    value={formData.faixa_etaria}
-                    onChange={(e) => setFormData({ ...formData, faixa_etaria: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Faixa Etária</label>
+                <input
+                  type="text"
+                  value={formData.faixa_etaria}
+                  onChange={(e) => setFormData({ ...formData, faixa_etaria: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                  placeholder="Ex: 3-12 anos"
+                />
               </div>
 
               <div>
@@ -322,9 +354,22 @@ export default function AdminBrinquedos() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                 >
                   <option value="DISPONIVEL">Disponível</option>
-                  <option value="INDISPONIVEL">Indisponível</option>
-                  <option value="MANUTENCAO">Em Manutenção</option>
+                  <option value="MANUTENCAO">Manutenção</option>
+                  <option value="APOSENTADO">Aposentado</option>
                 </select>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="mostrar_home"
+                  checked={formData.mostrar_home}
+                  onChange={(e) => setFormData({ ...formData, mostrar_home: e.target.checked })}
+                  className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                />
+                <label htmlFor="mostrar_home" className="ml-2 block text-sm text-gray-900">
+                  Mostrar na Home
+                </label>
               </div>
 
               <div className="flex gap-2">
@@ -337,7 +382,7 @@ export default function AdminBrinquedos() {
                 <button
                   type="button"
                   onClick={() => setMostrarFormulario(false)}
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                  className="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400"
                 >
                   Cancelar
                 </button>
@@ -346,7 +391,7 @@ export default function AdminBrinquedos() {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white shadow rounded-lg overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -354,10 +399,10 @@ export default function AdminBrinquedos() {
                   Nome
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tema
+                  Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  Home
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
@@ -368,26 +413,41 @@ export default function AdminBrinquedos() {
               {brinquedos.map((brinquedo) => (
                 <tr key={brinquedo.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{brinquedo.nome}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
-                      {TEMAS.find((t) => t.value === brinquedo.tema_layout)?.label || brinquedo.tema_layout}
+                    <div className="flex items-center">
+                      {brinquedo.fotos && brinquedo.fotos.length > 0 && (
+                        <img
+                          src={brinquedo.fotos[0]}
+                          alt={brinquedo.nome}
+                          className="h-10 w-10 rounded-full object-cover mr-3"
+                        />
+                      )}
+                      <div className="text-sm font-medium text-gray-900">{brinquedo.nome}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                       brinquedo.status === 'DISPONIVEL' ? 'bg-green-100 text-green-800' :
-                      brinquedo.status === 'INDISPONIVEL' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
+                      brinquedo.status === 'MANUTENCAO' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
                     }`}>
                       {brinquedo.status}
                     </span>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {brinquedo.mostrar_home ? (
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                        Sim
+                      </span>
+                    ) : (
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                        Não
+                      </span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
                       onClick={() => handleEdit(brinquedo)}
-                      className="text-emerald-600 hover:text-emerald-900 mr-4"
+                      className="text-indigo-600 hover:text-indigo-900 mr-4"
                     >
                       Editar
                     </button>

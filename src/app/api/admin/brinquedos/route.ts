@@ -23,7 +23,6 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log('Dados recebidos para criar brinquedo:', JSON.stringify(body, null, 2));
 
     const {
       nome,
@@ -32,12 +31,14 @@ export async function POST(request: Request) {
       tema_layout,
       dimensoes,
       faixa_etaria,
-      status
+      status,
+      preco_periodo,
+      categoria_id,
+      mostrar_home
     } = body;
 
     // Validar campos obrigatórios
     if (!nome || !descricao) {
-      console.error('Campos obrigatórios faltando');
       return NextResponse.json(
         { error: 'Nome e descrição são obrigatórios' },
         { status: 400 }
@@ -47,20 +48,30 @@ export async function POST(request: Request) {
     // Converter fotos para JSON string se for array
     const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
 
-    console.log('Fotos para salvar:', fotosParaSalvar);
+    // Tentar verificar se o campo mostrar_home existe
+    const { data: testBrinquedo, error: testError } = await supabaseAdmin
+      .from('brinquedo')
+      .select('id')
+      .limit(1)
+      .single();
 
-    const brinquedoData = {
+    const brinquedoData: any = {
       id: crypto.randomUUID(),
       nome: nome.trim(),
       descricao: descricao.trim(),
       fotos: fotosParaSalvar,
-      tema_layout: tema_layout || 'classico_divertido',
+      tema_layout: tema_layout || 'CLASSICO_DIVERTIDO',
       dimensoes: dimensoes || '',
       faixa_etaria: faixa_etaria || '',
       status: status || 'DISPONIVEL',
+      preco_periodo: preco_periodo || 0,
+      categoria_id: categoria_id || null,
     };
 
-    console.log('Dados para inserir no Supabase:', JSON.stringify(brinquedoData, null, 2));
+    // Só adicionar mostrar_home se não houver erro no teste (campo existe)
+    if (!testError || testError.code !== 'PGRST116') {
+      brinquedoData.mostrar_home = mostrar_home || false;
+    }
 
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
@@ -69,14 +80,13 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      console.error('Erro Supabase ao criar brinquedo:', JSON.stringify(error, null, 2));
+      console.error('Erro Supabase ao criar brinquedo:', error);
       return NextResponse.json(
         { error: 'Erro ao criar brinquedo no banco de dados', details: error.message },
         { status: 500 }
       );
     }
 
-    console.log('Brinquedo criado com sucesso:', data);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Erro ao criar brinquedo:', error);

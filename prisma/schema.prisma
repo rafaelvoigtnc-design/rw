@@ -48,6 +48,7 @@ model Brinquedo {
   preco_periodo  Float
   status         BrinquedoStatus     @default(DISPONIVEL)
   tema_layout    TemaLayout
+  mostrar_home   Boolean             @default(false)
   criado_em      DateTime            @default(now())
 
   categoria      Categoria           @relation(fields: [categoria_id], references: [id])

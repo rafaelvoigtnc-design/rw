@@ -17,7 +17,8 @@ export async function PUT(
       tema_layout,
       dimensoes,
       faixa_etaria,
-      status
+      status,
+      mostrar_home
     } = body;
 
     // Converter fotos para JSON string se for array
@@ -25,17 +26,31 @@ export async function PUT(
 
     console.log('Fotos para salvar:', fotosParaSalvar);
 
+    // Tentar verificar se o campo mostrar_home existe
+    const { data: testBrinquedo, error: testError } = await supabaseAdmin
+      .from('brinquedo')
+      .select('id')
+      .limit(1)
+      .single();
+
+    const updateData: any = {
+      nome,
+      descricao,
+      fotos: fotosParaSalvar,
+      tema_layout,
+      dimensoes,
+      faixa_etaria,
+      status,
+    };
+
+    // Só adicionar mostrar_home se não houver erro no teste (campo existe)
+    if (!testError || testError.code !== 'PGRST116') {
+      updateData.mostrar_home = mostrar_home;
+    }
+
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
-      .update({
-        nome,
-        descricao,
-        fotos: fotosParaSalvar,
-        tema_layout,
-        dimensoes,
-        faixa_etaria,
-        status,
-      })
+      .update(updateData)
       .eq('id', params.id)
       .select()
       .single();
@@ -62,6 +77,37 @@ export async function DELETE(
 ) {
   try {
     console.log('Deletando brinquedo ID:', params.id);
+
+    // Primeiro buscar o brinquedo para obter as fotos
+    const { data: brinquedo } = await supabaseAdmin
+      .from('brinquedo')
+      .select('fotos')
+      .eq('id', params.id)
+      .single();
+
+    if (brinquedo && brinquedo.fotos) {
+      // Deletar as imagens do storage
+      const fotosArray = typeof brinquedo.fotos === 'string'
+        ? JSON.parse(brinquedo.fotos)
+        : brinquedo.fotos;
+
+      for (const fotoUrl of fotosArray) {
+        try {
+          // Extrair o path da URL
+          const urlParts = fotoUrl.split('/imagens/');
+          if (urlParts.length > 1) {
+            const filePath = urlParts[1];
+            await supabaseAdmin
+              .storage
+              .from('imagens')
+              .remove([filePath]);
+          }
+        } catch (error) {
+          console.error('Erro ao deletar imagem:', error);
+        }
+      }
+    }
+
     const { error } = await supabaseAdmin
       .from('brinquedo')
       .delete()

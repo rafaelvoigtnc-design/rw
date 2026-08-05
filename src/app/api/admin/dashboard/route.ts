@@ -58,9 +58,10 @@ export async function GET(request: Request) {
     // Contar número de brinquedos
     const { data: brinquedos } = await supabaseAdmin
       .from('brinquedo')
-      .select('id', { count: 'exact', head: true });
+      .select('id, status');
 
     const numeroBrinquedos = brinquedos?.length || 0;
+    const brinquedosAtivos = brinquedos?.filter(b => b.status === 'DISPONIVEL').length || 0;
 
     // Dados para gráfico de evolução mensal (últimos 12 meses)
     const dadosGrafico = [];
@@ -139,6 +140,7 @@ export async function GET(request: Request) {
       totalCuidadores,
       numeroLocacoes,
       numeroBrinquedos,
+      brinquedosAtivos,
       ticketMedio,
       dadosGrafico,
       comparativo,

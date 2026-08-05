@@ -13,6 +13,7 @@ interface DashboardData {
   totalCuidadores: number;
   numeroLocacoes: number;
   numeroBrinquedos: number;
+  brinquedosAtivos: number;
   ticketMedio: number;
   dadosGrafico: Array<{
     mes: string;
@@ -237,6 +238,9 @@ export default function AdminDashboard() {
             <h3 className="text-sm font-medium text-gray-500 mb-2">Nº de Brinquedos</h3>
             <p className="text-2xl font-bold text-gray-800">
               {data.numeroBrinquedos}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {data.brinquedosAtivos} ativos
             </p>
           </div>
 
