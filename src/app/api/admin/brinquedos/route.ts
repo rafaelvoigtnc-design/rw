@@ -29,7 +29,6 @@ export async function POST(request: Request) {
     const {
       nome,
       descricao,
-      fotos,
       tema_layout,
       dimensoes,
       faixa_etaria,
@@ -44,23 +43,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Converter fotos para JSON string se for array
-    const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
-
-    // Usar exatamente os mesmos campos que funcionam na edição
+    // Versão mínima - sem fotos por enquanto
     const brinquedoData = {
       nome,
       descricao,
-      fotos: fotosParaSalvar,
-      tema_layout,
-      dimensoes,
-      faixa_etaria,
-      status,
+      fotos: '[]',
+      tema_layout: tema_layout || 'CLASSICO_DIVERTIDO',
+      dimensoes: dimensoes || '',
+      faixa_etaria: faixa_etaria || '',
+      status: status || 'DISPONIVEL',
     };
 
     console.log('Dados para inserir:', brinquedoData);
 
-    // Tentar sem .single() primeiro
     const { data, error } = await supabaseAdmin
       .from('brinquedo')
       .insert(brinquedoData)
@@ -76,7 +71,6 @@ export async function POST(request: Request) {
     }
 
     console.log('Brinquedo criado com sucesso:', data);
-    // Retornar o primeiro item do array
     return NextResponse.json(data[0]);
   } catch (error) {
     console.error('Erro ao criar brinquedo:', error);

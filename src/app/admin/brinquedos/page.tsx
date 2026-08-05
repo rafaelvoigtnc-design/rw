@@ -102,9 +102,14 @@ export default function AdminBrinquedos() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Temporariamente não enviar fotos
     const dadosParaEnviar = {
-      ...formData,
-      fotos: formData.fotos,
+      nome: formData.nome,
+      descricao: formData.descricao,
+      tema_layout: formData.tema_layout,
+      dimensoes: formData.dimensoes,
+      faixa_etaria: formData.faixa_etaria,
+      status: formData.status,
     };
 
     try {
