@@ -263,12 +263,6 @@ export default function BrinquedoPage() {
 
           {/* Informações */}
           <div className="space-y-6">
-            <div>
-              <span className="text-sm font-medium text-primary-blue-600 bg-primary-blue-50 px-3 py-1 rounded-full">
-                {brinquedo.categoria?.nome}
-              </span>
-            </div>
-
             <h1 className="text-4xl lg:text-5xl font-bold text-secondary-gray-900 leading-tight">
               {brinquedo.nome}
             </h1>
