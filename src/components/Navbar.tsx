@@ -25,17 +25,31 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const token = document.cookie.match(/client_token=([^;]+)/)?.[1];
-    setIsLoggedIn(!!token);
-    
-    if (token) {
-      fetch('/api/carrinho')
-        .then(res => res.json())
-        .then(data => {
+    // Verificar login via API
+    fetch('/api/cliente/perfil')
+      .then(res => {
+        if (res.ok) {
+          setIsLoggedIn(true);
+          return fetch('/api/carrinho');
+        }
+        setIsLoggedIn(false);
+        return null;
+      })
+      .then(res => {
+        if (res) {
+          return res.json();
+        }
+        return null;
+      })
+      .then(data => {
+        if (data) {
           setCartItems(data.length || 0);
-        })
-        .catch(() => setCartItems(0));
-    }
+        }
+      })
+      .catch(() => {
+        setIsLoggedIn(false);
+        setCartItems(0);
+      });
   }, []);
 
   const handleLoginSuccess = () => {

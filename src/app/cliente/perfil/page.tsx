@@ -16,23 +16,19 @@ export default function ClientePerfil() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const token = document.cookie.match(/client_token=([^;]+)/)?.[1];
-    if (!token) {
-      router.push('/');
-      return;
-    }
-
-    // Buscar dados do cliente
-    fetch('/api/cliente/perfil', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    })
-      .then(res => res.json())
+    // Verificar login via API
+    fetch('/api/cliente/perfil')
+      .then(res => {
+        if (!res.ok) {
+          router.push('/');
+          return null;
+        }
+        return res.json();
+      })
       .then(data => {
-        if (data.error) {
+        if (data && data.error) {
           setError(data.error);
-        } else {
+        } else if (data) {
           setFormData({
             nome: data.nome || '',
             telefone: data.telefone || '',
@@ -41,7 +37,9 @@ export default function ClientePerfil() {
           });
         }
       })
-      .catch(() => setError('Erro ao carregar dados'));
+      .catch(() => {
+        router.push('/');
+      });
   }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,12 +61,10 @@ export default function ClientePerfil() {
     }
 
     try {
-      const token = document.cookie.match(/client_token=([^;]+)/)?.[1];
       const response = await fetch('/api/cliente/perfil', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           ...formData,

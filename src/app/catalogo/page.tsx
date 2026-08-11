@@ -31,11 +31,17 @@ export default function Catalogo() {
   useEffect(() => {
     fetchBrinquedos();
 
-    const token = document.cookie.match(/client_token=([^;]+)/)?.[1];
-    if (token) {
-      setIsLoggedIn(true);
-      fetchFavoritos();
-    }
+    // Verificar login via API
+    fetch('/api/cliente/perfil')
+      .then(res => {
+        if (res.ok) {
+          setIsLoggedIn(true);
+          fetchFavoritos();
+        }
+      })
+      .catch(() => {
+        setIsLoggedIn(false);
+      });
   }, [filtroFaixaEtaria, busca, ordenacao]);
 
   const fetchBrinquedos = () => {
