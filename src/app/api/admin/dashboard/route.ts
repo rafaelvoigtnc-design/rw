@@ -56,9 +56,12 @@ export async function GET(request: Request) {
     const ticketMedio = numeroLocacoes > 0 ? entradaLocacao / numeroLocacoes : 0;
 
     // Contar número de brinquedos
-    const { data: brinquedos } = await supabaseAdmin
+    const { data: brinquedos, error: brinquedosError } = await supabaseAdmin
       .from('brinquedo')
       .select('id, status');
+
+    console.log('Brinquedos:', brinquedos);
+    console.log('Erro brinquedos:', brinquedosError);
 
     const numeroBrinquedos = brinquedos?.length || 0;
     const brinquedosAtivos = brinquedos?.filter(b => b.status === 'DISPONIVEL').length || 0;

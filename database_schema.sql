@@ -12,10 +12,10 @@ CREATE TABLE usuario_admin (
 -- Tabela cliente
 CREATE TABLE cliente (
     id TEXT PRIMARY KEY,
+    auth_id TEXT UNIQUE NOT NULL,
     nome TEXT NOT NULL,
     telefone TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
-    senha_hash TEXT NOT NULL,
     endereco TEXT NOT NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

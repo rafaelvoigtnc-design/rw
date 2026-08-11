@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getClientByEmail } from '@/lib/supabase';
-import { verifyPassword, createClientToken } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,38 +12,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar cliente
-    const cliente = await getClientByEmail(email);
+    // Usar Supabase Auth para login
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password: senha,
+    });
 
-    if (!cliente) {
+    if (error) {
       return NextResponse.json(
         { error: 'Credenciais inválidas' },
         { status: 401 }
       );
     }
 
-    // Verificar senha
-    const isValid = await verifyPassword(senha, cliente.senha_hash);
-    if (!isValid) {
+    // Buscar dados do cliente na tabela customizada
+    const { data: cliente, error: clienteError } = await supabase
+      .from('cliente')
+      .select('*')
+      .eq('auth_id', data.user.id)
+      .single();
+
+    if (clienteError || !cliente) {
       return NextResponse.json(
-        { error: 'Credenciais inválidas' },
-        { status: 401 }
+        { error: 'Cliente não encontrado' },
+        { status: 404 }
       );
     }
 
-    // Criar token
-    const token = await createClientToken(cliente.id);
-
-    console.log('Token criado para cliente:', cliente.id);
-    console.log('Ambiente:', process.env.NODE_ENV);
-
-    // Retornar token em cookie
+    // Retornar sessão em cookie
     const response = NextResponse.json(
       { success: true, cliente: { id: cliente.id, nome: cliente.nome, email: cliente.email } },
       { status: 200 }
     );
 
-    response.cookies.set('cliente_token', token, {
+    // Set session cookie
+    response.cookies.set('sb-access-token', data.session.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -52,7 +54,14 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    console.log('Cookie definido com sucesso');
+    response.cookies.set('sb-refresh-token', data.session.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 dias
+      path: '/',
+    });
+
     return response;
   } catch (error) {
     console.error('Erro no login cliente:', error);

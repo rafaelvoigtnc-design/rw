@@ -32,6 +32,17 @@ export async function getClientByEmail(email: string) {
   return data;
 }
 
+export async function getClientByAuthId(authId: string) {
+  const { data, error } = await supabase
+    .from('cliente')
+    .select('*')
+    .eq('auth_id', authId)
+    .single();
+  
+  if (error) return null;
+  return data;
+}
+
 export async function createClientRecord(clientData: any) {
   const { data, error } = await supabase
     .from('cliente')

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getClientByEmail, createClientRecord } from '@/lib/supabase';
-import { hashPassword, createClientToken } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,44 +13,82 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar se email já existe
-    const existingClient = await getClientByEmail(email);
-    if (existingClient) {
+    // Limpar telefone
+    const telefoneLimpo = telefone.replace(/\D/g, '');
+    if (telefoneLimpo.length !== 11) {
       return NextResponse.json(
-        { error: 'Email já cadastrado' },
+        { error: 'O telefone deve ter exatamente 11 dígitos' },
         { status: 400 }
       );
     }
 
-    // Hash da senha
-    const senha_hash = await hashPassword(senha);
-
-    // Criar cliente
-    const cliente = await createClientRecord({
-      id: crypto.randomUUID(),
-      nome,
-      telefone,
+    // Criar usuário no Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
-      senha_hash,
-      endereco,
-      criado_em: new Date().toISOString()
+      password: senha,
     });
 
-    // Criar token
-    const token = await createClientToken(cliente.id);
+    if (authError) {
+      return NextResponse.json(
+        { error: authError.message },
+        { status: 400 }
+      );
+    }
 
-    // Retornar token em cookie
+    if (!authData.user) {
+      return NextResponse.json(
+        { error: 'Erro ao criar usuário' },
+        { status: 500 }
+      );
+    }
+
+    // Criar registro na tabela cliente
+    const { data: cliente, error: clienteError } = await supabase
+      .from('cliente')
+      .insert({
+        id: crypto.randomUUID(),
+        auth_id: authData.user.id,
+        nome,
+        telefone: telefoneLimpo,
+        email,
+        endereco,
+        criado_em: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (clienteError) {
+      // Rollback: deletar usuário do auth se falhar
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      return NextResponse.json(
+        { error: 'Erro ao criar cliente' },
+        { status: 500 }
+      );
+    }
+
+    // Retornar sessão em cookie
     const response = NextResponse.json(
       { success: true, cliente: { id: cliente.id, nome: cliente.nome, email: cliente.email } },
       { status: 201 }
     );
 
-    response.cookies.set('cliente_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7 // 7 dias
-    });
+    if (authData.session) {
+      response.cookies.set('sb-access-token', authData.session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+      });
+
+      response.cookies.set('sb-refresh-token', authData.session.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+      });
+    }
 
     return response;
   } catch (error) {
