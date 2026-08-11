@@ -23,7 +23,6 @@ interface Brinquedo {
 interface Avaliacao {
   id: string;
   cliente_id: string;
-  brinquedo_id: string;
   texto: string;
   nota: number;
   criado_em: string;
@@ -135,7 +134,6 @@ export default function BrinquedoPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          brinquedoId: id,
           nota: novaAvaliacao.nota,
           texto: novaAvaliacao.texto,
         }),
