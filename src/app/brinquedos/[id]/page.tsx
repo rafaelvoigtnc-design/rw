@@ -6,7 +6,6 @@ import { Heart, Share2, Star, ChevronLeft, ChevronRight, Phone } from 'lucide-re
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AuthModal from '@/components/AuthModal';
-import { temas } from '@/components/BrinquedoTheme';
 
 interface Brinquedo {
   id: string;
@@ -93,8 +92,6 @@ export default function BrinquedoPage() {
     checkFavorito();
   };
 
-
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
@@ -121,27 +118,24 @@ export default function BrinquedoPage() {
     );
   }
 
-  const theme = temas[brinquedo.tema_layout] || temas.classico_divertido;
-
   return (
-    <div className={`min-h-screen ${theme.background} ${theme.textColor}`} style={{ background: theme.backgroundPattern }}>
-      <div className="pt-16">
-        <Navbar />
-        
-        <div className="max-w-[1440px] mx-auto px-6 py-12">
-          {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm mb-8" style={{ color: theme.textColor === 'text-white' ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>
-            <a href="/" className="hover:opacity-80 transition-opacity">Home</a>
-            <span>/</span>
-            <a href="/catalogo" className="hover:opacity-80 transition-opacity">Catálogo</a>
-            <span>/</span>
-            <span className="font-medium">{brinquedo.nome}</span>
-          </nav>
+    <div className="min-h-screen bg-gray-50 pt-16">
+      <Navbar />
+      
+      <div className="max-w-[1440px] mx-auto px-6 py-12">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-sm text-secondary-gray-600 mb-8">
+          <a href="/" className="hover:text-primary-blue-600 transition-colors">Home</a>
+          <span>/</span>
+          <a href="/catalogo" className="hover:text-primary-blue-600 transition-colors">Catálogo</a>
+          <span>/</span>
+          <span className="text-secondary-gray-900 font-medium">{brinquedo.nome}</span>
+        </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
           {/* Galeria de Fotos */}
           <div className="space-y-4">
-            <div className={`relative aspect-square bg-white ${theme.cardStyle} shadow-lg overflow-hidden ${theme.textColor === 'text-white' ? 'border border-white/20' : ''}`}>
+            <div className="relative aspect-square bg-white rounded-2xl shadow-soft overflow-hidden">
               {brinquedo.fotos && brinquedo.fotos.length > 0 ? (
                 <img
                   key={fotoAtual}
@@ -212,7 +206,7 @@ export default function BrinquedoPage() {
 
           {/* Informações */}
           <div className="space-y-6">
-            <h1 className={`text-4xl lg:text-5xl font-bold leading-tight ${theme.titleFont}`} style={{ color: theme.textColor === 'text-white' ? 'white' : '#1f2937' }}>
+            <h1 className="text-4xl lg:text-5xl font-bold text-secondary-gray-900 leading-tight">
               {brinquedo.nome}
             </h1>
 
@@ -227,7 +221,7 @@ export default function BrinquedoPage() {
               </div>
             </div>
 
-            <p className="text-lg leading-relaxed" style={{ color: theme.textColor === 'text-white' ? 'rgba(255,255,255,0.9)' : '#374151' }}>
+            <p className="text-lg text-secondary-gray-700 leading-relaxed">
               {brinquedo.descricao}
             </p>
 
@@ -236,7 +230,7 @@ export default function BrinquedoPage() {
               href={`https://wa.me/5555997302463?text=${encodeURIComponent(`Olá! Gostaria de solicitar um orçamento para o brinquedo: ${brinquedo.nome}. Poderia me passar mais informações?`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className={`inline-flex items-center justify-center gap-3 w-full ${theme.primaryColor} text-white py-5 ${theme.borderRadius} font-bold text-xl hover:opacity-90 transition-all shadow-lg hover:scale-102 transition-transform`}
+              className="inline-flex items-center justify-center gap-3 w-full bg-primary-green-500 text-white py-5 rounded-2xl font-bold text-xl hover:bg-primary-green-600 transition-colors shadow-soft hover:scale-102 transition-transform"
             >
               <Phone className="w-8 h-8" />
               Solicitar Orçamento pelo WhatsApp
