@@ -6,7 +6,7 @@ import { Heart, Share2, Star, ChevronLeft, ChevronRight, Phone } from 'lucide-re
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AuthModal from '@/components/AuthModal';
-import BrinquedoThemeProvider, { temas } from '@/components/BrinquedoTheme';
+import { temas } from '@/components/BrinquedoTheme';
 
 interface Brinquedo {
   id: string;
@@ -124,7 +124,7 @@ export default function BrinquedoPage() {
   const theme = temas[brinquedo.tema_layout] || temas.classico_divertido;
 
   return (
-    <BrinquedoThemeProvider tema={brinquedo.tema_layout}>
+    <div className={`min-h-screen ${theme.background} ${theme.textColor}`} style={{ background: theme.backgroundPattern }}>
       <div className="pt-16">
         <Navbar />
         
@@ -252,6 +252,6 @@ export default function BrinquedoPage() {
         onClose={() => setIsAuthModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
       />
-    </BrinquedoThemeProvider>
+    </div>
   );
 }
