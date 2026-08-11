@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
           telefone: telefoneLimpo,
           email,
           endereco,
+          senha_hash: null, // Campo não usado mais, mas deve ser null se existir
           criado_em: new Date().toISOString(),
         })
         .select()

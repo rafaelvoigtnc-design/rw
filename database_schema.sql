@@ -20,6 +20,11 @@ CREATE TABLE cliente (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- MIGRAÇÃO: Para tabelas existentes, execute:
+-- ALTER TABLE cliente ADD COLUMN auth_id TEXT UNIQUE;
+-- ALTER TABLE cliente ALTER COLUMN senha_hash DROP NOT NULL;
+-- ALTER TABLE cliente DROP COLUMN senha_hash;
+
 -- Tabela categoria
 CREATE TABLE categoria (
     id TEXT PRIMARY KEY,
