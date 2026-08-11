@@ -112,10 +112,14 @@ export default function AdminBrinquedos() {
       status: formData.status,
     };
 
+    console.log('Enviando dados:', dadosParaEnviar);
+    console.log('Tema sendo enviado:', dadosParaEnviar.tema_layout);
+
     try {
       let response;
       
       if (editando) {
+        console.log('Atualizando brinquedo ID:', editando.id);
         // Atualizar brinquedo existente
         response = await fetch(`/api/admin/brinquedos/${editando.id}`, {
           method: 'PUT',
@@ -123,6 +127,7 @@ export default function AdminBrinquedos() {
           body: JSON.stringify(dadosParaEnviar),
         });
       } else {
+        console.log('Criando novo brinquedo');
         // Criar novo brinquedo
         response = await fetch('/api/admin/brinquedos', {
           method: 'POST',
@@ -132,6 +137,7 @@ export default function AdminBrinquedos() {
       }
 
       const result = await response.json();
+      console.log('Resposta da API:', result);
 
       if (response.ok) {
         alert(editando ? 'Brinquedo atualizado com sucesso!' : 'Brinquedo criado com sucesso!');
@@ -304,7 +310,11 @@ export default function AdminBrinquedos() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tema do Layout</label>
                 <select
                   value={formData.tema_layout}
-                  onChange={(e) => setFormData({ ...formData, tema_layout: e.target.value })}
+                  onChange={(e) => {
+                    console.log('Tema selecionado:', e.target.value);
+                    console.log('Estado anterior:', formData.tema_layout);
+                    setFormData({ ...formData, tema_layout: e.target.value });
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                 >
                   {TEMAS.map((tema) => (
@@ -313,6 +323,7 @@ export default function AdminBrinquedos() {
                     </option>
                   ))}
                 </select>
+                <p className="text-xs text-gray-500 mt-1">Tema atual: {formData.tema_layout}</p>
               </div>
 
               <div>

@@ -26,7 +26,7 @@ export default function Catalogo() {
   const [showFilters, setShowFilters] = useState(false);
   const [ordenacao, setOrdenacao] = useState('nome');
 
-  const faixasEtarias = ['0-2 anos', '3-5 anos', '6-8 anos', '9-12 anos', 'Todas idades'];
+  const faixasEtarias = ['0-2 anos', '3-5 anos', '6-8 anos', '9-12 anos'];
 
   useEffect(() => {
     fetchBrinquedos();
