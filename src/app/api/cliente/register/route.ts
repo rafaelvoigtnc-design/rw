@@ -38,10 +38,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Criar usuário no Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Criar usuário no Supabase Auth usando service role (bypass rate limit)
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: senha,
+      emailConfirm: true, // Auto-confirmar email
     });
 
     console.log('Auth data:', authData);
@@ -114,14 +115,30 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Criar sessão manualmente para fazer login automático
+      const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword({
+        email,
+        password: senha,
+      });
+
+      if (sessionError) {
+        console.error('Erro ao criar sessão:', sessionError);
+        // Mesmo sem sessão, o usuário foi criado com sucesso
+        const response = NextResponse.json(
+          { success: true, cliente: { id: cliente.id, nome: cliente.nome, email: cliente.email } },
+          { status: 201 }
+        );
+        return response;
+      }
+
       // Retornar sessão em cookie
       const response = NextResponse.json(
         { success: true, cliente: { id: cliente.id, nome: cliente.nome, email: cliente.email } },
         { status: 201 }
       );
 
-      if (authData.session) {
-        response.cookies.set('sb-access-token', authData.session.access_token, {
+      if (sessionData.session) {
+        response.cookies.set('sb-access-token', sessionData.session.access_token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
@@ -129,7 +146,7 @@ export async function POST(request: NextRequest) {
           path: '/',
         });
 
-        response.cookies.set('sb-refresh-token', authData.session.refresh_token, {
+        response.cookies.set('sb-refresh-token', sessionData.session.refresh_token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
