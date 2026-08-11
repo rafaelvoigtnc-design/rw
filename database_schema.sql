@@ -15,14 +15,13 @@ CREATE TABLE cliente (
     nome TEXT NOT NULL,
     telefone TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
-    senha_hash TEXT NOT NULL,
+    senha_hash TEXT,
     endereco TEXT NOT NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- MIGRAÇÃO: Para tabelas existentes com auth_id, execute:
--- ALTER TABLE cliente DROP COLUMN IF EXISTS auth_id;
--- ALTER TABLE cliente ALTER COLUMN senha_hash SET NOT NULL;
+-- MIGRAÇÃO: Para tabelas existentes, execute:
+-- ALTER TABLE cliente ALTER COLUMN senha_hash DROP NOT NULL;
 
 -- Tabela categoria
 CREATE TABLE categoria (

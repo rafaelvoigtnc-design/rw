@@ -26,39 +26,50 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    // Verificar login via API
-    fetch('/api/cliente/perfil')
-      .then(res => {
-        if (res.ok) {
-          return res.json();
+    // Verificar login via API (primeiro tenta Google Auth, depois JWT)
+    const checkLogin = async () => {
+      try {
+        // Tenta primeiro verificar via Google Auth
+        const authResponse = await fetch('/api/auth/user');
+        const authData = await authResponse.json();
+        
+        if (authData.user) {
+          // Login com Google - buscar dados na tabela cliente pelo email
+          const clienteResponse = await fetch('/api/cliente/perfil');
+          if (clienteResponse.ok) {
+            const clienteData = await clienteResponse.json();
+            setIsLoggedIn(true);
+            setUserName(clienteData.nome || '');
+            const carrinhoResponse = await fetch('/api/carrinho');
+            const carrinhoData = await carrinhoResponse.json();
+            setCartItems(carrinhoData.length || 0);
+            return;
+          }
         }
-        setIsLoggedIn(false);
-        return null;
-      })
-      .then(data => {
-        if (data) {
+
+        // Se não tiver Google Auth, tenta via JWT
+        const clienteResponse = await fetch('/api/cliente/perfil');
+        if (clienteResponse.ok) {
+          const clienteData = await clienteResponse.json();
           setIsLoggedIn(true);
-          setUserName(data.nome || '');
-          return fetch('/api/carrinho');
+          setUserName(clientteData.nome || '');
+          const carrinhoResponse = await fetch('/api/carrinho');
+          const carrinhoData = await carrinhoResponse.json();
+          setCartItems(carrinhoData.length || 0);
+        } else {
+          setIsLoggedIn(false);
+          setCartItems(0);
+          setUserName('');
         }
-        return null;
-      })
-      .then(res => {
-        if (res) {
-          return res.json();
-        }
-        return null;
-      })
-      .then(data => {
-        if (data) {
-          setCartItems(data.length || 0);
-        }
-      })
-      .catch(() => {
+      } catch (error) {
+        console.error('Erro ao verificar login:', error);
         setIsLoggedIn(false);
         setCartItems(0);
         setUserName('');
-      });
+      }
+    };
+
+    checkLogin();
   }, []);
 
   const handleLoginSuccess = () => {
