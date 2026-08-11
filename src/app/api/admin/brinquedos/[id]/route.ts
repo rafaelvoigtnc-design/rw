@@ -42,6 +42,7 @@ export async function PUT(
       nome,
       descricao,
       fotos: fotosParaSalvar,
+      tema_layout: 'classico_divertido',
       dimensoes,
       faixa_etaria,
       status,
