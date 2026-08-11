@@ -102,7 +102,6 @@ export default function Catalogo() {
   };
 
   const clearFilters = () => {
-    setFiltroCategoria('');
     setFiltroFaixaEtaria('');
     setBusca('');
   };

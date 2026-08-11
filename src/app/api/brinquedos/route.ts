@@ -33,7 +33,13 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json(data);
+    // Converter fotos de JSON string para array
+    const brinquedosFormatados = data.map((b: any) => ({
+      ...b,
+      fotos: typeof b.fotos === 'string' ? JSON.parse(b.fotos) : (b.fotos || []),
+    }));
+
+    return NextResponse.json(brinquedosFormatados);
   } catch (error) {
     console.error('Erro ao buscar brinquedos:', error);
     return NextResponse.json(

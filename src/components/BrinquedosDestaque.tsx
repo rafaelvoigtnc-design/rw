@@ -104,12 +104,6 @@ export default function BrinquedosDestaque() {
 
               {/* Conteúdo */}
               <div className="p-3 md:p-5">
-                <div className="mb-1.5 md:mb-2">
-                  <span className="text-[10px] md:text-xs font-medium text-primary-blue-600 bg-primary-blue-50 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full">
-                    {brinquedo.categoria?.nome}
-                  </span>
-                </div>
-                
                 <h3 className="text-sm md:text-lg font-bold text-secondary-gray-900 mb-1 md:mb-2 line-clamp-2 group-hover:text-primary-blue-600 transition-colors">
                   {brinquedo.nome}
                 </h3>
