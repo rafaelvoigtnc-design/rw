@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { verifyToken } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
@@ -35,38 +36,35 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { texto, nota, brinquedoId } = await request.json();
+    const { texto, nota } = await request.json();
 
-    console.log('Dados recebidos para avaliação:', { texto, nota, brinquedoId });
+    console.log('Dados recebidos para avaliação:', { texto, nota });
 
     // Verificar se há token de cliente
     const cookieHeader = request.headers.get('cookie');
     const token = cookieHeader?.match(/client_token=([^;]+)/)?.[1];
 
     if (!token) {
+      console.log('Token não encontrado');
       return NextResponse.json(
         { error: 'Você precisa estar logado para deixar um depoimento' },
         { status: 401 }
       );
     }
 
-    // Verificar o token e obter o cliente_id
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/api/cliente/perfil`, {
-      headers: {
-        cookie: cookieHeader,
-      },
-    });
+    // Verificar o token diretamente
+    const payload = await verifyToken(token);
+    console.log('Payload do token:', payload);
 
-    if (!response.ok) {
+    if (!payload || payload.type !== 'client') {
+      console.log('Token inválido ou não é de cliente');
       return NextResponse.json(
-        { error: 'Erro ao verificar autenticação' },
+        { error: 'Token inválido' },
         { status: 401 }
       );
     }
 
-    const clienteData = await response.json();
-    const clienteId = clienteData.id;
-
+    const clienteId = payload.id;
     console.log('Cliente ID:', clienteId);
 
     // Criar avaliação
@@ -76,7 +74,6 @@ export async function POST(request: Request) {
       texto: String(texto),
       nota: Number(nota),
       aprovado_para_exibir: false,
-      exibir_no_home: false,
       criado_em: new Date().toISOString(),
     };
 

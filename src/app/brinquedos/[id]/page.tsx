@@ -58,11 +58,17 @@ export default function BrinquedoPage() {
         setLoading(false);
       });
 
-    const token = document.cookie.match(/client_token=([^;]+)/)?.[1];
-    if (token) {
-      setIsLoggedIn(true);
-      checkFavorito();
-    }
+    // Verificar login via API
+    fetch('/api/cliente/perfil')
+      .then(res => {
+        if (res.ok) {
+          setIsLoggedIn(true);
+          checkFavorito();
+        }
+      })
+      .catch(error => {
+        console.error('Erro ao verificar login:', error);
+      });
 
     // Buscar avaliações
     fetch(`/api/avaliacoes?brinquedo_id=${id}`)
