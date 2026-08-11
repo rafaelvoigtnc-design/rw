@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -104,10 +105,18 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   };
 
   const handleGoogleLogin = async () => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const redirectUrl = `${window.location.origin}/api/auth/google`;
-    const googleAuthUrl = `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}`;
-    window.location.href = googleAuthUrl;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/api/auth/google`,
+        skipBrowserRedirect: false,
+      },
+    });
+
+    if (error) {
+      console.error('Erro ao iniciar login com Google:', error);
+      alert('Erro ao iniciar login com Google');
+    }
   };
 
   if (!isOpen) return null;
