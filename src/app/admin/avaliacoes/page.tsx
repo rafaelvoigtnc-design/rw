@@ -5,26 +5,20 @@ import { useRouter } from 'next/navigation';
 
 interface Avaliacao {
   id: string;
+  cliente_id: string;
+  brinquedo_id: string | null;
   texto: string;
   nota: number;
   foto: string | null;
   aprovado_para_exibir: boolean;
-  exibir_no_home: boolean;
   criado_em: string;
-  cliente: {
-    nome: string;
-    email: string;
-  };
-  brinquedo: {
-    nome: string;
-  };
 }
 
 export default function AdminAvaliacoes() {
   const router = useRouter();
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filtro, setFiltro] = useState<'todas' | 'pendentes' | 'aprovadas' | 'home'>('todas');
+  const [filtro, setFiltro] = useState<'todas' | 'pendentes' | 'aprovadas' | 'brinquedos'>('todas');
 
   useEffect(() => {
     fetchData();
@@ -58,21 +52,6 @@ export default function AdminAvaliacoes() {
       }
     } catch (error) {
       console.error('Erro ao aprovar/recusar avaliação:', error);
-    }
-  };
-
-  const handleToggleHome = async (id: string, exibirNoHome: boolean) => {
-    try {
-      const response = await fetch(`/api/admin/avaliacoes/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ exibir_no_home: exibirNoHome }),
-      });
-      if (response.ok) {
-        fetchData();
-      }
-    } catch (error) {
-      console.error('Erro ao alterar exibição no home:', error);
     }
   };
 
@@ -126,12 +105,12 @@ export default function AdminAvaliacoes() {
               Aprovadas
             </button>
             <button
-              onClick={() => setFiltro('home')}
+              onClick={() => setFiltro('brinquedos')}
               className={`px-4 py-2 rounded-md transition-colors ${
-                filtro === 'home' ? 'bg-primary-green-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                filtro === 'brinquedos' ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
-              🏠 Exibir no Home
+              🧸 Avaliações de Brinquedos
             </button>
           </div>
         </div>
@@ -147,11 +126,10 @@ export default function AdminAvaliacoes() {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      {avaliacao.cliente.nome}
+                      Cliente ID: {avaliacao.cliente_id}
                     </h3>
-                    <p className="text-sm text-gray-600">{avaliacao.cliente.email}</p>
                     <p className="text-sm text-gray-600">
-                      Brinquedo: {avaliacao.brinquedo.nome}
+                      {avaliacao.brinquedo_id ? `Brinquedo ID: ${avaliacao.brinquedo_id}` : 'Avaliação geral'}
                     </p>
                     <p className="text-sm text-gray-600">
                       {new Date(avaliacao.criado_em).toLocaleDateString('pt-BR')}
@@ -162,9 +140,9 @@ export default function AdminAvaliacoes() {
                           Aprovada
                         </span>
                       )}
-                      {avaliacao.exibir_no_home && (
-                        <span className="px-2 py-1 bg-primary-green-100 text-primary-green-700 text-xs rounded-full">
-                          🏠 No Home
+                      {avaliacao.brinquedo_id && (
+                        <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                          🧸 Brinquedo
                         </span>
                       )}
                     </div>
@@ -217,19 +195,6 @@ export default function AdminAvaliacoes() {
                       className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700"
                     >
                       Desaprovar
-                    </button>
-                  )}
-                  
-                  {avaliacao.aprovado_para_exibir && (
-                    <button
-                      onClick={() => handleToggleHome(avaliacao.id, !avaliacao.exibir_no_home)}
-                      className={`px-4 py-2 rounded-md transition-colors ${
-                        avaliacao.exibir_no_home 
-                          ? 'bg-primary-green-600 text-white hover:bg-primary-green-700' 
-                          : 'bg-gray-600 text-white hover:bg-gray-700'
-                      }`}
-                    >
-                      {avaliacao.exibir_no_home ? '🏠 Remover do Home' : '🏠 Exibir no Home'}
                     </button>
                   )}
                 </div>

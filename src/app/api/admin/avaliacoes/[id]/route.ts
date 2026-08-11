@@ -13,7 +13,6 @@ export async function PUT(
       .from('avaliacao')
       .update({
         ...(body.aprovado !== undefined && { aprovado_para_exibir: body.aprovado }),
-        ...(body.exibir_no_home !== undefined && { exibir_no_home: body.exibir_no_home }),
       })
       .eq('id', id)
       .select()

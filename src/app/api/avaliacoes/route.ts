@@ -37,6 +37,8 @@ export async function POST(request: Request) {
   try {
     const { texto, nota, brinquedoId } = await request.json();
 
+    console.log('Dados recebidos para avaliação:', { texto, nota, brinquedoId });
+
     // Verificar se há token de cliente
     const cookieHeader = request.headers.get('cookie');
     const token = cookieHeader?.match(/client_token=([^;]+)/)?.[1];
@@ -65,29 +67,39 @@ export async function POST(request: Request) {
     const clienteData = await response.json();
     const clienteId = clienteData.id;
 
+    console.log('Cliente ID:', clienteId);
+
     // Criar avaliação
+    const avaliacaoData = {
+      id: crypto.randomUUID(),
+      cliente_id: clienteId,
+      texto: String(texto),
+      nota: Number(nota),
+      aprovado_para_exibir: false,
+      exibir_no_home: false,
+      criado_em: new Date().toISOString(),
+    };
+
+    console.log('Dados para inserir:', avaliacaoData);
+
     const { data, error } = await supabase
       .from('avaliacao')
-      .insert({
-        id: crypto.randomUUID(),
-        cliente_id: clienteId,
-        brinquedo_id: brinquedoId,
-        texto,
-        nota,
-        aprovado_para_exibir: false,
-        exibir_no_home: false,
-        criado_em: new Date().toISOString(),
-      })
+      .insert(avaliacaoData)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Erro Supabase ao criar avaliação:', error);
+      console.error('Detalhes do erro:', JSON.stringify(error, null, 2));
+      throw error;
+    }
 
+    console.log('Avaliação criada com sucesso:', data);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Erro ao criar avaliação:', error);
     return NextResponse.json(
-      { error: 'Erro ao criar avaliação' },
+      { error: 'Erro ao criar avaliação', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
