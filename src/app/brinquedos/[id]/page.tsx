@@ -20,6 +20,16 @@ interface Brinquedo {
   avaliacao_media?: number;
 }
 
+interface Avaliacao {
+  id: string;
+  cliente: {
+    nome: string;
+  };
+  texto: string;
+  nota: number;
+  criado_em: string;
+}
+
 export default function BrinquedoPage() {
   const params = useParams();
   const id = params.id as string;
@@ -30,6 +40,9 @@ export default function BrinquedoPage() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isFavorito, setIsFavorito] = useState(false);
+  const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
+  const [novaAvaliacao, setNovaAvaliacao] = useState({ nota: 0, texto: '' });
+  const [enviandoAvaliacao, setEnviandoAvaliacao] = useState(false);
 
 
   useEffect(() => {
@@ -49,6 +62,16 @@ export default function BrinquedoPage() {
       setIsLoggedIn(true);
       checkFavorito();
     }
+
+    // Buscar avaliações
+    fetch(`/api/avaliacoes?brinquedo_id=${id}`)
+      .then(res => res.json())
+      .then(data => {
+        setAvaliacoes(data || []);
+      })
+      .catch(error => {
+        console.error('Erro ao buscar avaliações:', error);
+      });
   }, [id]);
 
   const checkFavorito = async () => {
@@ -89,6 +112,47 @@ export default function BrinquedoPage() {
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
     checkFavorito();
+  };
+
+  const handleEnviarAvaliacao = async () => {
+    if (!isLoggedIn) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    if (novaAvaliacao.nota === 0 || !novaAvaliacao.texto.trim()) {
+      alert('Por favor, selecione uma nota e escreva um comentário');
+      return;
+    }
+
+    setEnviandoAvaliacao(true);
+
+    try {
+      const response = await fetch('/api/avaliacoes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brinquedoId: id,
+          nota: novaAvaliacao.nota,
+          texto: novaAvaliacao.texto,
+        }),
+      });
+
+      if (response.ok) {
+        alert('Avaliação enviada com sucesso!');
+        setNovaAvaliacao({ nota: 0, texto: '' });
+        // Recarregar avaliações
+        const data = await response.json();
+        setAvaliacoes([...avaliacoes, data]);
+      } else {
+        alert('Erro ao enviar avaliação');
+      }
+    } catch (error) {
+      console.error('Erro ao enviar avaliação:', error);
+      alert('Erro ao enviar avaliação');
+    } finally {
+      setEnviandoAvaliacao(false);
+    }
   };
 
   if (loading) {
@@ -234,6 +298,90 @@ export default function BrinquedoPage() {
               <Phone className="w-8 h-8" />
               Solicitar Orçamento pelo WhatsApp
             </a>
+
+            {/* Formulário de Avaliação */}
+            <div className="bg-gray-50 rounded-2xl p-6">
+              <h3 className="text-xl font-bold text-secondary-gray-900 mb-4">Avaliar este brinquedo</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-gray-700 mb-2">Sua nota (1-5 estrelas)</label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((estrela) => (
+                      <button
+                        key={estrela}
+                        type="button"
+                        onClick={() => setNovaAvaliacao({ ...novaAvaliacao, nota: estrela })}
+                        className={`text-3xl transition-all ${
+                          novaAvaliacao.nota >= estrela ? 'text-yellow-400' : 'text-gray-300'
+                        } hover:text-yellow-400`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-secondary-gray-700 mb-2">Seu comentário</label>
+                  <textarea
+                    value={novaAvaliacao.texto}
+                    onChange={(e) => setNovaAvaliacao({ ...novaAvaliacao, texto: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 bg-white text-gray-900"
+                    rows={3}
+                    placeholder="Conte sua experiência com este brinquedo..."
+                  />
+                </div>
+                <button
+                  onClick={handleEnviarAvaliacao}
+                  disabled={enviandoAvaliacao}
+                  className="w-full bg-primary-blue-500 text-white py-3 rounded-xl font-semibold hover:bg-primary-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {enviandoAvaliacao ? 'Enviando...' : 'Enviar Avaliação'}
+                </button>
+              </div>
+            </div>
+
+            {/* Lista de Avaliações */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-secondary-gray-900">Avaliações ({avaliacoes.length})</h3>
+              {avaliacoes.length === 0 ? (
+                <p className="text-secondary-gray-500 text-center py-8">Seja o primeiro a avaliar este brinquedo!</p>
+              ) : (
+                <div className="space-y-4">
+                  {avaliacoes.map((avaliacao) => (
+                    <div key={avaliacao.id} className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-10 h-10 bg-primary-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-primary-blue-600 font-semibold">
+                              {avaliacao.cliente?.nome?.charAt(0) || 'A'}
+                            </span>
+                          </div>
+                          <span className="font-medium text-secondary-gray-900">
+                            {avaliacao.cliente?.nome || 'Cliente'}
+                          </span>
+                        </div>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((estrela) => (
+                            <span
+                              key={estrela}
+                              className={`text-sm ${
+                                avaliacao.nota >= estrela ? 'text-yellow-400' : 'text-gray-300'
+                              }`}
+                            >
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-secondary-gray-700">{avaliacao.texto}</p>
+                      <p className="text-xs text-secondary-gray-400 mt-2">
+                        {new Date(avaliacao.criado_em).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

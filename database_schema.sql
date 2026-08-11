@@ -96,12 +96,15 @@ CREATE TABLE promocao (
 CREATE TABLE avaliacao (
     id TEXT PRIMARY KEY,
     cliente_id TEXT NOT NULL,
+    brinquedo_id TEXT,
     texto TEXT NOT NULL,
     nota INTEGER NOT NULL,
     foto TEXT,
     aprovado_para_exibir BOOLEAN DEFAULT false,
+    exibir_no_home BOOLEAN DEFAULT false,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT avaliacao_cliente_fkey FOREIGN KEY (cliente_id) REFERENCES cliente(id)
+    CONSTRAINT avaliacao_cliente_fkey FOREIGN KEY (cliente_id) REFERENCES cliente(id),
+    CONSTRAINT avaliacao_brinquedo_fkey FOREIGN KEY (brinquedo_id) REFERENCES brinquedo(id)
 );
 
 -- Tabela favorito

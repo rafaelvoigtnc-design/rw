@@ -1,18 +1,30 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const { data, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const brinquedoId = searchParams.get('brinquedo_id');
+
+    let query = supabase
       .from('avaliacao')
       .select(`
         *,
         cliente (
           nome
         )
-      `)
-      .eq('aprovado_para_exibir', true)
-      .order('criado_em', { ascending: false });
+      `);
+
+    if (brinquedoId) {
+      query = query.eq('brinquedo_id', brinquedoId);
+    } else {
+      // Se não tiver brinquedo_id, retorna apenas aprovadas para home
+      query = query.eq('aprovado_para_exibir', true);
+    }
+
+    query = query.order('criado_em', { ascending: false });
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
@@ -28,7 +40,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { texto, nota } = await request.json();
+    const { texto, nota, brinquedoId } = await request.json();
 
     // Verificar se há token de cliente
     const cookieHeader = request.headers.get('cookie');
@@ -64,13 +76,19 @@ export async function POST(request: Request) {
       .insert({
         id: crypto.randomUUID(),
         cliente_id: clienteId,
+        brinquedo_id: brinquedoId,
         texto,
         nota,
         aprovado_para_exibir: false,
         exibir_no_home: false,
         criado_em: new Date().toISOString(),
       })
-      .select()
+      .select(`
+        *,
+        cliente (
+          nome
+        )
+      `)
       .single();
 
     if (error) throw error;
