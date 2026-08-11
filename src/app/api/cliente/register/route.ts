@@ -83,6 +83,9 @@ export async function POST(request: NextRequest) {
 
       if (clienteError) {
         console.error('Erro ao criar cliente na tabela:', clienteError);
+        console.error('Código do erro:', clienteError.code);
+        console.error('Mensagem do erro:', clienteError.message);
+        console.error('Detalhes:', clienteError.details);
         
         // Rollback: deletar usuário do auth se falhar
         try {
@@ -99,8 +102,13 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // Retornar erro detalhado
         return NextResponse.json(
-          { error: clienteError.message || 'Erro ao criar cliente' },
+          { 
+            error: clienteError.message || 'Erro ao criar cliente',
+            code: clienteError.code,
+            details: clienteError.details
+          },
           { status: 500 }
         );
       }
