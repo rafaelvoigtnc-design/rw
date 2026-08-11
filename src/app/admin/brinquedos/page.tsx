@@ -8,20 +8,10 @@ interface Brinquedo {
   nome: string;
   descricao: string;
   fotos: string[];
-  tema_layout: string;
   dimensoes: string;
   faixa_etaria: string;
   status: string;
 }
-
-const TEMAS = [
-  { value: 'infantil_ludico', label: 'Infantil Lúdico' },
-  { value: 'aventura_acao', label: 'Aventura/Ação' },
-  { value: 'esporte_competicao', label: 'Esporte/Competição' },
-  { value: 'agua_diversao', label: 'Água/Diversão' },
-  { value: 'festa_elegante', label: 'Festa Elegante' },
-  { value: 'classico_divertido', label: 'Clássico Divertido' },
-];
 
 export default function AdminBrinquedos() {
   const router = useRouter();
@@ -34,7 +24,6 @@ export default function AdminBrinquedos() {
     nome: '',
     descricao: '',
     fotos: [] as string[],
-    tema_layout: 'classico_divertido',
     dimensoes: '',
     faixa_etaria: '',
     status: 'DISPONIVEL',
@@ -106,20 +95,15 @@ export default function AdminBrinquedos() {
       nome: formData.nome,
       descricao: formData.descricao,
       fotos: formData.fotos,
-      tema_layout: formData.tema_layout,
       dimensoes: formData.dimensoes,
       faixa_etaria: formData.faixa_etaria,
       status: formData.status,
     };
 
-    console.log('Enviando dados:', dadosParaEnviar);
-    console.log('Tema sendo enviado:', dadosParaEnviar.tema_layout);
-
     try {
       let response;
       
       if (editando) {
-        console.log('Atualizando brinquedo ID:', editando.id);
         // Atualizar brinquedo existente
         response = await fetch(`/api/admin/brinquedos/${editando.id}`, {
           method: 'PUT',
@@ -127,7 +111,6 @@ export default function AdminBrinquedos() {
           body: JSON.stringify(dadosParaEnviar),
         });
       } else {
-        console.log('Criando novo brinquedo');
         // Criar novo brinquedo
         response = await fetch('/api/admin/brinquedos', {
           method: 'POST',
@@ -137,7 +120,6 @@ export default function AdminBrinquedos() {
       }
 
       const result = await response.json();
-      console.log('Resposta da API:', result);
 
       if (response.ok) {
         alert(editando ? 'Brinquedo atualizado com sucesso!' : 'Brinquedo criado com sucesso!');
@@ -147,7 +129,6 @@ export default function AdminBrinquedos() {
           nome: '',
           descricao: '',
           fotos: [],
-          tema_layout: 'classico_divertido',
           dimensoes: '',
           faixa_etaria: '',
           status: 'DISPONIVEL',
@@ -164,14 +145,11 @@ export default function AdminBrinquedos() {
   };
 
   const handleEdit = (brinquedo: Brinquedo) => {
-    console.log('Editando brinquedo:', brinquedo);
-    console.log('Tema atual:', brinquedo.tema_layout);
     setEditando(brinquedo);
     setFormData({
       nome: brinquedo.nome,
       descricao: brinquedo.descricao,
       fotos: Array.isArray(brinquedo.fotos) ? brinquedo.fotos : [],
-      tema_layout: brinquedo.tema_layout || 'classico_divertido',
       dimensoes: brinquedo.dimensoes,
       faixa_etaria: brinquedo.faixa_etaria,
       status: brinquedo.status,
@@ -231,7 +209,6 @@ export default function AdminBrinquedos() {
                 nome: '',
                 descricao: '',
                 fotos: [],
-                tema_layout: 'classico_divertido',
                 dimensoes: '',
                 faixa_etaria: '',
                 status: 'DISPONIVEL',
@@ -305,26 +282,6 @@ export default function AdminBrinquedos() {
                   ))}
                 </div>
               )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tema do Layout</label>
-                <select
-                  value={formData.tema_layout}
-                  onChange={(e) => {
-                    console.log('Tema selecionado:', e.target.value);
-                    console.log('Estado anterior:', formData.tema_layout);
-                    setFormData({ ...formData, tema_layout: e.target.value });
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                >
-                  {TEMAS.map((tema) => (
-                    <option key={tema.value} value={tema.value}>
-                      {tema.label}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 mt-1">Tema atual: {formData.tema_layout}</p>
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Dimensões</label>

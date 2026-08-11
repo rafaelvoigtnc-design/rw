@@ -14,7 +14,6 @@ export async function PUT(
       nome,
       descricao,
       fotos,
-      tema_layout,
       dimensoes,
       faixa_etaria,
       status
@@ -43,7 +42,6 @@ export async function PUT(
       nome,
       descricao,
       fotos: fotosParaSalvar,
-      tema_layout,
       dimensoes,
       faixa_etaria,
       status,

@@ -30,7 +30,6 @@ export async function POST(request: Request) {
       nome,
       descricao,
       fotos,
-      tema_layout,
       dimensoes,
       faixa_etaria,
       status
@@ -53,7 +52,6 @@ export async function POST(request: Request) {
       nome: String(nome),
       descricao: String(descricao),
       fotos: fotosParaSalvar,
-      tema_layout: String(tema_layout || 'CLASSICO_DIVERTIDO'),
       dimensoes: String(dimensoes || ''),
       faixa_etaria: String(faixa_etaria || ''),
       status: String(status || 'DISPONIVEL'),

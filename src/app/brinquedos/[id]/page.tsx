@@ -12,7 +12,6 @@ interface Brinquedo {
   nome: string;
   descricao: string;
   fotos: string[];
-  tema_layout: string;
   dimensoes: string;
   faixa_etaria: string;
   categoria: {
@@ -92,60 +91,6 @@ export default function BrinquedoPage() {
     checkFavorito();
   };
 
-  const getThemeClasses = (tema: string) => {
-    const themes: Record<string, { bg: string; text: string; accent: string; title: string; card: string; button: string }> = {
-      infantil_ludico: {
-        bg: 'bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100',
-        text: 'text-gray-800',
-        accent: 'text-pink-600',
-        title: 'font-bold',
-        card: 'rounded-3xl',
-        button: 'bg-pink-500 hover:bg-pink-600'
-      },
-      aventura_acao: {
-        bg: 'bg-gradient-to-br from-orange-100 via-red-50 to-yellow-100',
-        text: 'text-gray-900',
-        accent: 'text-orange-700',
-        title: 'font-black uppercase tracking-wide',
-        card: 'rounded-2xl',
-        button: 'bg-orange-600 hover:bg-orange-700'
-      },
-      esporte_competicao: {
-        bg: 'bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800',
-        text: 'text-white',
-        accent: 'text-red-500',
-        title: 'font-black uppercase tracking-widest',
-        card: 'rounded-xl border-2 border-red-600/50',
-        button: 'bg-red-600 hover:bg-red-700'
-      },
-      agua_diversao: {
-        bg: 'bg-gradient-to-br from-cyan-100 via-blue-100 to-teal-100',
-        text: 'text-gray-800',
-        accent: 'text-cyan-700',
-        title: 'font-semibold',
-        card: 'rounded-2xl',
-        button: 'bg-cyan-600 hover:bg-cyan-700'
-      },
-      festa_elegante: {
-        bg: 'bg-gradient-to-br from-amber-50 via-rose-50 to-stone-100',
-        text: 'text-gray-900',
-        accent: 'text-amber-800',
-        title: 'font-serif',
-        card: 'rounded-xl border border-amber-300/50',
-        button: 'bg-amber-700 hover:bg-amber-800'
-      },
-      classico_divertido: {
-        bg: 'bg-gradient-to-br from-emerald-100 via-teal-50 to-green-100',
-        text: 'text-gray-800',
-        accent: 'text-emerald-700',
-        title: 'font-semibold',
-        card: 'rounded-2xl',
-        button: 'bg-emerald-600 hover:bg-emerald-700'
-      }
-    };
-    return themes[tema] || themes.classico_divertido;
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 pt-16">
@@ -172,26 +117,24 @@ export default function BrinquedoPage() {
     );
   }
 
-  const theme = getThemeClasses(brinquedo.tema_layout);
-
   return (
-    <div className={`min-h-screen ${theme.bg} ${theme.text} pt-16`}>
+    <div className="min-h-screen bg-white pt-16">
       <Navbar />
       
       <div className="max-w-[1440px] mx-auto px-6 py-12">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm mb-8 opacity-70">
-          <a href="/" className="hover:opacity-100 transition-opacity">Home</a>
+        <nav className="flex items-center gap-2 text-sm text-secondary-gray-600 mb-8">
+          <a href="/" className="hover:text-primary-blue-600 transition-colors">Home</a>
           <span>/</span>
-          <a href="/catalogo" className="hover:opacity-100 transition-opacity">Catálogo</a>
+          <a href="/catalogo" className="hover:text-primary-blue-600 transition-colors">Catálogo</a>
           <span>/</span>
-          <span className="font-medium">{brinquedo.nome}</span>
+          <span className="text-secondary-gray-900 font-medium">{brinquedo.nome}</span>
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
           {/* Galeria de Fotos */}
           <div className="space-y-4">
-            <div className={`relative aspect-square bg-white ${theme.card} shadow-lg overflow-hidden ${theme.text === 'text-white' ? 'border border-white/20' : ''}`}>
+            <div className="relative aspect-square bg-white rounded-2xl shadow-soft overflow-hidden">
               {brinquedo.fotos && brinquedo.fotos.length > 0 ? (
                 <img
                   key={fotoAtual}
@@ -262,7 +205,7 @@ export default function BrinquedoPage() {
 
           {/* Informações */}
           <div className="space-y-6">
-            <h1 className={`text-4xl lg:text-5xl font-bold leading-tight ${theme.title}`}>
+            <h1 className="text-4xl lg:text-5xl font-bold text-secondary-gray-900 leading-tight">
               {brinquedo.nome}
             </h1>
 
@@ -277,7 +220,7 @@ export default function BrinquedoPage() {
               </div>
             </div>
 
-            <p className="text-lg leading-relaxed opacity-90">
+            <p className="text-lg text-secondary-gray-700 leading-relaxed">
               {brinquedo.descricao}
             </p>
 
@@ -286,7 +229,7 @@ export default function BrinquedoPage() {
               href={`https://wa.me/5555997302463?text=${encodeURIComponent(`Olá! Gostaria de solicitar um orçamento para o brinquedo: ${brinquedo.nome}. Poderia me passar mais informações?`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className={`inline-flex items-center justify-center gap-3 w-full ${theme.button} text-white py-5 rounded-2xl font-bold text-xl transition-all shadow-lg hover:scale-102 transition-transform`}
+              className="inline-flex items-center justify-center gap-3 w-full bg-primary-green-500 text-white py-5 rounded-2xl font-bold text-xl hover:bg-primary-green-600 transition-colors shadow-soft hover:scale-102 transition-transform"
             >
               <Phone className="w-8 h-8" />
               Solicitar Orçamento pelo WhatsApp
