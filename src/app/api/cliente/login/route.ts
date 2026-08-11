@@ -37,9 +37,7 @@ export async function POST(request: NextRequest) {
     // Criar token
     const token = await createClientToken(cliente.id);
 
-    console.log('Token criado para cliente:', cliente.id);
-    console.log('Token:', token.substring(0, 50) + '...');
-    console.log('Ambiente:', process.env.NODE_ENV);
+    console.log('Login bem-sucedido:', cliente.email);
 
     // Retornar token em cookie
     const response = NextResponse.json(
@@ -49,14 +47,12 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set('cliente_token', token, {
       httpOnly: true,
-      secure: false, // Mudar para false para funcionar em desenvolvimento
+      secure: false,
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 dias
+      maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });
 
-    console.log('Cookie definido com sucesso');
-    console.log('Login realizado com sucesso para:', cliente.email);
     return response;
   } catch (error) {
     console.error('Erro no login cliente:', error);

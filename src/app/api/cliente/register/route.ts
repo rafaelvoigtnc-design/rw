@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getClientByEmail, createClientRecord } from '@/lib/supabase';
 import { hashPassword, createClientToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -25,13 +25,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar se email já existe na tabela cliente
-    const { data: existingClient } = await supabase
-      .from('cliente')
-      .select('email')
-      .eq('email', email)
-      .single();
-
+    // Verificar se email já existe
+    const existingClient = await getClientByEmail(email);
     if (existingClient) {
       return NextResponse.json(
         { error: 'Email já cadastrado' },
@@ -42,36 +37,21 @@ export async function POST(request: NextRequest) {
     // Hash da senha
     const senha_hash = await hashPassword(senha);
 
-    // Criar cliente diretamente na tabela (sem Supabase Auth)
-    const { data: cliente, error: clienteError } = await supabase
-      .from('cliente')
-      .insert({
-        id: crypto.randomUUID(),
-        nome,
-        telefone: telefoneLimpo,
-        email,
-        senha_hash,
-        endereco,
-        criado_em: new Date().toISOString(),
-      })
-      .select()
-      .single();
+    // Criar cliente
+    const cliente = await createClientRecord({
+      id: crypto.randomUUID(),
+      nome,
+      telefone: telefoneLimpo,
+      email,
+      senha_hash,
+      endereco,
+      criado_em: new Date().toISOString(),
+    });
 
-    console.log('Cliente data:', cliente);
-    console.log('Cliente error:', clienteError);
-
-    if (clienteError) {
-      console.error('Erro ao criar cliente:', clienteError);
-      return NextResponse.json(
-        { error: clienteError.message || 'Erro ao criar cliente' },
-        { status: 500 }
-      );
-    }
-
-    // Criar token JWT
+    // Criar token
     const token = await createClientToken(cliente.id);
 
-    console.log('Token criado no registro:', token.substring(0, 50) + '...');
+    console.log('Registro bem-sucedido:', cliente.email);
 
     // Retornar token em cookie
     const response = NextResponse.json(
@@ -81,13 +61,12 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set('cliente_token', token, {
       httpOnly: true,
-      secure: false, // Mudar para false para funcionar em desenvolvimento
+      secure: false,
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 dias
+      maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });
 
-    console.log('Cookie definido no registro');
     return response;
   } catch (error) {
     console.error('Erro no registro cliente:', error);

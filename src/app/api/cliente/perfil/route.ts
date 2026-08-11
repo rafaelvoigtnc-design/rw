@@ -1,23 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { verifyToken } from '@/lib/auth';
+import { verifyToken, hashPassword } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
     const token = request.cookies.get('cliente_token')?.value;
-    console.log('Token recebido:', token ? token.substring(0, 50) + '...' : 'NENHUM');
     
     if (!token) {
-      console.log('Token não encontrado no cookie');
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
     // Verificar token
     const payload = await verifyToken(token);
-    console.log('Payload do token:', payload);
-    
     if (!payload || payload.type !== 'client') {
-      console.log('Token inválido ou não é de cliente');
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
@@ -27,8 +22,6 @@ export async function GET(request: NextRequest) {
       .select('id, nome, telefone, email, endereco')
       .eq('id', payload.id)
       .single();
-
-    console.log('Cliente encontrado:', cliente ? cliente.nome : 'NÃO');
 
     if (error || !cliente) {
       return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 });
@@ -43,7 +36,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const token = request.cookies.get('client_token')?.value;
+    const token = request.cookies.get('cliente_token')?.value;
     if (!token) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
@@ -54,12 +47,25 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { nome, telefone, email, endereco } = body;
+    const { nome, telefone, email, senha, endereco } = body;
 
     // Validar telefone
     const telefoneLimpo = telefone.replace(/\D/g, '');
     if (telefoneLimpo.length !== 11) {
       return NextResponse.json({ error: 'O telefone deve ter exatamente 11 dígitos' }, { status: 400 });
+    }
+
+    // Preparar dados para atualizar
+    const updateData: any = {
+      nome,
+      telefone: telefoneLimpo,
+      email,
+      endereco,
+    };
+
+    // Se senha foi fornecida, atualizar também
+    if (senha && senha.length >= 6) {
+      updateData.senha_hash = await hashPassword(senha);
     }
 
     // Verificar se o email já está em uso por outro cliente
@@ -77,12 +83,7 @@ export async function PUT(request: NextRequest) {
     // Atualizar cliente
     const { error } = await supabase
       .from('cliente')
-      .update({
-        nome,
-        telefone: telefoneLimpo,
-        email,
-        endereco,
-      })
+      .update(updateData)
       .eq('id', payload.id);
 
     if (error) {
