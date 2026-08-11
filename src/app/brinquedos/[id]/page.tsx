@@ -22,12 +22,14 @@ interface Brinquedo {
 
 interface Avaliacao {
   id: string;
-  cliente: {
-    nome: string;
-  };
+  cliente_id: string;
+  brinquedo_id: string;
   texto: string;
   nota: number;
   criado_em: string;
+  cliente?: {
+    nome: string;
+  };
 }
 
 export default function BrinquedoPage() {
@@ -67,10 +69,11 @@ export default function BrinquedoPage() {
     fetch(`/api/avaliacoes?brinquedo_id=${id}`)
       .then(res => res.json())
       .then(data => {
-        setAvaliacoes(data || []);
+        setAvaliacoes(Array.isArray(data) ? data : []);
       })
       .catch(error => {
         console.error('Erro ao buscar avaliações:', error);
+        setAvaliacoes([]); // Garantir que seja array mesmo em caso de erro
       });
   }, [id]);
 
@@ -142,8 +145,13 @@ export default function BrinquedoPage() {
         alert('Avaliação enviada com sucesso!');
         setNovaAvaliacao({ nota: 0, texto: '' });
         // Recarregar avaliações
-        const data = await response.json();
-        setAvaliacoes([...avaliacoes, data]);
+        try {
+          const avaliacoesData = await fetch(`/api/avaliacoes?brinquedo_id=${id}`);
+          const avaliacoesAtualizadas = await avaliacoesData.json();
+          setAvaliacoes(Array.isArray(avaliacoesAtualizadas) ? avaliacoesAtualizadas : []);
+        } catch (error) {
+          console.error('Erro ao recarregar avaliações:', error);
+        }
       } else {
         alert('Erro ao enviar avaliação');
       }
@@ -353,7 +361,7 @@ export default function BrinquedoPage() {
                         <div className="flex items-center gap-2">
                           <div className="w-10 h-10 bg-primary-blue-100 rounded-full flex items-center justify-center">
                             <span className="text-primary-blue-600 font-semibold">
-                              {avaliacao.cliente?.nome?.charAt(0) || 'A'}
+                              {avaliacao.cliente?.nome?.charAt(0) || 'C'}
                             </span>
                           </div>
                           <span className="font-medium text-secondary-gray-900">

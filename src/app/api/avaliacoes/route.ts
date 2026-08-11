@@ -8,12 +8,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from('avaliacao')
-      .select(`
-        *,
-        cliente (
-          nome
-        )
-      `);
+      .select('*');
 
     if (brinquedoId) {
       query = query.eq('brinquedo_id', brinquedoId);
@@ -83,12 +78,7 @@ export async function POST(request: Request) {
         exibir_no_home: false,
         criado_em: new Date().toISOString(),
       })
-      .select(`
-        *,
-        cliente (
-          nome
-        )
-      `)
+      .select()
       .single();
 
     if (error) throw error;
