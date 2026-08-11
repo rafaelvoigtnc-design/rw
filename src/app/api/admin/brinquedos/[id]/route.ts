@@ -20,6 +20,20 @@ export async function PUT(
       status
     } = body;
 
+    // Primeiro buscar o brinquedo atual para preservar categoria_id e preco_periodo
+    const { data: brinquedoAtual } = await supabaseAdmin
+      .from('brinquedo')
+      .select('categoria_id, preco_periodo')
+      .eq('id', params.id)
+      .single();
+
+    if (!brinquedoAtual) {
+      return NextResponse.json(
+        { error: 'Brinquedo não encontrado' },
+        { status: 404 }
+      );
+    }
+
     // Converter fotos para JSON string se for array
     const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
 
@@ -33,8 +47,8 @@ export async function PUT(
       dimensoes,
       faixa_etaria,
       status,
-      categoria_id: null, // Mantém null para consistência
-      preco_periodo: 0, // Mantém 0 para consistência
+      categoria_id: brinquedoAtual.categoria_id, // Preservar categoria_id existente
+      preco_periodo: brinquedoAtual.preco_periodo, // Preservar preco_periodo existente
     };
 
     const { data, error } = await supabaseAdmin

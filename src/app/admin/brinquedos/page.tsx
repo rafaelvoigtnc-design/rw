@@ -102,23 +102,39 @@ export default function AdminBrinquedos() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Usar API de teste para ver o erro detalhado
     const dadosParaEnviar = {
       nome: formData.nome,
       descricao: formData.descricao,
+      fotos: formData.fotos,
+      tema_layout: formData.tema_layout,
+      dimensoes: formData.dimensoes,
+      faixa_etaria: formData.faixa_etaria,
+      status: formData.status,
     };
 
     try {
-      const response = await fetch('/api/admin/test-simple-insert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dadosParaEnviar),
-      });
+      let response;
+      
+      if (editando) {
+        // Atualizar brinquedo existente
+        response = await fetch(`/api/admin/brinquedos/${editando.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dadosParaEnviar),
+        });
+      } else {
+        // Criar novo brinquedo
+        response = await fetch('/api/admin/brinquedos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dadosParaEnviar),
+        });
+      }
 
       const result = await response.json();
 
-      if (result.success) {
-        alert('Brinquedo criado com sucesso! (teste)');
+      if (response.ok) {
+        alert(editando ? 'Brinquedo atualizado com sucesso!' : 'Brinquedo criado com sucesso!');
         setMostrarFormulario(false);
         setEditando(null);
         setFormData({
@@ -132,7 +148,7 @@ export default function AdminBrinquedos() {
         });
         fetchData();
       } else {
-        alert(`ERRO DETALHADO: ${result.error}\nCódigo: ${result.code}\nDetalhes: ${JSON.stringify(result.details)}`);
+        alert(`Erro: ${result.error || 'Erro ao salvar brinquedo'}`);
         console.error('Erro completo:', result);
       }
     } catch (error) {
@@ -248,10 +264,39 @@ export default function AdminBrinquedos() {
                 />
               </div>
 
-              {/* Upload de imagens temporariamente desativado */}
-              <div className="text-sm text-gray-500 bg-yellow-50 p-3 rounded-md">
-                Upload de imagens temporariamente desativado para manutenção.
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fotos</label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                />
+                {uploading && <p className="text-sm text-gray-500 mt-1">Fazendo upload...</p>}
               </div>
+
+              {formData.fotos.length > 0 && (
+                <div className="grid grid-cols-4 gap-2">
+                  {formData.fotos.map((foto, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={foto}
+                        alt={`Foto ${index + 1}`}
+                        className="w-full h-24 object-cover rounded-md"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removerFoto(index)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tema do Layout</label>

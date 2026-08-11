@@ -29,6 +29,7 @@ export async function POST(request: Request) {
     const {
       nome,
       descricao,
+      fotos,
       tema_layout,
       dimensoes,
       faixa_etaria,
@@ -43,12 +44,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // Converter fotos para JSON string se for array
+    const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
+
     // Versão com todos os campos obrigatórios
     const brinquedoData = {
       id: crypto.randomUUID(),
       nome: String(nome),
       descricao: String(descricao),
-      fotos: '[]',
+      fotos: fotosParaSalvar,
       tema_layout: String(tema_layout || 'CLASSICO_DIVERTIDO'),
       dimensoes: String(dimensoes || ''),
       faixa_etaria: String(faixa_etaria || ''),
