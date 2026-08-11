@@ -5,6 +5,8 @@ export async function POST(request: NextRequest) {
   try {
     const { email, senha } = await request.json();
 
+    console.log('Tentativa de login:', email);
+
     if (!email || !senha) {
       return NextResponse.json(
         { error: 'Email e senha são obrigatórios' },
@@ -18,10 +20,21 @@ export async function POST(request: NextRequest) {
       password: senha,
     });
 
+    console.log('Auth data:', data);
+    console.log('Auth error:', error);
+
     if (error) {
+      console.error('Erro de autenticação:', error);
       return NextResponse.json(
-        { error: 'Credenciais inválidas' },
+        { error: error.message || 'Credenciais inválidas' },
         { status: 401 }
+      );
+    }
+
+    if (!data.user || !data.session) {
+      return NextResponse.json(
+        { error: 'Erro ao fazer login: sessão não criada' },
+        { status: 500 }
       );
     }
 
@@ -32,7 +45,33 @@ export async function POST(request: NextRequest) {
       .eq('auth_id', data.user.id)
       .single();
 
-    if (clienteError || !cliente) {
+    console.log('Cliente data:', cliente);
+    console.log('Cliente error:', clienteError);
+
+    if (clienteError) {
+      console.error('Erro ao buscar cliente:', clienteError);
+      
+      if (clienteError.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: 'Cliente não encontrado. Você precisa se registrar primeiro.' },
+          { status: 404 }
+        );
+      }
+      
+      if (clienteError.message?.includes('auth_id')) {
+        return NextResponse.json(
+          { error: 'A tabela cliente não tem o campo auth_id. Execute a migração SQL no Supabase.' },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(
+        { error: 'Erro ao buscar dados do cliente' },
+        { status: 500 }
+      );
+    }
+
+    if (!cliente) {
       return NextResponse.json(
         { error: 'Cliente não encontrado' },
         { status: 404 }
@@ -62,6 +101,7 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
+    console.log('Login realizado com sucesso para:', cliente.email);
     return response;
   } catch (error) {
     console.error('Erro no login cliente:', error);
