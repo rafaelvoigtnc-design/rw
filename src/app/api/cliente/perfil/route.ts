@@ -2,48 +2,33 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { verifyToken, hashPassword } from '@/lib/auth';
 
-async function getClientId(request: NextRequest) {
-  // Primeiro tenta verificar via Google Auth
-  const accessToken = request.cookies.get('sb-access-token')?.value;
-  if (accessToken) {
-    const { data: { user }, error } = await supabase.auth.getUser(accessToken);
-    if (!error && user) {
-      // Buscar cliente pelo email
-      const { data: cliente } = await supabase
-        .from('cliente')
-        .select('id')
-        .eq('email', user.email)
-        .single();
-      if (cliente) return cliente.id;
-    }
-  }
-
-  // Se não tiver Google Auth, tenta via JWT
-  const token = request.cookies.get('cliente_token')?.value;
-  if (token) {
-    const payload = await verifyToken(token);
-    if (payload && payload.type === 'client') {
-      return payload.id;
-    }
-  }
-
-  return null;
-}
-
 export async function GET(request: NextRequest) {
   try {
-    const clienteId = await getClientId(request);
+    const token = request.cookies.get('cliente_token')?.value;
+    console.log('Token recebido:', token ? 'SIM' : 'NÃO');
     
-    if (!clienteId) {
+    if (!token) {
+      console.log('Token não encontrado');
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+
+    // Verificar token
+    const payload = await verifyToken(token);
+    console.log('Payload do token:', payload);
+    
+    if (!payload || payload.type !== 'client') {
+      console.log('Token inválido');
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
     // Buscar dados do cliente
     const { data: cliente, error } = await supabase
       .from('cliente')
       .select('id, nome, telefone, email, endereco')
-      .eq('id', clienteId)
+      .eq('id', payload.id)
       .single();
+
+    console.log('Cliente encontrado:', cliente ? cliente.nome : 'NÃO');
 
     if (error || !cliente) {
       return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 });
@@ -58,9 +43,14 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const clienteId = await getClientId(request);
-    if (!clienteId) {
+    const token = request.cookies.get('cliente_token')?.value;
+    if (!token) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+
+    const payload = await verifyToken(token);
+    if (!payload || payload.type !== 'client') {
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -90,7 +80,7 @@ export async function PUT(request: NextRequest) {
       .from('cliente')
       .select('id')
       .eq('email', email)
-      .neq('id', clienteId)
+      .neq('id', payload.id)
       .single();
 
     if (clienteExistente) {
@@ -101,7 +91,7 @@ export async function PUT(request: NextRequest) {
     const { error } = await supabase
       .from('cliente')
       .update(updateData)
-      .eq('id', clienteId);
+      .eq('id', payload.id);
 
     if (error) {
       throw error;

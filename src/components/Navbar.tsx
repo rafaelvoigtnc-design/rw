@@ -26,37 +26,24 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    // Verificar login via API (primeiro tenta Google Auth, depois JWT)
+    // Verificar login via API - simplificado para usar apenas JWT
     const checkLogin = async () => {
       try {
-        // Tenta primeiro verificar via Google Auth
-        const authResponse = await fetch('/api/auth/user');
-        const authData = await authResponse.json();
-        
-        if (authData.user) {
-          // Login com Google - buscar dados na tabela cliente pelo email
-          const clienteResponse = await fetch('/api/cliente/perfil');
-          if (clienteResponse.ok) {
-            const clienteData = await clienteResponse.json();
-            setIsLoggedIn(true);
-            setUserName(clienteData.nome || '');
-            const carrinhoResponse = await fetch('/api/carrinho');
-            const carrinhoData = await carrinhoResponse.json();
-            setCartItems(carrinhoData.length || 0);
-            return;
-          }
-        }
-
-        // Se não tiver Google Auth, tenta via JWT
+        console.log('Verificando login...');
         const clienteResponse = await fetch('/api/cliente/perfil');
+        console.log('Status da resposta:', clienteResponse.status);
+        
         if (clienteResponse.ok) {
           const clienteData = await clienteResponse.json();
+          console.log('Dados do cliente:', clienteData);
           setIsLoggedIn(true);
-          setUserName(clientteData.nome || '');
+          setUserName(clienteData.nome || '');
+          
           const carrinhoResponse = await fetch('/api/carrinho');
           const carrinhoData = await carrinhoResponse.json();
           setCartItems(carrinhoData.length || 0);
         } else {
+          console.log('Não está logado');
           setIsLoggedIn(false);
           setCartItems(0);
           setUserName('');
