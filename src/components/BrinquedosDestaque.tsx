@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Star, ShoppingCart, Heart } from 'lucide-react';
+import { Star, Heart } from 'lucide-react';
 import Link from 'next/link';
 
 interface Brinquedo {
@@ -113,15 +113,10 @@ export default function BrinquedosDestaque() {
                 </p>
 
                 <button
-                  className="w-full bg-primary-green-500 text-white py-2 md:py-3 rounded-xl text-xs md:text-base font-semibold hover:bg-primary-green-600 transition-colors flex items-center justify-center gap-1 md:gap-2 hover:scale-102 transition-transform"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.open(`https://wa.me/5555997302463?text=${encodeURIComponent(`Olá! Gostaria de saber mais sobre o brinquedo: ${brinquedo.nome}`)}`, '_blank');
-                  }}
+                  className="w-full bg-primary-blue-500 text-white py-2 md:py-3 rounded-xl text-xs md:text-base font-semibold hover:bg-primary-blue-600 transition-colors flex items-center justify-center gap-1 md:gap-2 hover:scale-102 transition-transform"
                 >
-                  <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" />
-                  <span className="hidden md:inline">Solicitar Orçamento</span>
-                  <span className="md:hidden">Orçamento</span>
+                  <span className="hidden md:inline">Ver Detalhes</span>
+                  <span className="md:hidden">Detalhes</span>
                 </button>
               </div>
             </div>

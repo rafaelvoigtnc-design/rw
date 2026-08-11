@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, SlidersHorizontal, X, Heart, ShoppingCart, Star } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Heart, Star } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AuthModal from '@/components/AuthModal';
@@ -188,7 +188,6 @@ export default function Catalogo() {
                   >
                     <option value="nome">Nome (A-Z)</option>
                     <option value="nome_desc">Nome (Z-A)</option>
-                    <option value="avaliacao">Avaliação</option>
                   </select>
                 </div>
 
@@ -296,15 +295,10 @@ export default function Catalogo() {
                             </p>
 
                             <button
-                              className="w-full bg-primary-green-500 text-white py-2 md:py-3 rounded-xl text-xs md:text-base font-semibold hover:bg-primary-green-600 transition-colors flex items-center justify-center gap-1 md:gap-2 hover:scale-102 transition-transform"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                window.open(`https://wa.me/5555997302463?text=${encodeURIComponent(`Olá! Gostaria de saber mais sobre o brinquedo: ${brinquedo.nome}`)}`, '_blank');
-                              }}
+                              className="w-full bg-primary-blue-500 text-white py-2 md:py-3 rounded-xl text-xs md:text-base font-semibold hover:bg-primary-blue-600 transition-colors flex items-center justify-center gap-1 md:gap-2 hover:scale-102 transition-transform"
                             >
-                              <ShoppingCart className="w-4 h-4 md:w-5 md:h-5" />
-                              <span className="hidden md:inline">Solicitar Orçamento</span>
-                              <span className="md:hidden">Orçamento</span>
+                              <span className="hidden md:inline">Ver Detalhes</span>
+                              <span className="md:hidden">Detalhes</span>
                             </button>
                           </div>
                         </div>
