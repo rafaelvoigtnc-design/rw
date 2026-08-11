@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { verifyToken } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const accessToken = request.cookies.get('sb-access-token')?.value;
-    if (!accessToken) {
+    const token = request.cookies.get('client_token')?.value;
+    if (!token) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    // Verificar token com Supabase
-    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
-    if (authError || !user) {
+    // Verificar token
+    const payload = await verifyToken(token);
+    if (!payload || payload.type !== 'client') {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
     const { data: cliente, error } = await supabase
       .from('cliente')
       .select('id, nome, telefone, email, endereco')
-      .eq('auth_id', user.id)
+      .eq('id', payload.id)
       .single();
 
     if (error || !cliente) {
@@ -34,13 +35,13 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const accessToken = request.cookies.get('sb-access-token')?.value;
-    if (!accessToken) {
+    const token = request.cookies.get('client_token')?.value;
+    if (!token) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
-    if (authError || !user) {
+    const payload = await verifyToken(token);
+    if (!payload || payload.type !== 'client') {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
@@ -53,23 +54,12 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'O telefone deve ter exatamente 11 dígitos' }, { status: 400 });
     }
 
-    // Buscar cliente atual
-    const { data: clienteAtual } = await supabase
-      .from('cliente')
-      .select('id')
-      .eq('auth_id', user.id)
-      .single();
-
-    if (!clienteAtual) {
-      return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 });
-    }
-
     // Verificar se o email já está em uso por outro cliente
     const { data: clienteExistente } = await supabase
       .from('cliente')
       .select('id')
       .eq('email', email)
-      .neq('id', clienteAtual.id)
+      .neq('id', payload.id)
       .single();
 
     if (clienteExistente) {
@@ -85,7 +75,7 @@ export async function PUT(request: NextRequest) {
         email,
         endereco,
       })
-      .eq('id', clienteAtual.id);
+      .eq('id', payload.id);
 
     if (error) {
       throw error;

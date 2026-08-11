@@ -12,18 +12,16 @@ CREATE TABLE usuario_admin (
 -- Tabela cliente
 CREATE TABLE cliente (
     id TEXT PRIMARY KEY,
-    auth_id TEXT UNIQUE NOT NULL,
     nome TEXT NOT NULL,
     telefone TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
+    senha_hash TEXT NOT NULL,
     endereco TEXT NOT NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- MIGRAÇÃO: Para tabelas existentes, execute:
--- ALTER TABLE cliente ADD COLUMN auth_id TEXT UNIQUE;
--- ALTER TABLE cliente ALTER COLUMN senha_hash DROP NOT NULL;
--- ALTER TABLE cliente DROP COLUMN senha_hash;
+-- MIGRAÇÃO: Para tabelas existentes com auth_id, execute:
+-- ALTER TABLE cliente DROP COLUMN IF EXISTS auth_id;
 
 -- Tabela categoria
 CREATE TABLE categoria (
