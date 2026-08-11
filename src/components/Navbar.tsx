@@ -15,6 +15,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [cartItems, setCartItems] = useState(0);
+  const [userName, setUserName] = useState('');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,10 +30,17 @@ export default function Navbar() {
     fetch('/api/cliente/perfil')
       .then(res => {
         if (res.ok) {
-          setIsLoggedIn(true);
-          return fetch('/api/carrinho');
+          return res.json();
         }
         setIsLoggedIn(false);
+        return null;
+      })
+      .then(data => {
+        if (data) {
+          setIsLoggedIn(true);
+          setUserName(data.nome || '');
+          return fetch('/api/carrinho');
+        }
         return null;
       })
       .then(res => {
@@ -49,6 +57,7 @@ export default function Navbar() {
       .catch(() => {
         setIsLoggedIn(false);
         setCartItems(0);
+        setUserName('');
       });
   }, []);
 
@@ -136,6 +145,9 @@ export default function Navbar() {
 
               {isLoggedIn ? (
                 <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-secondary-gray-700">
+                    Olá, {userName.split(' ')[0]}
+                  </span>
                   <Link
                     href="/cliente/perfil"
                     className="px-6 py-2.5 rounded-full bg-primary-blue-500 text-white font-semibold hover:bg-primary-blue-600 transition-colors shadow-soft hover:scale-105"
