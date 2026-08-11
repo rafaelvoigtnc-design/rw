@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { supabase } from '@/lib/supabase';
 import { verifyToken } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,20 +15,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const cliente = await prisma.cliente.findUnique({
-      where: {
-        id: payload.id,
-      },
-      select: {
-        id: true,
-        nome: true,
-        telefone: true,
-        email: true,
-        endereco: true,
-      },
-    });
+    const { data: cliente, error } = await supabase
+      .from('cliente')
+      .select('id, nome, telefone, email, endereco')
+      .eq('id', payload.id)
+      .single();
 
-    if (!cliente) {
+    if (error || !cliente) {
       return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 });
     }
 
@@ -63,29 +54,31 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verificar se o email já está em uso por outro cliente
-    const clienteExistente = await prisma.cliente.findFirst({
-      where: {
-        email: email,
-        id: { not: payload.id },
-      },
-    });
+    const { data: clienteExistente } = await supabase
+      .from('cliente')
+      .select('id')
+      .eq('email', email)
+      .neq('id', payload.id)
+      .single();
 
     if (clienteExistente) {
       return NextResponse.json({ error: 'Email já está em uso' }, { status: 400 });
     }
 
     // Atualizar cliente
-    const cliente = await prisma.cliente.update({
-      where: {
-        id: payload.id,
-      },
-      data: {
+    const { error } = await supabase
+      .from('cliente')
+      .update({
         nome,
         telefone: telefoneLimpo,
         email,
         endereco,
-      },
-    });
+      })
+      .eq('id', payload.id);
+
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

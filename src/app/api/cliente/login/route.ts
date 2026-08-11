@@ -35,6 +35,9 @@ export async function POST(request: NextRequest) {
     // Criar token
     const token = await createClientToken(cliente.id);
 
+    console.log('Token criado para cliente:', cliente.id);
+    console.log('Ambiente:', process.env.NODE_ENV);
+
     // Retornar token em cookie
     const response = NextResponse.json(
       { success: true, cliente: { id: cliente.id, nome: cliente.nome, email: cliente.email } },
@@ -45,9 +48,11 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7 // 7 dias
+      maxAge: 60 * 60 * 24 * 7, // 7 dias
+      path: '/',
     });
 
+    console.log('Cookie definido com sucesso');
     return response;
   } catch (error) {
     console.error('Erro no login cliente:', error);
