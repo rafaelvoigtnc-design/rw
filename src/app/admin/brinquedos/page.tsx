@@ -158,12 +158,14 @@ export default function AdminBrinquedos() {
   };
 
   const handleEdit = (brinquedo: Brinquedo) => {
+    console.log('Editando brinquedo:', brinquedo);
+    console.log('Tema atual:', brinquedo.tema_layout);
     setEditando(brinquedo);
     setFormData({
       nome: brinquedo.nome,
       descricao: brinquedo.descricao,
       fotos: Array.isArray(brinquedo.fotos) ? brinquedo.fotos : [],
-      tema_layout: brinquedo.tema_layout,
+      tema_layout: brinquedo.tema_layout || 'classico_divertido',
       dimensoes: brinquedo.dimensoes,
       faixa_etaria: brinquedo.faixa_etaria,
       status: brinquedo.status,
