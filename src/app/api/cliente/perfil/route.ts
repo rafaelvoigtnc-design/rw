@@ -4,14 +4,20 @@ import { verifyToken } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('client_token')?.value;
+    const token = request.cookies.get('cliente_token')?.value;
+    console.log('Token recebido:', token ? token.substring(0, 50) + '...' : 'NENHUM');
+    
     if (!token) {
+      console.log('Token não encontrado no cookie');
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
     // Verificar token
     const payload = await verifyToken(token);
+    console.log('Payload do token:', payload);
+    
     if (!payload || payload.type !== 'client') {
+      console.log('Token inválido ou não é de cliente');
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
@@ -21,6 +27,8 @@ export async function GET(request: NextRequest) {
       .select('id, nome, telefone, email, endereco')
       .eq('id', payload.id)
       .single();
+
+    console.log('Cliente encontrado:', cliente ? cliente.nome : 'NÃO');
 
     if (error || !cliente) {
       return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 });

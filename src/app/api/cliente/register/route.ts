@@ -71,6 +71,8 @@ export async function POST(request: NextRequest) {
     // Criar token JWT
     const token = await createClientToken(cliente.id);
 
+    console.log('Token criado no registro:', token.substring(0, 50) + '...');
+
     // Retornar token em cookie
     const response = NextResponse.json(
       { success: true, cliente: { id: cliente.id, nome: cliente.nome, email: cliente.email } },
@@ -79,12 +81,13 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set('cliente_token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // Mudar para false para funcionar em desenvolvimento
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 dias
       path: '/',
     });
 
+    console.log('Cookie definido no registro');
     return response;
   } catch (error) {
     console.error('Erro no registro cliente:', error);
