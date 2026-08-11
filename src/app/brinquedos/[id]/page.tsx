@@ -252,6 +252,6 @@ export default function BrinquedoPage() {
         onClose={() => setIsAuthModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
       />
-    </div>
+    </BrinquedoThemeProvider>
   );
 }
