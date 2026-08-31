@@ -14,6 +14,8 @@ interface DashboardData {
   numeroLocacoes: number;
   numeroBrinquedos: number;
   brinquedosAtivos: number;
+  brinquedosIndisponiveis: number;
+  brinquedosManutencao: number;
   ticketMedio: number;
   dadosGrafico: Array<{
     mes: string;
@@ -239,9 +241,11 @@ export default function AdminDashboard() {
             <p className="text-2xl font-bold text-gray-800">
               {data.numeroBrinquedos}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {data.brinquedosAtivos} ativos
-            </p>
+            <div className="text-xs text-gray-500 mt-1 space-y-1">
+              <p>{data.brinquedosAtivos} disponíveis</p>
+              <p>{data.brinquedosIndisponiveis} indisponíveis</p>
+              <p>{data.brinquedosManutencao} em manutenção</p>
+            </div>
           </div>
 
           <div className="bg-white rounded-lg shadow p-6">

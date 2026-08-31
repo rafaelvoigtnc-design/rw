@@ -60,11 +60,22 @@ export async function GET(request: Request) {
       .from('brinquedo')
       .select('id, status');
 
-    console.log('Brinquedos:', brinquedos);
-    console.log('Erro brinquedos:', brinquedosError);
+    if (brinquedosError) {
+      console.error('Erro ao buscar brinquedos:', brinquedosError);
+    } else {
+      console.log('Brinquedos encontrados:', brinquedos?.length || 0);
+      console.log('Amostra de brinquedos:', brinquedos?.slice(0, 3));
+    }
 
     const numeroBrinquedos = brinquedos?.length || 0;
     const brinquedosAtivos = brinquedos?.filter(b => b.status === 'DISPONIVEL').length || 0;
+    const brinquedosIndisponiveis = brinquedos?.filter(b => b.status === 'INDISPONIVEL').length || 0;
+    const brinquedosManutencao = brinquedos?.filter(b => b.status === 'MANUTENCAO').length || 0;
+
+    console.log('Total de brinquedos:', numeroBrinquedos);
+    console.log('Brinquedos ativos (DISPONIVEL):', brinquedosAtivos);
+    console.log('Brinquedos indisponíveis:', brinquedosIndisponiveis);
+    console.log('Brinquedos em manutenção:', brinquedosManutencao);
 
     // Dados para gráfico de evolução mensal (últimos 12 meses)
     const dadosGrafico = [];
@@ -144,6 +155,8 @@ export async function GET(request: Request) {
       numeroLocacoes,
       numeroBrinquedos,
       brinquedosAtivos,
+      brinquedosIndisponiveis,
+      brinquedosManutencao,
       ticketMedio,
       dadosGrafico,
       comparativo,
