@@ -8,7 +8,7 @@ interface Promocao {
   titulo: string;
   descricao: string;
   data_inicio: string;
-  data_fim: string;
+  data_fim: string | null;
   ativa: boolean;
 }
 
@@ -24,6 +24,7 @@ export default function AdminPromocoes() {
     data_inicio: '',
     data_fim: '',
     ativa: false,
+    tempo_indeterminado: false,
   });
 
   useEffect(() => {
@@ -45,13 +46,18 @@ export default function AdminPromocoes() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const dataToSend = {
+        ...formData,
+        data_fim: formData.tempo_indeterminado ? null : formData.data_fim,
+      };
+      
       const url = editando ? `/api/admin/promocoes/${editando.id}` : '/api/admin/promocoes';
       const method = editando ? 'PUT' : 'POST';
       
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dataToSend),
       });
 
       if (response.ok) {
@@ -63,6 +69,7 @@ export default function AdminPromocoes() {
           data_inicio: '',
           data_fim: '',
           ativa: false,
+          tempo_indeterminado: false,
         });
         fetchData();
       }
@@ -76,9 +83,10 @@ export default function AdminPromocoes() {
     setFormData({
       titulo: promocao.titulo,
       descricao: promocao.descricao,
-      data_inicio: promocao.data_inicio.split('T')[0],
-      data_fim: promocao.data_fim.split('T')[0],
+      data_inicio: promocao.data_inicio ? promocao.data_inicio.split('T')[0] : '',
+      data_fim: promocao.data_fim ? promocao.data_fim.split('T')[0] : '',
       ativa: promocao.ativa,
+      tempo_indeterminado: !promocao.data_fim,
     });
     setMostrarFormulario(true);
   };
@@ -145,6 +153,7 @@ export default function AdminPromocoes() {
                 data_inicio: '',
                 data_fim: '',
                 ativa: false,
+                tempo_indeterminado: false,
               });
               setMostrarFormulario(true);
             }}
@@ -194,16 +203,31 @@ export default function AdminPromocoes() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
-                  <input
-                    type="date"
-                    value={formData.data_fim}
-                    onChange={(e) => setFormData({ ...formData, data_fim: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                    required
-                  />
-                </div>
+                {!formData.tempo_indeterminado && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Data Fim</label>
+                    <input
+                      type="date"
+                      value={formData.data_fim}
+                      onChange={(e) => setFormData({ ...formData, data_fim: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                      required={!formData.tempo_indeterminado}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="tempo_indeterminado"
+                  checked={formData.tempo_indeterminado}
+                  onChange={(e) => setFormData({ ...formData, tempo_indeterminado: e.target.checked })}
+                  className="mr-2"
+                />
+                <label htmlFor="tempo_indeterminado" className="text-sm font-medium text-gray-700">
+                  Tempo indeterminado (promoção ativa até ser desativada)
+                </label>
               </div>
 
               <div className="flex items-center">

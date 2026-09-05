@@ -1,15 +1,16 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Package, 
-  Calendar, 
-  Users, 
-  DollarSign, 
-  Star, 
-  Tag, 
-  FileText, 
+import { useState, useEffect } from 'react';
+import {
+  LayoutDashboard,
+  Package,
+  Calendar,
+  Users,
+  DollarSign,
+  Star,
+  Tag,
+  FileText,
   LogOut,
   TrendingUp,
   ShoppingCart,
@@ -20,6 +21,31 @@ import {
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const [stats, setStats] = useState({
+    brinquedos: 0,
+    locacoes: 0,
+    clientes: 0,
+    faturamento: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/admin/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar estatísticas:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await fetch('/api/admin/logout', { method: 'POST' });
@@ -143,28 +169,33 @@ export default function AdminDashboard() {
 
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-4 md:py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-2 md:gap-4 lg:gap-6 mb-6 md:mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6 mb-4 md:mb-8">
           {[
-            { label: 'Brinquedos', value: '0', icon: Package, color: 'bg-primary-blue-500' },
-            { label: 'Locações', value: '0', icon: ShoppingCart, color: 'bg-primary-green-500' },
-            { label: 'Clientes', value: '0', icon: Users, color: 'bg-primary-orange-500' },
-            { label: 'Faturamento', value: '0,00', prefix: 'R$', icon: TrendingUp, color: 'bg-primary-yellow-500' },
-          ].map((stat, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6"
-            >
-              <div className="flex items-center justify-between mb-2 md:mb-4">
-                <div className={`w-8 h-8 md:w-12 md:h-12 ${stat.color} rounded-lg md:rounded-xl flex items-center justify-center`}>
-                  <stat.icon className="w-4 h-4 md:w-6 md:h-6 text-white" />
+            { label: 'Brinquedos', value: loading ? '...' : stats.brinquedos, icon: Package, color: 'bg-primary-blue-500' },
+            { label: 'Locações', value: loading ? '...' : stats.locacoes, icon: ShoppingCart, color: 'bg-primary-green-500' },
+            { label: 'Clientes', value: loading ? '...' : stats.clientes, icon: Users, color: 'bg-primary-orange-500' },
+            { label: 'Faturamento', value: loading ? '...' : stats.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), prefix: 'R$', icon: TrendingUp, color: 'bg-primary-yellow-500' },
+          ].map((stat, index) => {
+            const displayValue = loading ? '...' : (stat.prefix ? `${stat.prefix} ${stat.value}` : stat.value);
+            return (
+              <div
+                key={index}
+                className="bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6"
+              >
+                <div className="flex items-center justify-between mb-2 md:mb-4">
+                  <div className={`w-8 h-8 md:w-12 md:h-12 ${stat.color} rounded-lg md:rounded-xl flex items-center justify-center`}>
+                    <stat.icon className="w-4 h-4 md:w-6 md:h-6 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] md:text-2xl font-bold text-secondary-gray-900 block">
+                      {displayValue}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] md:text-2xl font-bold text-secondary-gray-900 block">{stat.prefix}{stat.value}</span>
-                </div>
+                <p className="text-[8px] md:text-base text-secondary-gray-600 font-medium">{stat.label}</p>
               </div>
-              <p className="text-[8px] md:text-base text-secondary-gray-600 font-medium">{stat.label}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Menu Grid */}
@@ -197,9 +228,9 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-8 bg-white rounded-2xl shadow-soft p-4 md:p-6">
-          <h2 className="text-lg md:text-xl font-bold text-secondary-gray-900 mb-3 md:mb-4">Ações Rápidas</h2>
-          <div className="flex gap-2 md:gap-4 overflow-x-auto">
+        <div className="mt-6 md:mt-8 bg-white rounded-xl md:rounded-2xl shadow-soft p-4 md:p-6">
+          <h2 className="text-base md:text-xl font-bold text-secondary-gray-900 mb-3 md:mb-4">Ações Rápidas</h2>
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-4 overflow-x-auto">
             <button
               onClick={() => router.push('/admin/brinquedos')}
               className="px-3 py-2 md:px-6 md:py-3 bg-primary-green-500 text-white rounded-lg md:rounded-xl text-xs md:text-base font-medium hover:bg-primary-green-600 transition-colors hover:scale-105 transition-transform flex-shrink-0"

@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getClientByEmail, createClientRecord } from '@/lib/supabase';
-import { hashPassword, createClientToken } from '@/lib/auth';
+import { setDoc, doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export async function POST(request: NextRequest) {
   try {
-    const { nome, telefone, email, senha, endereco } = await request.json();
+    const { uid, nome, telefone, email, endereco, cidade } = await request.json();
 
-    console.log('Dados de registro:', { nome, telefone, email, endereco });
+    console.log('Dados de registro recebidos:', { uid, nome, telefone, email, endereco, cidade });
 
     // Validação
-    if (!nome || !telefone || !email || !senha || !endereco) {
+    if (!uid || !nome || !telefone || !email || !endereco || !cidade) {
+      console.log('Validação falhou - campos faltando');
       return NextResponse.json(
         { error: 'Todos os campos são obrigatórios' },
         { status: 400 }
@@ -19,59 +20,45 @@ export async function POST(request: NextRequest) {
     // Limpar telefone
     const telefoneLimpo = telefone.replace(/\D/g, '');
     if (telefoneLimpo.length !== 11) {
+      console.log('Validação falhou - telefone inválido');
       return NextResponse.json(
         { error: 'O telefone deve ter exatamente 11 dígitos' },
         { status: 400 }
       );
     }
 
-    // Verificar se email já existe
-    const existingClient = await getClientByEmail(email);
-    if (existingClient) {
+    // Verificar se usuário já existe
+    const existingDoc = await getDoc(doc(db, 'clientes', uid));
+    if (existingDoc.exists()) {
+      console.log('Usuário já existe no Firestore');
       return NextResponse.json(
-        { error: 'Email já cadastrado' },
+        { error: 'Usuário já cadastrado' },
         { status: 400 }
       );
     }
 
-    // Hash da senha
-    const senha_hash = await hashPassword(senha);
-
-    // Criar cliente
-    const cliente = await createClientRecord({
-      id: crypto.randomUUID(),
+    // Salvar dados no Firestore
+    console.log('Salvando dados no Firestore...');
+    await setDoc(doc(db, 'clientes', uid), {
+      id: uid,
       nome,
       telefone: telefoneLimpo,
       email,
-      senha_hash,
       endereco,
-      criado_em: new Date().toISOString(),
+      cidade,
+      criado_em: new Date().toISOString()
     });
 
-    // Criar token
-    const token = await createClientToken(cliente.id);
+    console.log('Registro bem-sucedido no Firestore:', email);
 
-    console.log('Registro bem-sucedido:', cliente.email);
-
-    // Retornar token em cookie
-    const response = NextResponse.json(
-      { success: true, cliente: { id: cliente.id, nome: cliente.nome, email: cliente.email } },
+    return NextResponse.json(
+      { success: true },
       { status: 201 }
     );
-
-    response.cookies.set('cliente_token', token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-    });
-
-    return response;
   } catch (error) {
     console.error('Erro no registro cliente:', error);
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor: ' + (error instanceof Error ? error.message : String(error)) },
       { status: 500 }
     );
   }

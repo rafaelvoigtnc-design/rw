@@ -116,6 +116,7 @@ export default function Promocoes() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {promocoes.map((promocao, index) => {
               const countdown = countdowns[promocao.id];
+              const isIndeterminada = !promocao.data_fim;
               return (
                 <div
                   key={promocao.id}
@@ -138,7 +139,7 @@ export default function Promocoes() {
                         </div>
 
                         {/* Countdown */}
-                        {countdown && (
+                        {!isIndeterminada && countdown && (
                           <div className="flex gap-3 mt-6">
                             <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
                               <div className="text-2xl font-bold text-white">{countdown.days}</div>
@@ -158,6 +159,14 @@ export default function Promocoes() {
                             </div>
                           </div>
                         )}
+                        
+                        {isIndeterminada && (
+                          <div className="mt-6">
+                            <span className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg text-white font-semibold">
+                              ⏰ Promoção por tempo indeterminado
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -171,7 +180,8 @@ export default function Promocoes() {
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4" />
                           <span>
-                            De {formatarData(promocao.data_inicio)} até {formatarData(promocao.data_fim)}
+                            Desde {formatarData(promocao.data_inicio)}
+                            {!isIndeterminada && ` até ${formatarData(promocao.data_fim)}`}
                           </span>
                         </div>
                       </div>

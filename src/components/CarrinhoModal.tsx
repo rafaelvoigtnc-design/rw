@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { User } from 'lucide-react';
 
 interface CarrinhoItem {
   id: string;
@@ -18,9 +20,12 @@ interface CarrinhoItem {
 interface CarrinhoModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onUpdateCartCount?: (count: number) => void;
+  onCartUpdated?: () => void;
 }
 
-export default function CarrinhoModal({ isOpen, onClose }: CarrinhoModalProps) {
+export default function CarrinhoModal({ isOpen, onClose, onUpdateCartCount, onCartUpdated }: CarrinhoModalProps) {
+  const { getToken, userData } = useAuth();
   const [itens, setItens] = useState<CarrinhoItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [dataInteresse, setDataInteresse] = useState('');
@@ -34,10 +39,19 @@ export default function CarrinhoModal({ isOpen, onClose }: CarrinhoModalProps) {
   const fetchCarrinho = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/carrinho');
+      const token = await getToken();
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('/api/carrinho', { headers });
       if (response.ok) {
         const data = await response.json();
         setItens(data);
+        if (onUpdateCartCount) {
+          onUpdateCartCount(data.length);
+        }
       }
     } catch (error) {
       console.error('Erro ao buscar carrinho:', error);
@@ -48,11 +62,21 @@ export default function CarrinhoModal({ isOpen, onClose }: CarrinhoModalProps) {
 
   const removerItem = async (itemId: string) => {
     try {
+      const token = await getToken();
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`/api/carrinho/${itemId}`, {
         method: 'DELETE',
+        headers,
       });
       if (response.ok) {
         fetchCarrinho();
+        if (onCartUpdated) {
+          onCartUpdated();
+        }
       }
     } catch (error) {
       console.error('Erro ao remover item:', error);
@@ -62,15 +86,12 @@ export default function CarrinhoModal({ isOpen, onClose }: CarrinhoModalProps) {
   const finalizarCarrinho = () => {
     if (itens.length === 0) return;
 
-    let mensagem = `Olá! Gostaria de fazer uma locação com os seguintes brinquedos:\n\n`;
+    let mensagem = `Olá! Gostaria de fazer um orçamento para locação com os seguintes brinquedos:\n\n`;
     
     itens.forEach((item, index) => {
       mensagem += `${index + 1}. ${item.brinquedo.nome}`;
       if (item.data_interesse) {
-        mensagem += `\n   Data: ${new Date(item.data_interesse).toLocaleDateString('pt-BR')}`;
-      }
-      if (item.horario_inicio && item.horario_fim) {
-        mensagem += `\n   Horário: ${item.horario_inicio} às ${item.horario_fim}`;
+        mensagem += `\n   Data de interesse: ${new Date(item.data_interesse).toLocaleDateString('pt-BR')}`;
       }
       mensagem += '\n';
     });
@@ -79,7 +100,15 @@ export default function CarrinhoModal({ isOpen, onClose }: CarrinhoModalProps) {
       mensagem += `\nData de interesse geral: ${dataInteresse}`;
     }
     
-    mensagem += '\n\nAguardo retorno!';
+    if (userData?.nome) {
+      mensagem += `\n\nMeu nome: ${userData.nome}`;
+    }
+    
+    if (userData?.telefone) {
+      mensagem += `\nTelefone: ${userData.telefone}`;
+    }
+    
+    mensagem += '\n\nAguardo retorno para finalizar a locação!';
 
     const mensagemCodificada = encodeURIComponent(mensagem);
     window.open(`https://wa.me/5555997302463?text=${mensagemCodificada}`, '_blank');

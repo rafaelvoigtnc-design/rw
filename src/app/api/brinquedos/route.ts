@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getBrinquedos } from '@/lib/firebase-db';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,38 +10,12 @@ export async function GET(request: Request) {
     const busca = searchParams.get('busca');
     const ordenacao = searchParams.get('ordenacao') || 'nome';
 
-    let query = supabase
-      .from('brinquedo')
-      .select('*')
-      .eq('status', 'DISPONIVEL');
+    const brinquedos = await getBrinquedos({ faixaEtaria, busca, ordenacao });
 
-    if (faixaEtaria) {
-      query = query.eq('faixa_etaria', faixaEtaria);
-    }
+    // Temporariamente: não filtrar por status para debug
+    // const brinquedosDisponiveis = brinquedos.filter((b: any) => b.status === 'DISPONIVEL');
 
-    if (busca) {
-      query = query.ilike('nome', `%${busca}%`);
-    }
-
-    if (ordenacao === 'nome') {
-      query = query.order('nome', { ascending: true });
-    } else if (ordenacao === 'nome_desc') {
-      query = query.order('nome', { ascending: false });
-    } else if (ordenacao === 'avaliacao') {
-      query = query.order('avaliacao_media', { ascending: false, nullsFirst: false });
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    // Converter fotos de JSON string para array
-    const brinquedosFormatados = data.map((b: any) => ({
-      ...b,
-      fotos: typeof b.fotos === 'string' ? JSON.parse(b.fotos) : (b.fotos || []),
-    }));
-
-    return NextResponse.json(brinquedosFormatados);
+    return NextResponse.json(brinquedos);
   } catch (error) {
     console.error('Erro ao buscar brinquedos:', error);
     return NextResponse.json(

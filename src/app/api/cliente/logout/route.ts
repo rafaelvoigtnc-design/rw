@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export async function POST(request: NextRequest) {
-  const response = NextResponse.json({ success: true });
+  try {
+    await signOut(auth);
 
-  // Remover cookie de sessão
-  response.cookies.delete('cliente_token', { path: '/' });
-
-  return response;
+    const response = NextResponse.json({ success: true });
+    
+    // Limpar cookies antigos se existirem
+    response.cookies.delete('cliente_token');
+    
+    return response;
+  } catch (error) {
+    console.error('Erro no logout:', error);
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    );
+  }
 }

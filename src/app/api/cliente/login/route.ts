@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getClientByEmail } from '@/lib/supabase';
-import { verifyPassword, createClientToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,45 +13,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar cliente
-    const cliente = await getClientByEmail(email);
-
-    if (!cliente) {
-      return NextResponse.json(
-        { error: 'Credenciais inválidas' },
-        { status: 401 }
-      );
-    }
-
-    // Verificar senha
-    const isValid = await verifyPassword(senha, cliente.senha_hash);
-    if (!isValid) {
-      return NextResponse.json(
-        { error: 'Credenciais inválidas' },
-        { status: 401 }
-      );
-    }
-
-    // Criar token
-    const token = await createClientToken(cliente.id);
-
-    console.log('Login bem-sucedido:', cliente.email);
-
-    // Retornar token em cookie
-    const response = NextResponse.json(
-      { success: true, cliente: { id: cliente.id, nome: cliente.nome, email: cliente.email } },
-      { status: 200 }
+    // O login é feito diretamente no cliente usando Firebase Auth
+    // Esta API route não é mais necessária para o login
+    return NextResponse.json(
+      { error: 'Use Firebase Auth diretamente no cliente' },
+      { status: 400 }
     );
-
-    response.cookies.set('cliente_token', token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-    });
-
-    return response;
   } catch (error) {
     console.error('Erro no login cliente:', error);
     return NextResponse.json(

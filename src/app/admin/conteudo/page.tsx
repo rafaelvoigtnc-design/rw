@@ -22,6 +22,7 @@ export default function AdminConteudo() {
   const [editando, setEditando] = useState<{ id: string; valor: string; tipo: string } | null>(null);
   const [showImageEditor, setShowImageEditor] = useState(false);
   const [editingImage, setEditingImage] = useState('');
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -60,26 +61,40 @@ export default function AdminConteudo() {
 
   const handleSalvar = async (id: string, valor: string) => {
     try {
-      const conteudo = conteudos.find(c => c.id === id);
-      if (!conteudo) return;
+      // Se o ID for igual a uma chave (campo não salvo ainda), precisamos criar novo
+      const conteudoExistente = conteudos.find(c => c.id === id);
+      const campoDefinido = camposPorPagina[paginaSelecionada]?.find(c => c.chave === id);
+
+      // Criar FormData para enviar arquivo
+      const formData = new FormData();
+      formData.append('pagina', paginaSelecionada);
+      formData.append('chave', campoDefinido?.chave || conteudoExistente?.chave);
+      formData.append('valor', valor);
+      formData.append('tipo', campoDefinido?.tipo || conteudoExistente?.tipo);
+
+      // Se houver arquivo, enviar
+      if (uploadFile && (conteudoExistente?.tipo === 'imagem' || campoDefinido?.tipo === 'imagem')) {
+        formData.append('arquivo', uploadFile);
+      }
 
       const response = await fetch('/api/admin/conteudo', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pagina: conteudo.pagina,
-          chave: conteudo.chave,
-          valor,
-          tipo: conteudo.tipo,
-        }),
+        body: formData,
       });
+
+      const responseData = await response.json();
 
       if (response.ok) {
         setEditando(null);
+        setUploadFile(null);
         fetchData();
+        alert('Conteúdo salvo com sucesso!');
+      } else {
+        alert('Erro ao salvar: ' + (responseData.error || 'Erro desconhecido'));
       }
     } catch (error) {
       console.error('Erro ao salvar conteúdo:', error);
+      alert('Erro ao salvar conteúdo: ' + error);
     }
   };
 
@@ -92,31 +107,35 @@ export default function AdminConteudo() {
     { value: 'depoimentos', label: 'Depoimentos' },
   ];
 
-  const adicionarConteudo = async () => {
-    const novaChave = prompt('Digite a chave do novo conteúdo (ex: foto_equipe):');
-    if (!novaChave) return;
-
-    const novoTipo = prompt('Digite o tipo (texto ou imagem):', 'texto');
-    if (!novoTipo) return;
-
-    try {
-      const response = await fetch('/api/admin/conteudo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pagina: paginaSelecionada,
-          chave: novaChave,
-          valor: '',
-          tipo: novoTipo,
-        }),
-      });
-
-      if (response.ok) {
-        fetchData();
-      }
-    } catch (error) {
-      console.error('Erro ao adicionar conteúdo:', error);
-    }
+  const camposPorPagina: Record<string, Array<{ chave: string; label: string; tipo: string; tamanho?: string }>> = {
+    home: [
+      { chave: 'foto_equipe', label: 'Foto da Equipe', tipo: 'imagem', tamanho: '1920x1080 (landscape)' },
+      { chave: 'titulo_hero', label: 'Título do Hero', tipo: 'texto' },
+      { chave: 'subtitulo_hero', label: 'Subtítulo do Hero', tipo: 'texto' },
+    ],
+    sobre: [
+      { chave: 'foto_equipe', label: 'Foto da Equipe', tipo: 'imagem', tamanho: '1920x1080 (landscape)' },
+      { chave: 'texto_historia', label: 'Texto de Nossa História', tipo: 'texto' },
+      { chave: 'texto_missao', label: 'Texto de Nossa Missão', tipo: 'texto' },
+      { chave: 'texto_visao', label: 'Texto de Nossa Visão', tipo: 'texto' },
+    ],
+    catalogo: [
+      { chave: 'titulo_catalogo', label: 'Título do Catálogo', tipo: 'texto' },
+      { chave: 'subtitulo_catalogo', label: 'Subtítulo do Catálogo', tipo: 'texto' },
+    ],
+    contato: [
+      { chave: 'telefone', label: 'Telefone de Contato', tipo: 'texto' },
+      { chave: 'email', label: 'Email de Contato', tipo: 'texto' },
+      { chave: 'whatsapp', label: 'WhatsApp', tipo: 'texto' },
+    ],
+    promocoes: [
+      { chave: 'banner_promocoes', label: 'Banner de Promoções', tipo: 'imagem', tamanho: '1920x600 (banner)' },
+      { chave: 'titulo_promocoes', label: 'Título de Promoções', tipo: 'texto' },
+    ],
+    depoimentos: [
+      { chave: 'titulo_depoimentos', label: 'Título de Depoimentos', tipo: 'texto' },
+      { chave: 'subtitulo_depoimentos', label: 'Subtítulo de Depoimentos', tipo: 'texto' },
+    ],
   };
 
   if (loading) {
@@ -159,217 +178,169 @@ export default function AdminConteudo() {
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold capitalize">
-              Editar Conteúdo - {paginaSelecionada}
-            </h2>
-            <button
-              onClick={adicionarConteudo}
-              className="px-4 py-2 bg-primary-green-500 text-white rounded-lg hover:bg-primary-green-600 transition-colors"
-            >
-              + Adicionar Conteúdo
-            </button>
-          </div>
+          <h2 className="text-xl font-semibold capitalize mb-4">
+            Editar Conteúdo - {paginaSelecionada}
+          </h2>
 
-          {conteudos.length === 0 ? (
-            <p className="text-gray-500">Nenhum conteúdo configurado para esta página.</p>
+          {camposPorPagina[paginaSelecionada]?.length === 0 ? (
+            <p className="text-gray-500">Nenhum campo configurado para esta página.</p>
           ) : (
             <div className="space-y-6">
-              {conteudos.map((conteudo) => (
-                <div key={conteudo.id} className="border-b pb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {conteudo.chave.replace(/_/g, ' ').toUpperCase()}
-                  </label>
-                  
-                  {editando?.id === conteudo.id ? (
-                    <div className="space-y-2">
-                      {conteudo.tipo === 'texto' ? (
-                        <textarea
-                          value={editando.valor}
-                          onChange={(e) => setEditando({ id: conteudo.id, valor: e.target.value, tipo: conteudo.tipo })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                          rows={3}
-                        />
-                      ) : conteudo.tipo === 'imagem' ? (
-                        <div className="space-y-2">
+              {camposPorPagina[paginaSelecionada].map((campo) => {
+                const conteudoExistente = conteudos.find(c => c.chave === campo.chave);
+                return (
+                  <div key={campo.chave} className="border-b pb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {campo.label}
+                      {campo.tamanho && (
+                        <span className="text-xs text-gray-500 ml-2">
+                          (Tamanho recomendado: {campo.tamanho})
+                        </span>
+                      )}
+                    </label>
+
+                    {editando?.id === (conteudoExistente?.id || campo.chave) ? (
+                      <div className="space-y-2">
+                        {campo.tipo === 'texto' ? (
+                          <textarea
+                            value={editando?.valor || ''}
+                            onChange={(e) => {
+                              if (editando) {
+                                setEditando({ id: editando.id, valor: e.target.value, tipo: campo.tipo });
+                              }
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                            rows={3}
+                          />
+                        ) : campo.tipo === 'imagem' ? (
+                          <div className="space-y-2">
+                            <div className="mb-2">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Carregar imagem do PC
+                              </label>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file && editando) {
+                                    setUploadFile(file);
+                                    // Mostrar preview
+                                    const reader = new FileReader();
+                                    reader.onload = (e) => {
+                                      setEditando({ id: editando.id, valor: e.target?.result as string, tipo: campo.tipo });
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                              />
+                            </div>
+                            <div className="mb-2">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Ou colar URL da imagem
+                              </label>
+                              <input
+                                type="text"
+                                value={editando?.valor || ''}
+                                onChange={(e) => {
+                                  if (editando) {
+                                    setEditando({ id: editando.id, valor: e.target.value, tipo: campo.tipo });
+                                    setUploadFile(null);
+                                  }
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                                placeholder="https://exemplo.com/imagem.jpg"
+                              />
+                            </div>
+                            {editando?.valor && (
+                              <div className="mb-2">
+                                <img
+                                  src={editando.valor}
+                                  alt="Preview"
+                                  className="w-32 h-32 object-cover rounded"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        ) : (
                           <input
                             type="text"
-                            value={editando.valor}
-                            onChange={(e) => setEditando({ id: conteudo.id, valor: e.target.value, tipo: conteudo.tipo })}
+                            value={editando?.valor || ''}
+                            onChange={(e) => {
+                              if (editando) {
+                                setEditando({ id: editando.id, valor: e.target.value, tipo: campo.tipo });
+                              }
+                            }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                            placeholder="URL da imagem"
                           />
-                          {editando.valor && (
-                            <button
-                              onClick={() => {
-                                setEditingImage(editando.valor);
-                                setShowImageEditor(true);
-                              }}
-                              className="text-sm text-primary-blue-600 hover:text-primary-blue-700"
-                            >
-                              Editar imagem
-                            </button>
-                          )}
+                        )}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              if (editando) {
+                                handleSalvar(editando.id, editando.valor);
+                              }
+                            }}
+                            className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700"
+                          >
+                            Salvar
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditando(null);
+                            }}
+                            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                          >
+                            Cancelar
+                          </button>
                         </div>
-                      ) : conteudo.tipo === 'icone' ? (
-                        <IconPicker
-                          onSelect={(iconName) => setEditando({ id: conteudo.id, valor: iconName, tipo: conteudo.tipo })}
-                          selectedIcon={editando.valor}
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          value={editando.valor}
-                          onChange={(e) => setEditando({ id: conteudo.id, valor: e.target.value, tipo: conteudo.tipo })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                        />
-                      )}
-                      <div className="flex gap-2">
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {campo.tipo === 'texto' ? (
+                          <p className="text-gray-700 whitespace-pre-wrap">{conteudoExistente?.valor || 'Não configurado'}</p>
+                        ) : campo.tipo === 'imagem' ? (
+                          <div className="flex items-center gap-2">
+                            {conteudoExistente?.valor ? (
+                              <img
+                                src={conteudoExistente.valor}
+                                alt={campo.label}
+                                className="w-32 h-32 object-cover rounded"
+                              />
+                            ) : (
+                              <span className="text-gray-400">Sem imagem</span>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-gray-700">{conteudoExistente?.valor || 'Não configurado'}</p>
+                        )}
                         <button
-                          onClick={() => handleSalvar(conteudo.id, editando.valor)}
-                          className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700"
+                          onClick={() => {
+                            setEditando({
+                              id: conteudoExistente?.id || campo.chave,
+                              valor: conteudoExistente?.valor || '',
+                              tipo: campo.tipo
+                            });
+                          }}
+                          className="text-emerald-600 hover:text-emerald-800 text-sm"
                         >
-                          Salvar
-                        </button>
-                        <button
-                          onClick={() => setEditando(null)}
-                          className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
-                        >
-                          Cancelar
+                          Editar
                         </button>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {conteudo.tipo === 'texto' ? (
-                        <p className="text-gray-700 whitespace-pre-wrap">{conteudo.valor}</p>
-                      ) : conteudo.tipo === 'imagem' ? (
-                        <div className="flex items-center gap-2">
-                          {conteudo.valor ? (
-                            <img
-                              src={conteudo.valor}
-                              alt={conteudo.chave}
-                              className="w-32 h-32 object-cover rounded"
-                            />
-                          ) : (
-                            <span className="text-gray-400">Sem imagem</span>
-                          )}
-                          <p className="text-gray-700 text-sm">{conteudo.valor}</p>
-                        </div>
-                      ) : conteudo.tipo === 'icone' ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-700">{conteudo.valor}</span>
-                          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">Ícone</span>
-                        </div>
-                      ) : (
-                        <p className="text-gray-700">{conteudo.valor}</p>
-                      )}
-                      <button
-                        onClick={() => setEditando({ id: conteudo.id, valor: conteudo.valor, tipo: conteudo.tipo })}
-                        className="text-emerald-600 hover:text-emerald-800 text-sm"
-                      >
-                        Editar
-                      </button>
-                    </div>
-                  )}
-                  
-                  <p className="text-xs text-gray-400 mt-1">
-                    Última atualização: {new Date(conteudo.atualizado_em).toLocaleString('pt-BR')}
-                  </p>
-                </div>
-              ))}
+                    )}
+
+                    {conteudoExistente && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Última atualização: {new Date(conteudoExistente.atualizado_em).toLocaleString('pt-BR')}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
-
-        <div className="mt-6 bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Adicionar Novo Conteúdo</h3>
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              const formData = new FormData(e.target as HTMLFormElement);
-              const chave = formData.get('chave') as string;
-              const valor = formData.get('valor') as string;
-              const tipo = formData.get('tipo') as string;
-
-              try {
-                const response = await fetch('/api/admin/conteudo', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    pagina: paginaSelecionada,
-                    chave,
-                    valor,
-                    tipo,
-                  }),
-                });
-
-                if (response.ok) {
-                  (e.target as HTMLFormElement).reset();
-                  fetchData();
-                }
-              } catch (error) {
-                console.error('Erro ao adicionar conteúdo:', error);
-              }
-            }}
-            className="space-y-4"
-          >
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Chave</label>
-                <input
-                  type="text"
-                  name="chave"
-                  placeholder="ex: titulo_hero"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                <select
-                  name="tipo"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                >
-                  <option value="texto">Texto</option>
-                  <option value="imagem">Imagem (URL)</option>
-                  <option value="icone">Ícone (lucide-react)</option>
-                  <option value="numero">Número</option>
-                  <option value="cor">Cor (classe Tailwind)</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Valor</label>
-              <input
-                type="text"
-                name="valor"
-                placeholder="Conteúdo..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700"
-            >
-              Adicionar
-            </button>
-          </form>
-        </div>
-
-        {showImageEditor && (
-          <ImageEditor
-            imageUrl={editingImage}
-            onSave={(croppedImageUrl) => {
-              if (editando) {
-                setEditando({ ...editando, valor: croppedImageUrl });
-              }
-              setShowImageEditor(false);
-            }}
-            onCancel={() => setShowImageEditor(false)}
-          />
-        )}
       </div>
     </div>
   );

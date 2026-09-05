@@ -1,20 +1,23 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getDocs, collection, query, where, addDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { writeFile, mkdir } from 'fs/promises';
+import { existsSync } from 'fs';
+import path from 'path';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const pagina = searchParams.get('pagina');
 
-    let query = supabaseAdmin.from('conteudo_pagina').select('*');
-    
+    let q = collection(db, 'conteudo_pagina');
+
     if (pagina) {
-      query = query.eq('pagina', pagina);
+      q = query(q, where('pagina', '==', pagina));
     }
 
-    const { data, error } = await query.order('pagina').order('chave');
-
-    if (error) throw error;
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     return NextResponse.json(data);
   } catch (error) {
@@ -28,49 +31,76 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { pagina, chave, valor, tipo } = await request.json();
+    const formData = await request.formData();
+    const pagina = formData.get('pagina') as string;
+    const chave = formData.get('chave') as string;
+    const valor = formData.get('valor') as string;
+    const tipo = formData.get('tipo') as string;
+    const arquivo = formData.get('arquivo') as File | null;
 
-    // Verificar se já existe
-    const { data: existente } = await supabaseAdmin
-      .from('conteudo_pagina')
-      .select('*')
-      .eq('pagina', pagina)
-      .eq('chave', chave)
-      .single();
+    let finalValor = valor;
 
-    if (existente) {
-      // Atualizar existente
-      const { data, error } = await supabaseAdmin
-        .from('conteudo_pagina')
-        .update({ valor, tipo, atualizado_em: new Date().toISOString() })
-        .eq('id', existente.id)
-        .select()
-        .single();
+    // Se for upload de arquivo, salvar no servidor local
+    if (arquivo && tipo === 'imagem') {
+      const bytes = await arquivo.arrayBuffer();
+      const buffer = Buffer.from(bytes);
 
-      if (error) throw error;
-      return NextResponse.json(data);
+      // Criar diretório de uploads se não existir
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'conteudo', pagina);
+      if (!existsSync(uploadDir)) {
+        await mkdir(uploadDir, { recursive: true });
+      }
+
+      // Gerar nome único do arquivo
+      const timestamp = Date.now();
+      const extensao = arquivo.name.split('.').pop();
+      const fileName = `${chave}_${timestamp}.${extensao}`;
+      const filePath = path.join(uploadDir, fileName);
+
+      // Salvar arquivo
+      await writeFile(filePath, buffer);
+
+      // Retornar URL relativa
+      finalValor = `/uploads/conteudo/${pagina}/${fileName}`;
+      console.log('Imagem salva no servidor:', finalValor);
     }
 
-    // Criar novo
-    const { data, error } = await supabaseAdmin
-      .from('conteudo_pagina')
-      .insert({
-        id: crypto.randomUUID(),
+    // Verificar se já existe um conteúdo com a mesma página e chave
+    const q = query(
+      collection(db, 'conteudo_pagina'),
+      where('pagina', '==', pagina),
+      where('chave', '==', chave)
+    );
+    const snapshot = await getDocs(q);
+
+    if (!snapshot.empty) {
+      // Atualizar existente
+      const docRef = doc(db, 'conteudo_pagina', snapshot.docs[0].id);
+      await updateDoc(docRef, {
+        valor: finalValor,
+        tipo,
+        atualizado_em: new Date().toISOString(),
+      });
+      const docSnap = await getDoc(docRef);
+      console.log('Conteúdo atualizado:', docSnap.id);
+      return NextResponse.json({ id: docRef.id, ...docSnap.data() });
+    } else {
+      // Criar novo
+      const docRef = await addDoc(collection(db, 'conteudo_pagina'), {
         pagina,
         chave,
-        valor,
-        tipo: tipo || 'texto',
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return NextResponse.json(data);
+        valor: finalValor,
+        tipo,
+        atualizado_em: new Date().toISOString(),
+      });
+      const docSnap = await getDoc(docRef);
+      console.log('Conteúdo criado:', docSnap.id);
+      return NextResponse.json({ id: docRef.id, ...docSnap.data() });
+    }
   } catch (error) {
     console.error('Erro ao salvar conteúdo:', error);
     return NextResponse.json(
-      { error: 'Erro ao salvar conteúdo' },
+      { error: 'Erro ao salvar conteúdo: ' + error },
       { status: 500 }
     );
   }

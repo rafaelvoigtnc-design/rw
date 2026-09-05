@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
+import { useAuth } from '@/contexts/AuthContext';
+import { ArrowLeft } from 'lucide-react';
 
 export default function ClientePerfil() {
   const router = useRouter();
+  const { user, loading, getToken } = useAuth();
   const [formData, setFormData] = useState({
     nome: '',
     telefone: '',
@@ -13,39 +15,84 @@ export default function ClientePerfil() {
     senha: '',
     confirmarSenha: '',
     endereco: '',
+    cidade: '',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar login via API
-    fetch('/api/cliente/perfil')
-      .then(res => {
-        if (!res.ok) {
-          router.push('/');
-          return null;
-        }
-        return res.json();
-      })
-      .then(data => {
-        if (data && data.error) {
-          setError(data.error);
-        } else if (data) {
-          setFormData({
-            nome: data.nome || '',
-            telefone: data.telefone || '',
-            email: data.email || '',
-            senha: '',
-            confirmarSenha: '',
-            endereco: data.endereco || '',
-          });
-        }
-      })
-      .catch(() => {
+    const loadUserData = async () => {
+      console.log('Perfil - Carregando dados, user:', !!user, 'loading:', loading);
+      
+      if (!loading && !user) {
+        console.log('Perfil - Não autenticado, redirecionando');
         router.push('/');
-      });
-  }, [router]);
+        return;
+      }
+
+      if (user) {
+        try {
+          const token = await getToken();
+          console.log('Perfil - Token obtido:', !!token);
+          
+          if (token) {
+            const response = await fetch('/api/cliente/perfil', {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            });
+            
+            console.log('Perfil - Resposta da API:', response.status);
+            
+            if (response.ok) {
+              const data = await response.json();
+              console.log('Perfil - Dados carregados:', data);
+              setFormData({
+                nome: data.nome || '',
+                telefone: data.telefone || '',
+                email: data.email || '',
+                senha: '',
+                confirmarSenha: '',
+                endereco: data.endereco || '',
+                cidade: data.cidade || '',
+              });
+              setPageLoading(false);
+            } else {
+              console.error('Perfil - Erro na API:', response.status);
+              setError('Erro ao carregar dados do perfil');
+              setPageLoading(false);
+            }
+          } else {
+            console.error('Perfil - Token não disponível');
+            setError('Erro de autenticação');
+            setPageLoading(false);
+          }
+        } catch (error) {
+          console.error('Perfil - Erro ao buscar dados:', error);
+          setError('Erro ao carregar dados do perfil');
+          setPageLoading(false);
+        }
+      } else {
+        setPageLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [user, loading, router, getToken]);
+
+  if (loading || pageLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Redirecionando no useEffect
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -56,45 +103,54 @@ export default function ClientePerfil() {
     if (cleaned.length === 0) return '';
     if (cleaned.length <= 2) return `(${cleaned}`;
     if (cleaned.length <= 7) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
-    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
   };
 
   const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, telefone: formatTelefone(e.target.value) });
+    const formatted = formatTelefone(e.target.value);
+    setFormData({ ...formData, telefone: formatted });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    setLoading(true);
+    setFormLoading(true);
 
     // Validar telefone
     const telefoneLimpo = formData.telefone.replace(/\D/g, '');
     if (telefoneLimpo.length !== 11) {
       setError('O telefone deve ter exatamente 11 dígitos');
-      setLoading(false);
+      setFormLoading(false);
       return;
     }
 
     // Validar senha se fornecida
     if (formData.senha && formData.senha.length < 6) {
       setError('A senha deve ter pelo menos 6 caracteres');
-      setLoading(false);
+      setFormLoading(false);
       return;
     }
 
     if (formData.senha && formData.senha !== formData.confirmarSenha) {
       setError('As senhas não coincidem');
-      setLoading(false);
+      setFormLoading(false);
       return;
     }
 
     try {
+      const token = await getToken();
+      if (!token) {
+        setError('Não autenticado');
+        setFormLoading(false);
+        return;
+      }
+
       const response = await fetch('/api/cliente/perfil', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           nome: formData.nome,
@@ -102,6 +158,7 @@ export default function ClientePerfil() {
           email: formData.email,
           senha: formData.senha || undefined,
           endereco: formData.endereco,
+          cidade: formData.cidade,
         }),
       });
 
@@ -115,20 +172,50 @@ export default function ClientePerfil() {
           senha: '',
           confirmarSenha: '',
         });
+        // Recarregar dados do usuário
+        const loadUserData = async () => {
+          const newToken = await getToken();
+          if (newToken) {
+            const userResponse = await fetch('/api/cliente/perfil', {
+              headers: {
+                'Authorization': `Bearer ${newToken}`,
+              },
+            });
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              setFormData({
+                ...formData,
+                nome: userData.nome || '',
+                telefone: userData.telefone || '',
+                email: userData.email || '',
+                endereco: userData.endereco || '',
+                cidade: userData.cidade || '',
+              });
+            }
+          }
+        };
+        loadUserData();
       } else {
         setError(data.error || 'Erro ao atualizar dados');
       }
     } catch (error) {
       setError('Erro ao conectar com o servidor');
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="max-w-2xl mx-auto px-4 py-16">
+      <div className="max-w-2xl mx-auto px-4 py-16 pt-24">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 transition-colors"
+        >
+          <ArrowLeft size={20} />
+          <span>Voltar</span>
+        </button>
+        
         <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Meu Perfil</h1>
@@ -174,6 +261,7 @@ export default function ClientePerfil() {
                 value={formData.telefone}
                 onChange={handleTelefoneChange}
                 placeholder="(00) 00000-0000"
+                maxLength={15}
                 required
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
               />
@@ -181,7 +269,7 @@ export default function ClientePerfil() {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
+                Email (para login)
               </label>
               <input
                 id="email"
@@ -192,6 +280,7 @@ export default function ClientePerfil() {
                 required
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
               />
+              <p className="text-xs text-gray-500 mt-1">Usado apenas para login. Use o telefone para contato.</p>
             </div>
 
             <div>
@@ -203,6 +292,21 @@ export default function ClientePerfil() {
                 name="endereco"
                 type="text"
                 value={formData.endereco}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="cidade" className="block text-sm font-medium text-gray-700 mb-2">
+                Cidade
+              </label>
+              <input
+                id="cidade"
+                name="cidade"
+                type="text"
+                value={formData.cidade}
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
@@ -248,10 +352,10 @@ export default function ClientePerfil() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={formLoading}
               className="w-full bg-blue-500 text-white py-3 rounded-xl font-semibold hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Salvando...' : 'Salvar Alterações'}
+              {formLoading ? 'Salvando...' : 'Salvar Alterações'}
             </button>
           </form>
         </div>

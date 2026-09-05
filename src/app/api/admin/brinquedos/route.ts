@@ -1,16 +1,10 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getAllBrinquedos, createBrinquedo } from '@/lib/firebase-db';
 
 export async function GET() {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('brinquedo')
-      .select('*')
-      .order('nome');
-
-    if (error) throw error;
-
-    return NextResponse.json(data);
+    const brinquedos = await getAllBrinquedos();
+    return NextResponse.json(brinquedos);
   } catch (error) {
     console.error('Erro ao buscar brinquedos:', error);
     return NextResponse.json(
@@ -32,7 +26,10 @@ export async function POST(request: Request) {
       fotos,
       dimensoes,
       faixa_etaria,
-      status
+      status,
+      categoria_id,
+      preco_periodo,
+      tema_layout
     } = body;
 
     // Validar campos obrigatórios
@@ -43,41 +40,26 @@ export async function POST(request: Request) {
       );
     }
 
-    // Converter fotos para JSON string se for array
-    const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
-
-    // Versão com todos os campos obrigatórios
+    // Dados para salvar no Firebase
     const brinquedoData = {
-      id: crypto.randomUUID(),
       nome: String(nome),
       descricao: String(descricao),
-      fotos: fotosParaSalvar,
-      tema_layout: 'classico_divertido',
+      fotos: Array.isArray(fotos) ? fotos : (fotos || []),
+      tema_layout: String(tema_layout || 'CLASSICO_DIVERTIDO'),
       dimensoes: String(dimensoes || ''),
       faixa_etaria: String(faixa_etaria || ''),
       status: String(status || 'DISPONIVEL'),
-      categoria_id: null,
-      preco_periodo: 0,
+      categoria_id: categoria_id || null,
+      preco_periodo: Number(preco_periodo) || 0,
+      mostrar_home: false,
     };
 
     console.log('Dados para inserir:', brinquedoData);
 
-    const { data, error } = await supabaseAdmin
-      .from('brinquedo')
-      .insert(brinquedoData)
-      .select();
-
-    if (error) {
-      console.error('Erro Supabase ao criar brinquedo:', error);
-      console.error('Detalhes completos do erro:', JSON.stringify(error, null, 2));
-      return NextResponse.json(
-        { error: 'Erro ao criar brinquedo no banco de dados', details: error.message, code: error.code },
-        { status: 500 }
-      );
-    }
+    const data = await createBrinquedo(brinquedoData);
 
     console.log('Brinquedo criado com sucesso:', data);
-    return NextResponse.json(data[0]);
+    return NextResponse.json({ id: data.id, ...brinquedoData });
   } catch (error) {
     console.error('Erro ao criar brinquedo:', error);
     return NextResponse.json(

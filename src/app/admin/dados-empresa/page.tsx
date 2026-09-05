@@ -38,9 +38,51 @@ export default function AdminDadosEmpresa() {
     try {
       const response = await fetch('/api/admin/dados-empresa');
       const data = await response.json();
-      setDados(data);
+      console.log('Dados recebidos:', data);
+      if (data) {
+        setDados(data);
+      } else {
+        // Criar objeto padrão se não houver dados
+        setDados({
+          id: '',
+          razao_social: '',
+          nome_fantasia: 'RW Brinquedos',
+          cnpj: '',
+          inscricao_estadual: '',
+          endereco: '',
+          numero: '',
+          complemento: '',
+          bairro: '',
+          cidade: '',
+          estado: '',
+          cep: '',
+          telefone: '',
+          email: '',
+          site: '',
+          observacoes: '',
+        });
+      }
     } catch (error) {
       console.error('Erro ao buscar dados da empresa:', error);
+      // Criar objeto padrão em caso de erro
+      setDados({
+        id: '',
+        razao_social: '',
+        nome_fantasia: 'RW Brinquedos',
+        cnpj: '',
+        inscricao_estadual: '',
+        endereco: '',
+        numero: '',
+        complemento: '',
+        bairro: '',
+        cidade: '',
+        estado: '',
+        cep: '',
+        telefone: '',
+        email: '',
+        site: '',
+        observacoes: '',
+      });
     } finally {
       setLoading(false);
     }
@@ -71,12 +113,50 @@ export default function AdminDadosEmpresa() {
     }
   };
 
+  const formatarCNPJ = (value: string) => {
+    // Remove todos os caracteres não numéricos
+    const apenasNumeros = value.replace(/\D/g, '');
+
+    // Aplica a máscara do CNPJ: 00.000.000/0001-00
+    if (apenasNumeros.length <= 2) {
+      return apenasNumeros;
+    } else if (apenasNumeros.length <= 5) {
+      return `${apenasNumeros.slice(0, 2)}.${apenasNumeros.slice(2)}`;
+    } else if (apenasNumeros.length <= 8) {
+      return `${apenasNumeros.slice(0, 2)}.${apenasNumeros.slice(2, 5)}.${apenasNumeros.slice(5)}`;
+    } else if (apenasNumeros.length <= 12) {
+      return `${apenasNumeros.slice(0, 2)}.${apenasNumeros.slice(2, 5)}.${apenasNumeros.slice(5, 8)}/${apenasNumeros.slice(8)}`;
+    } else {
+      return `${apenasNumeros.slice(0, 2)}.${apenasNumeros.slice(2, 5)}.${apenasNumeros.slice(5, 8)}/${apenasNumeros.slice(8, 12)}-${apenasNumeros.slice(12, 14)}`;
+    }
+  };
+
+  const formatarCEP = (value: string) => {
+    const apenasNumeros = value.replace(/\D/g, '');
+    if (apenasNumeros.length <= 5) {
+      return apenasNumeros;
+    } else {
+      return `${apenasNumeros.slice(0, 5)}-${apenasNumeros.slice(5, 8)}`;
+    }
+  };
+
+  const formatarTelefone = (value: string) => {
+    const apenasNumeros = value.replace(/\D/g, '');
+    if (apenasNumeros.length <= 2) {
+      return apenasNumeros;
+    } else if (apenasNumeros.length <= 7) {
+      return `(${apenasNumeros.slice(0, 2)}) ${apenasNumeros.slice(2)}`;
+    } else {
+      return `(${apenasNumeros.slice(0, 2)}) ${apenasNumeros.slice(2, 7)}-${apenasNumeros.slice(7, 11)}`;
+    }
+  };
+
   if (loading) {
     return <div className="p-8">Carregando...</div>;
   }
 
   if (!dados) {
-    return <div className="p-8">Nenhum dado encontrado</div>;
+    return <div className="p-8">Carregando dados...</div>;
   }
 
   return (
@@ -148,9 +228,10 @@ export default function AdminDadosEmpresa() {
                   <input
                     type="text"
                     value={dados.cnpj}
-                    onChange={(e) => setDados({ ...dados, cnpj: e.target.value })}
+                    onChange={(e) => setDados({ ...dados, cnpj: formatarCNPJ(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                     placeholder="00.000.000/0001-00"
+                    maxLength={18}
                     required
                   />
                 </div>
@@ -232,9 +313,10 @@ export default function AdminDadosEmpresa() {
                   <input
                     type="text"
                     value={dados.cep}
-                    onChange={(e) => setDados({ ...dados, cep: e.target.value })}
+                    onChange={(e) => setDados({ ...dados, cep: formatarCEP(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                     placeholder="99999-999"
+                    maxLength={9}
                     required
                   />
                 </div>
@@ -279,9 +361,10 @@ export default function AdminDadosEmpresa() {
                   <input
                     type="text"
                     value={dados.telefone}
-                    onChange={(e) => setDados({ ...dados, telefone: e.target.value })}
+                    onChange={(e) => setDados({ ...dados, telefone: formatarTelefone(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                     placeholder="(55) 99999-9999"
+                    maxLength={15}
                     required
                   />
                 </div>

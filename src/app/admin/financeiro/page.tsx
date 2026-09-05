@@ -18,6 +18,7 @@ export default function AdminFinanceiro() {
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [editandoTransacao, setEditandoTransacao] = useState<Transacao | null>(null);
   const [formData, setFormData] = useState({
     tipo: 'injecao_capital',
     valor: 0,
@@ -45,14 +46,20 @@ export default function AdminFinanceiro() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/admin/financeiro', {
-        method: 'POST',
+      const url = editandoTransacao
+        ? `/api/admin/financeiro/${editandoTransacao.id}`
+        : '/api/admin/financeiro';
+      const method = editandoTransacao ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
       if (response.ok) {
         setMostrarFormulario(false);
+        setEditandoTransacao(null);
         setFormData({
           tipo: 'injecao_capital',
           valor: 0,
@@ -63,7 +70,35 @@ export default function AdminFinanceiro() {
         fetchData();
       }
     } catch (error) {
-      console.error('Erro ao criar transação:', error);
+      console.error('Erro ao salvar transação:', error);
+    }
+  };
+
+  const handleEdit = (transacao: Transacao) => {
+    setEditandoTransacao(transacao);
+    setFormData({
+      tipo: transacao.tipo,
+      valor: transacao.valor,
+      data: transacao.data,
+      descricao: transacao.descricao,
+      categoria: transacao.categoria || '',
+    });
+    setMostrarFormulario(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta transação?')) return;
+
+    try {
+      const response = await fetch(`/api/admin/financeiro/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Erro ao excluir transação:', error);
     }
   };
 
@@ -111,7 +146,10 @@ export default function AdminFinanceiro() {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="mb-6">
           <button
-            onClick={() => setMostrarFormulario(true)}
+            onClick={() => {
+              setEditandoTransacao(null);
+              setMostrarFormulario(true);
+            }}
             className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700"
           >
             + Novo Lançamento
@@ -120,7 +158,9 @@ export default function AdminFinanceiro() {
 
         {mostrarFormulario && (
           <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4 text-gray-900">Novo Lançamento</h2>
+            <h2 className="text-xl font-semibold mb-4 text-gray-900">
+              {editandoTransacao ? 'Editar Lançamento' : 'Novo Lançamento'}
+            </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
@@ -165,7 +205,6 @@ export default function AdminFinanceiro() {
                   value={formData.descricao}
                   onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                  required
                 />
               </div>
 
@@ -202,11 +241,14 @@ export default function AdminFinanceiro() {
                   type="submit"
                   className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700"
                 >
-                  Criar Lançamento
+                  {editandoTransacao ? 'Salvar Alterações' : 'Criar Lançamento'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setMostrarFormulario(false)}
+                  onClick={() => {
+                    setMostrarFormulario(false);
+                    setEditandoTransacao(null);
+                  }}
                   className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
                 >
                   Cancelar
@@ -234,6 +276,9 @@ export default function AdminFinanceiro() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Valor
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ações
                 </th>
               </tr>
             </thead>
@@ -264,6 +309,22 @@ export default function AdminFinanceiro() {
                       transacao.tipo === 'gasto' ? 'text-red-600' : 'text-green-600'
                     }`}>
                       {transacao.tipo === 'gasto' ? '-' : '+'} R$ {transacao.valor.toFixed(2)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(transacao)}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(transacao.id)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Excluir
+                      </button>
                     </div>
                   </td>
                 </tr>

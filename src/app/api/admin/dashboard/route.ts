@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getDocs, collection, query, where, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,103 +10,119 @@ export async function GET(request: Request) {
     const dataInicio = searchParams.get('dataInicio');
     const dataFim = searchParams.get('dataFim');
 
-    // Filtrar transações por período
-    let transacoesQuery = supabaseAdmin.from('transacao_financeira').select('*');
+    console.log('Buscando dados do dashboard...');
+    console.log('Data início:', dataInicio);
+    console.log('Data fim:', dataFim);
 
-    if (dataInicio && dataFim) {
-      transacoesQuery = transacoesQuery.gte('data', dataInicio).lte('data', dataFim);
+    // Buscar todas as transações financeiras
+    const transacoesSnapshot = await getDocs(collection(db, 'transacoes'));
+    const transacoes = transacoesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    console.log('Total de transações:', transacoes.length);
+
+    // Filtrar por período se não for "todos"
+    let transacoesFiltradas = transacoes;
+    if (dataInicio && dataFim && dataInicio !== '2000-01-01') {
+      transacoesFiltradas = transacoes.filter(t => {
+        const dataTransacao = new Date(t.data);
+        return dataTransacao >= new Date(dataInicio) && dataTransacao <= new Date(dataFim);
+      });
+      console.log('Transações filtradas:', transacoesFiltradas.length);
     }
 
-    const { data: transacoes, error: transacoesError } = await transacoesQuery;
+    // Buscar todas as locações
+    const locacoesSnapshot = await getDocs(collection(db, 'locacoes'));
+    const locacoes = locacoesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    console.log('Total de locações:', locacoes.length);
 
-    if (transacoesError) throw transacoesError;
-
-    // Filtrar locações por período para cálculos adicionais
-    let locacoesQuery = supabaseAdmin.from('locacao').select('*');
-
-    if (dataInicio && dataFim) {
-      locacoesQuery = locacoesQuery.gte('data_evento', dataInicio).lte('data_evento', dataFim);
+    // Filtrar locações por período se não for "todos"
+    let locacoesFiltradas = locacoes;
+    if (dataInicio && dataFim && dataInicio !== '2000-01-01') {
+      locacoesFiltradas = locacoes.filter(l => {
+        const dataEvento = new Date(l.data_evento);
+        return dataEvento >= new Date(dataInicio) && dataEvento <= new Date(dataFim);
+      });
+      console.log('Locações filtradas:', locacoesFiltradas.length);
     }
 
-    const { data: locacoes, error: locacoesError } = await locacoesQuery;
+    // Calcular entrada de locação a partir dos valores das locações
+    const entradaLocacao = locacoesFiltradas
+      .reduce((sum, l) => sum + (l.valor_total || 0), 0);
+    console.log('Entrada de locação:', entradaLocacao);
 
-    if (locacoesError) throw locacoesError;
-
-    // Cálculos
-    const entradaLocacao = transacoes
-      .filter(t => t.tipo === 'entrada_locacao')
-      .reduce((sum, t) => sum + t.valor, 0);
-
-    const injecaoCapital = transacoes
+    // Transações financeiras manuais
+    const injecaoCapital = transacoesFiltradas
       .filter(t => t.tipo === 'injecao_capital')
-      .reduce((sum, t) => sum + t.valor, 0);
+      .reduce((sum, t) => sum + (t.valor || 0), 0);
+    console.log('Injeção de capital:', injecaoCapital);
 
-    const gastos = transacoes
+    const gastos = transacoesFiltradas
       .filter(t => t.tipo === 'gasto')
-      .reduce((sum, t) => sum + t.valor, 0);
+      .reduce((sum, t) => sum + (t.valor || 0), 0);
+    console.log('Gastos:', gastos);
 
-    const investimentos = transacoes
+    const investimentos = transacoesFiltradas
       .filter(t => t.tipo === 'investimento')
-      .reduce((sum, t) => sum + t.valor, 0);
+      .reduce((sum, t) => sum + (t.valor || 0), 0);
+    console.log('Investimentos:', investimentos);
 
-    const lucro = entradaLocacao - gastos - investimentos;
-    const margemLucro = entradaLocacao > 0 ? (lucro / entradaLocacao) * 100 : 0;
-
-    const totalCuidadores = (locacoes || [])
+    // Total pago a cuidadores
+    const totalCuidadores = locacoesFiltradas
       .reduce((sum, l) => sum + (l.cuidador_valor || 0), 0);
+    console.log('Total cuidadores:', totalCuidadores);
 
-    const numeroLocacoes = (locacoes || []).length;
+    // Cálculo do lucro: entradas de locação + injeção de capital - gastos - investimentos - cuidadores
+    const lucro = entradaLocacao + injecaoCapital - gastos - investimentos - totalCuidadores;
+    const receitaTotal = entradaLocacao + injecaoCapital;
+    const margemLucro = receitaTotal > 0 ? (lucro / receitaTotal) * 100 : 0;
+    console.log('Lucro:', lucro);
+    console.log('Margem de lucro:', margemLucro);
+
+    const numeroLocacoes = locacoesFiltradas.length;
     const ticketMedio = numeroLocacoes > 0 ? entradaLocacao / numeroLocacoes : 0;
+    console.log('Número de locações:', numeroLocacoes);
+    console.log('Ticket médio:', ticketMedio);
 
-    // Contar número de brinquedos
-    const { data: brinquedos, error: brinquedosError } = await supabaseAdmin
-      .from('brinquedo')
-      .select('id, status');
+    // Buscar brinquedos
+    const brinquedosSnapshot = await getDocs(collection(db, 'brinquedos'));
+    const brinquedos = brinquedosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    if (brinquedosError) {
-      console.error('Erro ao buscar brinquedos:', brinquedosError);
-    } else {
-      console.log('Brinquedos encontrados:', brinquedos?.length || 0);
-      console.log('Amostra de brinquedos:', brinquedos?.slice(0, 3));
-    }
+    const numeroBrinquedos = brinquedos.length;
+    const brinquedosAtivos = brinquedos.filter(b => b.status === 'DISPONIVEL').length;
+    const brinquedosIndisponiveis = brinquedos.filter(b => b.status === 'INDISPONIVEL').length;
+    const brinquedosManutencao = brinquedos.filter(b => b.status === 'MANUTENCAO').length;
 
-    const numeroBrinquedos = brinquedos?.length || 0;
-    const brinquedosAtivos = brinquedos?.filter(b => b.status === 'DISPONIVEL').length || 0;
-    const brinquedosIndisponiveis = brinquedos?.filter(b => b.status === 'INDISPONIVEL').length || 0;
-    const brinquedosManutencao = brinquedos?.filter(b => b.status === 'MANUTENCAO').length || 0;
-
-    console.log('Total de brinquedos:', numeroBrinquedos);
-    console.log('Brinquedos ativos (DISPONIVEL):', brinquedosAtivos);
+    console.log('Brinquedos:', numeroBrinquedos);
+    console.log('Brinquedos ativos:', brinquedosAtivos);
     console.log('Brinquedos indisponíveis:', brinquedosIndisponiveis);
     console.log('Brinquedos em manutenção:', brinquedosManutencao);
 
     // Dados para gráfico de evolução mensal (últimos 12 meses)
     const dadosGrafico = [];
     const hoje = new Date();
-    
+
     for (let i = 11; i >= 0; i--) {
       const dataMes = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-      const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() - i + 1, 1);
-      
-      const mesStr = dataMes.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
-      
-      const entradasMes = transacoes
-        .filter(t => {
-          const dataTransacao = new Date(t.data);
-          return t.tipo === 'entrada_locacao' &&
-                 dataTransacao >= dataMes &&
-                 dataTransacao < proximoMes;
-        })
-        .reduce((sum, t) => sum + t.valor, 0);
+      const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() - i + 1, 0);
 
+      const mesStr = dataMes.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+
+      // Entradas de locação do mês
+      const entradasMes = locacoes
+        .filter(l => {
+          const dataEvento = new Date(l.data_evento);
+          return dataEvento >= dataMes && dataEvento <= proximoMes;
+        })
+        .reduce((sum, l) => sum + (l.valor_total || 0), 0);
+
+      // Gastos do mês
       const gastosMes = transacoes
         .filter(t => {
           const dataTransacao = new Date(t.data);
           return (t.tipo === 'gasto' || t.tipo === 'investimento') &&
                  dataTransacao >= dataMes &&
-                 dataTransacao < proximoMes;
+                 dataTransacao <= proximoMes;
         })
-        .reduce((sum, t) => sum + t.valor, 0);
+        .reduce((sum, t) => sum + (t.valor || 0), 0);
 
       dadosGrafico.push({
         mes: mesStr,
@@ -116,34 +133,31 @@ export async function GET(request: Request) {
 
     // Comparativo com período anterior
     let comparativo = null;
-    if (dataInicio && dataFim) {
+    if (dataInicio && dataFim && dataInicio !== '2000-01-01') {
       const inicioAtual = new Date(dataInicio);
       const fimAtual = new Date(dataFim);
       const diasPeriodo = (fimAtual.getTime() - inicioAtual.getTime()) / (1000 * 60 * 60 * 24);
-      
+
       const inicioAnterior = new Date(inicioAtual.getTime() - diasPeriodo * 24 * 60 * 60 * 1000);
-      
-      const { data: transacoesAnterior } = await supabaseAdmin
-        .from('transacao_financeira')
-        .select('*')
-        .gte('data', inicioAnterior.toISOString().split('T')[0])
-        .lte('data', inicioAtual.toISOString().split('T')[0]);
+      const fimAnterior = new Date(inicioAtual.getTime() - 1);
 
-      if (transacoesAnterior) {
-        const entradaAnterior = transacoesAnterior
-          .filter(t => t.tipo === 'entrada_locacao')
-          .reduce((sum, t) => sum + t.valor, 0);
+      const locacoesAnterior = locacoes.filter(l => {
+        const dataEvento = new Date(l.data_evento);
+        return dataEvento >= inicioAnterior && dataEvento <= fimAnterior;
+      });
 
-        const variacao = entradaAnterior > 0 
-          ? ((entradaLocacao - entradaAnterior) / entradaAnterior) * 100 
-          : 0;
+      const entradaAnterior = locacoesAnterior
+        .reduce((sum, l) => sum + (l.valor_total || 0), 0);
 
-        comparativo = {
-          periodoAnterior: entradaAnterior,
-          periodoAtual: entradaLocacao,
-          variacao,
-        };
-      }
+      const variacao = entradaAnterior > 0
+        ? ((entradaLocacao - entradaAnterior) / entradaAnterior) * 100
+        : 0;
+
+      comparativo = {
+        periodoAnterior: entradaAnterior,
+        periodoAtual: entradaLocacao,
+        variacao,
+      };
     }
 
     return NextResponse.json({

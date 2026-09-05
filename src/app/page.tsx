@@ -16,9 +16,9 @@ export default function Home() {
 
       {/* Diferenciais */}
       <ScrollAnimation direction="up" delay={0.1}>
-        <section className="py-12 md:py-20 bg-white">
-          <div className="max-w-[1440px] mx-auto px-6">
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+        <section className="py-8 md:py-20 bg-white">
+          <div className="max-w-[1440px] mx-auto px-4 md:px-6">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8">
               {[
                 {
                   icon: '🚚',
@@ -47,15 +47,15 @@ export default function Home() {
               ].map((item, index) => (
                 <div
                   key={index}
-                  className="p-4 md:p-8 rounded-2xl bg-white shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-2 cursor-pointer hover:scale-102"
+                  className="p-3 md:p-8 rounded-xl md:rounded-2xl bg-white shadow-soft hover:shadow-medium transition-all duration-300 hover:-translate-y-2 cursor-pointer hover:scale-102 active:scale-98"
                 >
-                  <div className={`w-12 h-12 md:w-16 md:h-16 ${item.color} rounded-2xl flex items-center justify-center mb-3 md:mb-6`}>
-                    <span className="text-2xl md:text-3xl">{item.icon}</span>
+                  <div className={`w-10 h-10 md:w-16 md:h-16 ${item.color} rounded-xl md:rounded-2xl flex items-center justify-center mb-2 md:mb-6`}>
+                    <span className="text-xl md:text-3xl">{item.icon}</span>
                   </div>
-                  <h3 className="text-sm md:text-xl font-bold text-secondary-gray-900 mb-1 md:mb-3">
+                  <h3 className="text-xs md:text-xl font-bold text-secondary-gray-900 mb-1 md:mb-3">
                     {item.title}
                   </h3>
-                  <p className="text-xs md:text-base text-secondary-gray-600 leading-relaxed">
+                  <p className="text-[10px] md:text-base text-secondary-gray-600 leading-relaxed line-clamp-2">
                     {item.description}
                   </p>
                 </div>
@@ -89,10 +89,10 @@ export default function Home() {
 
       {/* Como Funciona */}
       <ScrollAnimation direction="right" delay={0.4}>
-        <section className="py-12 md:py-20 bg-white">
-          <div className="max-w-[1440px] mx-auto px-6">
-            <div className="text-center mb-8 md:mb-16">
-              <h2 className="text-2xl md:text-4xl font-bold text-secondary-gray-900 mb-2 md:mb-4">
+        <section className="py-8 md:py-20 bg-white">
+          <div className="max-w-[1440px] mx-auto px-4 md:px-6">
+            <div className="text-center mb-6 md:mb-16">
+              <h2 className="text-xl md:text-4xl font-bold text-secondary-gray-900 mb-2 md:mb-4">
                 Como funciona
               </h2>
               <p className="text-sm md:text-lg text-secondary-gray-600">
@@ -100,7 +100,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8">
               {[
                 {
                   step: '1',
@@ -132,14 +132,14 @@ export default function Home() {
                   className="relative"
                 >
                   <div className="text-center">
-                    <div className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 mx-auto mb-3 md:mb-4 lg:mb-6 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-green-500 flex items-center justify-center text-white text-xl md:text-2xl lg:text-3xl font-bold shadow-soft">
+                    <div className="w-10 h-10 md:w-16 md:h-16 lg:w-20 lg:h-20 mx-auto mb-2 md:mb-4 lg:mb-6 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-green-500 flex items-center justify-center text-white text-sm md:text-2xl lg:text-3xl font-bold shadow-soft">
                       {item.step}
                     </div>
-                    <div className="text-2xl md:text-3xl lg:text-4xl mb-2 md:mb-3 lg:mb-4">{item.icon}</div>
-                    <h3 className="text-sm md:text-base lg:text-xl font-bold text-secondary-gray-900 mb-1 md:mb-2">
+                    <div className="text-xl md:text-3xl lg:text-4xl mb-1 md:mb-2 lg:mb-4">{item.icon}</div>
+                    <h3 className="text-xs md:text-base lg:text-xl font-bold text-secondary-gray-900 mb-1 md:mb-2">
                       {item.title}
                     </h3>
-                    <p className="text-[10px] md:text-sm lg:text-base text-secondary-gray-600">
+                    <p className="text-[10px] md:text-sm lg:text-base text-secondary-gray-600 leading-relaxed">
                       {item.description}
                     </p>
                   </div>

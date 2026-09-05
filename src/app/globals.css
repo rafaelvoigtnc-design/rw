@@ -303,3 +303,17 @@ html {
 .scroll-animate-delay-3 { transition-delay: 0.3s; }
 .scroll-animate-delay-4 { transition-delay: 0.4s; }
 .scroll-animate-delay-5 { transition-delay: 0.5s; }
+
+/* Estilos de impressão */
+@media print {
+  a[href]:after {
+    content: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

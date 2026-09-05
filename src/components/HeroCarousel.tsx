@@ -34,10 +34,14 @@ export default function HeroCarousel() {
       const response = await fetch('/api/banners');
       const data = await response.json();
       console.log('Banners da API:', data);
-      
+      console.log('Array:', Array.isArray(data));
+      console.log('Length:', data?.length);
+
       const activeBanners = Array.isArray(data) ? data.filter((b: Banner) => b.ativo) : [];
-      
+      console.log('Banners ativos:', activeBanners);
+
       if (activeBanners.length > 0) {
+        console.log('Usando banners da API');
         setBanners(activeBanners);
       } else {
         console.log('Nenhum banner ativo encontrado, usando fallback');

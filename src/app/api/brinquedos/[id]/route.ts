@@ -1,31 +1,36 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { data, error } = await supabase
-      .from('brinquedo')
-      .select('*')
-      .eq('id', params.id)
-      .single();
+    const { id } = await params;
+    
+    const docRef = doc(db, 'brinquedos', id);
+    const docSnap = await getDoc(docRef);
 
-    if (error) throw error;
-
-    if (!data) {
+    if (!docSnap.exists()) {
       return NextResponse.json(
         { error: 'Brinquedo não encontrado' },
         { status: 404 }
       );
     }
 
-    // Converter fotos de JSON string para array
+    const data = docSnap.data();
+    
+    // Converter fotos de JSON string para array se necessário
+    const fotos = typeof data.fotos === 'string' 
+      ? JSON.parse(data.fotos) 
+      : (data.fotos || []);
+
     const brinquedoFormatado = {
+      id: docSnap.id,
       ...data,
-      fotos: typeof data.fotos === 'string' ? JSON.parse(data.fotos) : (data.fotos || []),
-      categoria: data.categoria_id ? { nome: 'Categoria' } : null, // Categoria placeholder
+      fotos,
+      categoria: data.categoria_id ? { nome: 'Categoria' } : null,
     };
 
     return NextResponse.json(brinquedoFormatado);

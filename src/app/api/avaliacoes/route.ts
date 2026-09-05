@@ -1,30 +1,40 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { verifyToken } from '@/lib/auth';
+import { getAvaliacoes, createAvaliacao } from '@/lib/firebase-db';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const brinquedoId = searchParams.get('brinquedo_id');
+    const tipo = searchParams.get('tipo'); // 'depoimentos' ou 'brinquedos'
 
-    let query = supabase
-      .from('avaliacao')
-      .select('*');
+    let avaliacoes = await getAvaliacoes();
 
+    // Se tiver brinquedo_id, filtrar por ele
     if (brinquedoId) {
-      query = query.eq('brinquedo_id', brinquedoId);
-    } else {
-      // Se não tiver brinquedo_id, retorna apenas aprovadas para home
-      query = query.eq('aprovado_para_exibir', true);
+      avaliacoes = avaliacoes.filter((a: any) => a.brinquedo_id === brinquedoId);
+    }
+    
+    // Se tiver tipo, filtrar por tipo
+    if (tipo === 'depoimentos') {
+      avaliacoes = avaliacoes.filter((a: any) => !a.brinquedo_id);
+    } else if (tipo === 'brinquedos') {
+      avaliacoes = avaliacoes.filter((a: any) => a.brinquedo_id);
     }
 
-    query = query.order('criado_em', { ascending: false });
+    // Buscar dados dos clientes
+    const avaliacoesComClientes = await Promise.all(avaliacoes.map(async (avaliacao: any) => {
+      if (avaliacao.cliente_id) {
+        const clienteDoc = await getDoc(doc(db, 'clientes', avaliacao.cliente_id));
+        if (clienteDoc.exists()) {
+          avaliacao.cliente = clienteDoc.data();
+        }
+      }
+      return avaliacao;
+    }));
 
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    return NextResponse.json(data || []);
+    return NextResponse.json(avaliacoesComClientes);
   } catch (error) {
     console.error('Erro ao buscar avaliações:', error);
     return NextResponse.json(
@@ -36,13 +46,13 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { texto, nota } = await request.json();
+    const { texto, nota, brinquedo_id, foto } = await request.json();
 
-    console.log('Dados recebidos para avaliação:', { texto, nota });
+    console.log('Dados recebidos para avaliação:', { texto, nota, brinquedo_id, foto });
 
-    // Verificar se há token de cliente
-    const cookieHeader = request.headers.get('cookie');
-    const token = cookieHeader?.match(/client_token=([^;]+)/)?.[1];
+    // Verificar se há token de autenticação do Firebase
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
 
     if (!token) {
       console.log('Token não encontrado');
@@ -52,47 +62,51 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verificar o token diretamente
-    const payload = await verifyToken(token);
-    console.log('Payload do token:', payload);
+    // Decodificar o token para obter UID
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        return NextResponse.json(
+          { error: 'Token inválido' },
+          { status: 401 }
+        );
+      }
 
-    if (!payload || payload.type !== 'client') {
-      console.log('Token inválido ou não é de cliente');
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+      const clienteId = payload.user_id || payload.uid;
+      
+      if (!clienteId) {
+        return NextResponse.json(
+          { error: 'Token inválido' },
+          { status: 401 }
+        );
+      }
+
+      console.log('Cliente ID:', clienteId);
+
+      // Criar avaliação
+      const avaliacaoData = {
+        cliente_id: clienteId,
+        texto: String(texto),
+        nota: Number(nota),
+        brinquedo_id: brinquedo_id || null,
+        foto: foto || null,
+        aprovado_para_exibir: false,
+      };
+
+      console.log('Dados para inserir:', avaliacaoData);
+
+      const data = await createAvaliacao(avaliacaoData);
+
+      console.log('Avaliação criada com sucesso:', data);
+      return NextResponse.json({ id: data.id, ...avaliacaoData });
+    } catch (decodeError) {
+      console.error('Erro ao decodificar token:', decodeError);
       return NextResponse.json(
         { error: 'Token inválido' },
         { status: 401 }
       );
     }
-
-    const clienteId = payload.id;
-    console.log('Cliente ID:', clienteId);
-
-    // Criar avaliação
-    const avaliacaoData = {
-      id: crypto.randomUUID(),
-      cliente_id: clienteId,
-      texto: String(texto),
-      nota: Number(nota),
-      aprovado_para_exibir: false,
-      criado_em: new Date().toISOString(),
-    };
-
-    console.log('Dados para inserir:', avaliacaoData);
-
-    const { data, error } = await supabase
-      .from('avaliacao')
-      .insert(avaliacaoData)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Erro Supabase ao criar avaliação:', error);
-      console.error('Detalhes do erro:', JSON.stringify(error, null, 2));
-      throw error;
-    }
-
-    console.log('Avaliação criada com sucesso:', data);
-    return NextResponse.json(data);
   } catch (error) {
     console.error('Erro ao criar avaliação:', error);
     return NextResponse.json(

@@ -33,7 +33,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filtro, setFiltro] = useState<'mes' | 'trimestre' | 'ano' | 'customizado'>('mes');
+  const [filtro, setFiltro] = useState<'todos' | 'mes' | 'mes_passado' | 'mes_que_vem' | 'customizado'>('todos');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
 
@@ -43,23 +43,26 @@ export default function AdminDashboard() {
     let fim: Date;
 
     switch (filtro) {
+      case 'todos':
+        // Período indefinido (não filtra por data)
+        inicio = new Date('2000-01-01');
+        fim = new Date('2100-12-31');
+        break;
       case 'mes':
         inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
         fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
         break;
-      case 'trimestre':
-        const trimestreAtual = Math.floor(hoje.getMonth() / 3);
-        inicio = new Date(hoje.getFullYear(), trimestreAtual * 3, 1);
-        fim = new Date(hoje.getFullYear(), (trimestreAtual + 1) * 3, 0);
+      case 'mes_passado':
+        inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+        fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
         break;
-      case 'ano':
-        inicio = new Date(hoje.getFullYear(), 0, 1);
-        fim = new Date(hoje.getFullYear(), 11, 31);
+      case 'mes_que_vem':
+        inicio = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+        fim = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0);
         break;
       case 'customizado':
-        inicio = dataInicio ? new Date(dataInicio) : new Date();
-        fim = dataFim ? new Date(dataFim) : new Date();
-        break;
+        // Não muda datas no customizado, usa as que o usuário selecionou
+        return;
     }
 
     setDataInicio(inicio.toISOString().split('T')[0]);
@@ -67,12 +70,11 @@ export default function AdminDashboard() {
   }, [filtro]);
 
   useEffect(() => {
-    if (dataInicio && dataFim) {
-      fetchData();
-    }
+    fetchData();
   }, [dataInicio, dataFim]);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const response = await fetch(`/api/admin/dashboard?dataInicio=${dataInicio}&dataFim=${dataFim}`);
       const dashboardData = await response.json();
@@ -122,9 +124,10 @@ export default function AdminDashboard() {
               onChange={(e) => setFiltro(e.target.value as any)}
               className="px-3 py-2 border border-gray-300 rounded-md"
             >
+              <option value="todos">Todo o Período</option>
               <option value="mes">Este Mês</option>
-              <option value="trimestre">Este Trimestre</option>
-              <option value="ano">Este Ano</option>
+              <option value="mes_passado">Mês Passado</option>
+              <option value="mes_que_vem">Mês que Vem</option>
               <option value="customizado">Personalizado</option>
             </select>
 
@@ -148,48 +151,48 @@ export default function AdminDashboard() {
         </div>
 
         {/* Cards de Resumo */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Entradas de Locação</h3>
-            <p className="text-2xl font-bold text-green-600">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
+          <div className="bg-white rounded-xl md:rounded-lg shadow-soft p-3 md:p-6">
+            <h3 className="text-[10px] md:text-sm font-medium text-gray-500 mb-1 md:mb-2">Entradas de Locação</h3>
+            <p className="text-lg md:text-2xl font-bold text-green-600">
               R$ {data.entradaLocacao.toFixed(2)}
             </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Injeção de Capital</h3>
-            <p className="text-2xl font-bold text-blue-600">
+          <div className="bg-white rounded-xl md:rounded-lg shadow-soft p-3 md:p-6">
+            <h3 className="text-[10px] md:text-sm font-medium text-gray-500 mb-1 md:mb-2">Injeção de Capital</h3>
+            <p className="text-lg md:text-2xl font-bold text-blue-600">
               R$ {data.injecaoCapital.toFixed(2)}
             </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Gastos</h3>
-            <p className="text-2xl font-bold text-red-600">
+          <div className="bg-white rounded-xl md:rounded-lg shadow-soft p-3 md:p-6">
+            <h3 className="text-[10px] md:text-sm font-medium text-gray-500 mb-1 md:mb-2">Gastos</h3>
+            <p className="text-lg md:text-2xl font-bold text-red-600">
               R$ {data.gastos.toFixed(2)}
             </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Investimentos</h3>
-            <p className="text-2xl font-bold text-purple-600">
+          <div className="bg-white rounded-xl md:rounded-lg shadow-soft p-3 md:p-6">
+            <h3 className="text-[10px] md:text-sm font-medium text-gray-500 mb-1 md:mb-2">Investimentos</h3>
+            <p className="text-lg md:text-2xl font-bold text-purple-600">
               R$ {data.investimentos.toFixed(2)}
             </p>
           </div>
         </div>
 
         {/* Lucro e Margem */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Lucro/Prejuízo</h3>
-            <p className={`text-3xl font-bold ${data.lucro >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6 mb-4 md:mb-6">
+          <div className="bg-white rounded-xl md:rounded-lg shadow-soft p-3 md:p-6">
+            <h3 className="text-[10px] md:text-sm font-medium text-gray-500 mb-1 md:mb-2">Lucro/Prejuízo</h3>
+            <p className={`text-xl md:text-3xl font-bold ${data.lucro >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               R$ {data.lucro.toFixed(2)}
             </p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Margem de Lucro</h3>
-            <p className={`text-3xl font-bold ${data.margemLucro >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className="bg-white rounded-xl md:rounded-lg shadow-soft p-3 md:p-6">
+            <h3 className="text-[10px] md:text-sm font-medium text-gray-500 mb-1 md:mb-2">Margem de Lucro</h3>
+            <p className={`text-xl md:text-3xl font-bold ${data.margemLucro >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {data.margemLucro.toFixed(1)}%
             </p>
           </div>

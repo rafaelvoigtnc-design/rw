@@ -18,12 +18,19 @@ interface Contrato {
 
 interface Locacao {
   id: string;
-  cliente: {
+  cliente_nome?: string;
+  cliente?: {
     nome: string;
   };
   data_evento: string;
+  horario_inicio?: string;
+  horario_fim?: string;
+  endereco?: string;
+  local_evento?: string;
   valor_total: number;
-  status: string;
+  sinal_pago?: number;
+  status_pagamento?: string;
+  status_locacao?: string;
 }
 
 export default function AdminContratos() {
@@ -78,7 +85,7 @@ export default function AdminContratos() {
     if (!confirm('Tem certeza que deseja excluir este contrato?')) return;
 
     try {
-      await fetch(`/api/admin/contratos/${id}`, { method: 'DELETE' });
+      await fetch(`/api/admin/contratos?id=${id}`, { method: 'DELETE' });
       fetchContratos();
     } catch (error) {
       console.error('Erro ao excluir contrato:', error);
@@ -297,10 +304,8 @@ function ContratoForm({
 }) {
   const [formData, setFormData] = useState({
     locacao_id: selectedLocacao,
-    cliente_nome: editingContrato?.cliente_nome || '',
-    cliente_cpf: editingContrato?.cliente_cpf || '',
-    cliente_rg: '',
-    cliente_nascimento: '',
+    cliente_nome: '',
+    cliente_cpf: '',
     cliente_endereco: '',
     cliente_numero: '',
     cliente_complemento: '',
@@ -309,26 +314,70 @@ function ContratoForm({
     cliente_estado: '',
     cliente_cep: '',
     cliente_telefone: '',
-    cliente_email: '',
-    data_evento: editingContrato?.data_evento || '',
+    data_evento: '',
     horario_inicio: '',
     horario_fim: '',
-    local_evento: editingContrato?.local_evento || '',
-    valor_total: editingContrato?.valor_total || 0,
-    valor_sinal: 0,
-    forma_pagamento: '',
+    endereco: '',
+    local_evento: '',
+    valor_total: 0,
     clausulas_adicionais: '',
-    observacoes: '',
   });
+
+  // Carregar dados do contrato ao editar
+  useEffect(() => {
+    if (editingContrato) {
+      setFormData({
+        locacao_id: editingContrato.locacao_id || '',
+        cliente_nome: editingContrato.cliente_nome || '',
+        cliente_cpf: editingContrato.cliente_cpf || '',
+        cliente_endereco: editingContrato.cliente_endereco || '',
+        cliente_numero: editingContrato.cliente_numero || '',
+        cliente_complemento: editingContrato.cliente_complemento || '',
+        cliente_bairro: editingContrato.cliente_bairro || '',
+        cliente_cidade: editingContrato.cliente_cidade || '',
+        cliente_estado: editingContrato.cliente_estado || '',
+        cliente_cep: editingContrato.cliente_cep || '',
+        cliente_telefone: editingContrato.cliente_telefone || '',
+        data_evento: editingContrato.data_evento || '',
+        horario_inicio: editingContrato.horario_inicio || '',
+        horario_fim: editingContrato.horario_fim || '',
+        endereco: editingContrato.endereco || '',
+        local_evento: editingContrato.local_evento || '',
+        valor_total: editingContrato.valor_total || 0,
+        clausulas_adicionais: editingContrato.clausulas_adicionais || '',
+      });
+    } else {
+      setFormData({
+        locacao_id: selectedLocacao,
+        cliente_nome: '',
+        cliente_cpf: '',
+        cliente_endereco: '',
+        cliente_numero: '',
+        cliente_complemento: '',
+        cliente_bairro: '',
+        cliente_cidade: '',
+        cliente_estado: '',
+        cliente_cep: '',
+        cliente_telefone: '',
+        data_evento: '',
+        horario_inicio: '',
+        horario_fim: '',
+        endereco: '',
+        local_evento: '',
+        valor_total: 0,
+        clausulas_adicionais: '',
+      });
+    }
+  }, [editingContrato, selectedLocacao]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      const url = editingContrato 
-        ? `/api/admin/contratos/${editingContrato.id}`
+      const url = editingContrato
+        ? `/api/admin/contratos?id=${editingContrato.id}`
         : '/api/admin/contratos';
-      
+
       const method = editingContrato ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -352,8 +401,13 @@ function ContratoForm({
       setFormData({
         ...formData,
         locacao_id: locacaoId,
-        cliente_nome: locacao.cliente.nome,
+        cliente_nome: locacao.cliente_nome || locacao.cliente?.nome || '',
         data_evento: locacao.data_evento,
+        horario_inicio: locacao.horario_inicio,
+        horario_fim: locacao.horario_fim,
+        endereco: locacao.endereco,
+        cliente_endereco: locacao.endereco,
+        local_evento: locacao.local_evento || locacao.endereco,
         valor_total: locacao.valor_total,
       });
     }
@@ -381,7 +435,7 @@ function ContratoForm({
               <option value="">Selecione uma locação</option>
               {locacoes.map((locacao) => (
                 <option key={locacao.id} value={locacao.id}>
-                  {locacao.cliente.nome} - {new Date(locacao.data_evento).toLocaleDateString('pt-BR')} - R$ {locacao.valor_total}
+                  {locacao.cliente_nome || locacao.cliente?.nome || 'Cliente não identificado'} - {new Date(locacao.data_evento).toLocaleDateString('pt-BR')} - R$ {locacao.valor_total}
                 </option>
               ))}
             </select>
@@ -412,34 +466,24 @@ function ContratoForm({
               <input
                 type="text"
                 value={formData.cliente_cpf}
-                onChange={(e) => setFormData({ ...formData, cliente_cpf: e.target.value })}
+                onChange={(e) => {
+                  let value = e.target.value.replace(/\D/g, '');
+                  if (value.length > 11) value = value.slice(0, 11);
+                  if (value.length > 9) {
+                    value = value.slice(0, 9) + '-' + value.slice(9);
+                  }
+                  if (value.length > 6) {
+                    value = value.slice(0, 6) + '.' + value.slice(6);
+                  }
+                  if (value.length > 3) {
+                    value = value.slice(0, 3) + '.' + value.slice(3);
+                  }
+                  setFormData({ ...formData, cliente_cpf: value });
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                 placeholder="000.000.000-00"
+                maxLength={14}
                 required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                RG
-              </label>
-              <input
-                type="text"
-                value={formData.cliente_rg}
-                onChange={(e) => setFormData({ ...formData, cliente_rg: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Data de Nascimento
-              </label>
-              <input
-                type="date"
-                value={formData.cliente_nascimento}
-                onChange={(e) => setFormData({ ...formData, cliente_nascimento: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
               />
             </div>
 
@@ -449,8 +493,8 @@ function ContratoForm({
               </label>
               <input
                 type="text"
-                value={formData.cliente_endereco}
-                onChange={(e) => setFormData({ ...formData, cliente_endereco: e.target.value })}
+                value={formData.endereco || formData.cliente_endereco}
+                onChange={(e) => setFormData({ ...formData, cliente_endereco: e.target.value, endereco: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                 required
               />
@@ -546,17 +590,6 @@ function ContratoForm({
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                value={formData.cliente_email}
-                onChange={(e) => setFormData({ ...formData, cliente_email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-              />
-            </div>
           </div>
         </div>
 
@@ -605,14 +638,26 @@ function ContratoForm({
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Local do Evento *
+                Endereço (Rua)
+              </label>
+              <input
+                type="text"
+                value={formData.endereco || formData.cliente_endereco}
+                onChange={(e) => setFormData({ ...formData, cliente_endereco: e.target.value, endereco: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Local do Evento
               </label>
               <input
                 type="text"
                 value={formData.local_evento}
                 onChange={(e) => setFormData({ ...formData, local_evento: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                required
+                placeholder="Ex: Pavilhão de Eventos"
               />
             </div>
           </div>
@@ -621,52 +666,18 @@ function ContratoForm({
         {/* Valores */}
         <div className="border-b pb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Valores</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Valor Total *
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.valor_total}
-                onChange={(e) => setFormData({ ...formData, valor_total: parseFloat(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Valor do Sinal
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.valor_sinal}
-                onChange={(e) => setFormData({ ...formData, valor_sinal: parseFloat(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Forma de Pagamento *
-              </label>
-              <select
-                value={formData.forma_pagamento}
-                onChange={(e) => setFormData({ ...formData, forma_pagamento: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                required
-              >
-                <option value="">Selecione</option>
-                <option value="DINHEIRO">Dinheiro</option>
-                <option value="PIX">PIX</option>
-                <option value="CARTAO_CREDITO">Cartão de Crédito</option>
-                <option value="CARTAO_DEBITO">Cartão de Débito</option>
-                <option value="BOLETO">Boleto</option>
-              </select>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Valor Total *
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData.valor_total}
+              onChange={(e) => setFormData({ ...formData, valor_total: parseFloat(e.target.value) })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+              required
+            />
           </div>
         </div>
 
@@ -687,18 +698,21 @@ function ContratoForm({
           </div>
         </div>
 
-        {/* Observações */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Observações
-          </label>
-          <textarea
-            value={formData.observacoes}
-            onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-            rows={3}
-            placeholder="Observações gerais sobre o contrato..."
-          />
+        {/* Cláusulas Adicionais */}
+        <div className="border-b pb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Cláusulas Adicionais</h3>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Cláusulas Personalizadas
+            </label>
+            <textarea
+              value={formData.clausulas_adicionais}
+              onChange={(e) => setFormData({ ...formData, clausulas_adicionais: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+              rows={4}
+              placeholder="Adicione cláusulas específicas para este contrato..."
+            />
+          </div>
         </div>
 
         <div className="flex justify-end gap-3">

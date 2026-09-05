@@ -119,33 +119,33 @@ export default function Catalogo() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-blue-500 via-primary-green-500 to-primary-blue-600 py-16">
-        <div className="max-w-[1440px] mx-auto px-6">
-          <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">
+      <section className="bg-gradient-to-br from-primary-blue-500 via-primary-green-500 to-primary-blue-600 py-8 md:py-16">
+        <div className="max-w-[1440px] mx-auto px-4 md:px-6">
+          <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4">
             Catálogo de Brinquedos
           </h1>
-          <p className="text-xl text-white/90 max-w-2xl">
+          <p className="text-sm md:text-xl text-white/90 max-w-2xl">
             Explore nossa coleção completa de brinquedos e itens para festas
           </p>
         </div>
       </section>
 
-      <div className="max-w-[1440px] mx-auto px-6 py-12">
-        <div className="flex flex-col lg:flex-row gap-8">
+      <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-6 md:py-12">
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-8">
           {/* Filtros Laterais */}
           <aside className="lg:w-72 flex-shrink-0">
-            <div className="bg-white rounded-2xl shadow-soft p-6 sticky top-24">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-secondary-gray-900">Filtros</h2>
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-soft p-4 md:p-6 sticky top-20 md:top-24">
+              <div className="flex items-center justify-between mb-4 md:mb-6">
+                <h2 className="text-lg md:text-xl font-bold text-secondary-gray-900">Filtros</h2>
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+                  className="lg:hidden p-2 rounded-lg hover:bg-gray-100 active:scale-95 transition-transform"
                 >
                   <SlidersHorizontal className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className={`space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+              <div className={`space-y-4 md:space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
                 {/* Busca */}
                 <div>
                   <label className="block text-sm font-medium text-secondary-gray-700 mb-2">
@@ -214,10 +214,10 @@ export default function Catalogo() {
           {/* Grid de Brinquedos */}
           <div className="flex-1">
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
                 {[...Array(12)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-2xl shadow-soft overflow-hidden">
-                    <div className="h-40 md:h-56 bg-gray-200 animate-pulse" />
+                  <div key={i} className="bg-white rounded-xl md:rounded-2xl shadow-soft overflow-hidden">
+                    <div className="h-32 md:h-56 bg-gray-200 animate-pulse" />
                     <div className="p-3 md:p-5 space-y-2 md:space-y-3">
                       <div className="h-3 md:h-4 bg-gray-200 rounded animate-pulse" />
                       <div className="h-2 md:h-3 bg-gray-200 rounded animate-pulse w-2/3" />
@@ -227,25 +227,25 @@ export default function Catalogo() {
                 ))}
               </div>
             ) : brinquedos.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-2xl shadow-soft">
-                <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-xl font-bold text-secondary-gray-900 mb-2">
+              <div className="text-center py-12 md:py-16 bg-white rounded-xl md:rounded-2xl shadow-soft">
+                <div className="text-4xl md:text-6xl mb-4">🔍</div>
+                <h3 className="text-lg md:text-xl font-bold text-secondary-gray-900 mb-2">
                   Nenhum brinquedo encontrado
                 </h3>
-                <p className="text-secondary-gray-600 mb-6">
+                <p className="text-sm md:text-base text-secondary-gray-600 mb-6">
                   Tente ajustar os filtros para encontrar o que procura
                 </p>
                 <button
                   onClick={clearFilters}
-                  className="px-6 py-3 bg-primary-blue-500 text-white rounded-xl hover:bg-primary-blue-600 transition-colors"
+                  className="px-4 md:px-6 py-2 md:py-3 bg-primary-blue-500 text-white rounded-xl hover:bg-primary-blue-600 transition-colors text-sm md:text-base"
                 >
                   Limpar filtros
                 </button>
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between mb-6">
-                  <p className="text-secondary-gray-600">
+                <div className="flex items-center justify-between mb-4 md:mb-6">
+                  <p className="text-sm md:text-base text-secondary-gray-600">
                     {brinquedos.length} brinquedo{brinquedos.length !== 1 ? 's' : ''} encontrado{brinquedos.length !== 1 ? 's' : ''}
                   </p>
                 </div>

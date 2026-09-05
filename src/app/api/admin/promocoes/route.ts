@@ -1,16 +1,10 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getAllPromocoes, createPromocao, updatePromocao, deletePromocao } from '@/lib/firebase-db';
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
-      .from('promocao')
-      .select('*')
-      .order('data_inicio', { ascending: false });
-
-    if (error) throw error;
-
-    return NextResponse.json(data);
+    const promocoes = await getAllPromocoes();
+    return NextResponse.json(promocoes);
   } catch (error) {
     console.error('Erro ao buscar promoções:', error);
     return NextResponse.json(
@@ -24,26 +18,57 @@ export async function POST(request: Request) {
   try {
     const { titulo, descricao, data_inicio, data_fim, ativa } = await request.json();
 
-    const { data, error } = await supabase
-      .from('promocao')
-      .insert({
-        id: crypto.randomUUID(),
-        titulo,
-        descricao,
-        data_inicio,
-        data_fim,
-        ativa: ativa || false,
-      })
-      .select()
-      .single();
+    const data = await createPromocao({
+      titulo,
+      descricao,
+      data_inicio,
+      data_fim,
+      ativa: ativa || false,
+    });
 
-    if (error) throw error;
-
-    return NextResponse.json(data);
+    return NextResponse.json({ id: data.id, titulo, descricao, data_inicio, data_fim, ativa });
   } catch (error) {
     console.error('Erro ao criar promoção:', error);
     return NextResponse.json(
       { error: 'Erro ao criar promoção' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const { id, titulo, descricao, data_inicio, data_fim, ativa } = await request.json();
+
+    await updatePromocao(id, {
+      titulo,
+      descricao,
+      data_inicio,
+      data_fim,
+      ativa,
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao atualizar promoção:', error);
+    return NextResponse.json(
+      { error: 'Erro ao atualizar promoção' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { id } = await request.json();
+
+    await deletePromocao(id);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao deletar promoção:', error);
+    return NextResponse.json(
+      { error: 'Erro ao deletar promoção' },
       { status: 500 }
     );
   }

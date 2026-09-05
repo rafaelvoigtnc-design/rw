@@ -1,12 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-
-interface AuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onLoginSuccess?: () => void;
-}
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -23,6 +19,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
     senha: '',
     confirmarSenha: '',
     endereco: '',
+    cidade: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,11 +33,12 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
     if (cleaned.length === 0) return '';
     if (cleaned.length <= 2) return `(${cleaned}`;
     if (cleaned.length <= 7) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
-    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
   };
 
   const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, telefone: formatTelefone(e.target.value) });
+    const formatted = formatTelefone(e.target.value);
+    setFormData({ ...formData, telefone: formatted });
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -49,22 +47,24 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
     setLoading(true);
 
     try {
-      const response = await fetch('/api/cliente/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email, senha: formData.senha }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        onClose();
-        onLoginSuccess?.();
+      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.senha);
+      console.log('Login bem-sucedido:', userCredential.user.email);
+      onClose();
+      onLoginSuccess?.();
+    } catch (error: any) {
+      console.error('Erro no login:', error);
+      // Traduzir mensagens de erro comuns do Firebase
+      if (error.code === 'auth/user-not-found') {
+        setError('Usuário não encontrado');
+      } else if (error.code === 'auth/wrong-password') {
+        setError('Senha incorreta');
+      } else if (error.code === 'auth/invalid-email') {
+        setError('Email inválido');
+      } else if (error.code === 'auth/invalid-credential') {
+        setError('Credenciais inválidas');
       } else {
-        setError(data.error || 'Erro ao fazer login');
+        setError(error.message || 'Erro ao fazer login');
       }
-    } catch (error) {
-      setError('Erro ao conectar com o servidor');
     } finally {
       setLoading(false);
     }
@@ -91,31 +91,59 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
       return;
     }
 
+    if (!formData.cidade) {
+      setError('A cidade é obrigatória');
+      return;
+    }
+
     setLoading(true);
 
     try {
+      console.log('Iniciando registro com email:', formData.email);
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.senha);
+      console.log('Usuário criado no Firebase:', userCredential.user.uid);
+      
+      // Salvar dados adicionais via API
       const response = await fetch('/api/cliente/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          uid: userCredential.user.uid,
           nome: formData.nome,
           telefone: telefoneLimpo,
           email: formData.email,
-          senha: formData.senha,
           endereco: formData.endereco,
+          cidade: formData.cidade,
         }),
       });
 
-      const data = await response.json();
+      console.log('Resposta da API de registro:', response.status);
 
       if (response.ok) {
+        console.log('Registro bem-sucedido:', formData.email);
         onClose();
         onLoginSuccess?.();
       } else {
-        setError(data.error || 'Erro ao criar conta');
+        const data = await response.json();
+        console.error('Erro na API de registro:', data);
+        setError(data.error || 'Erro ao salvar dados adicionais');
+        // Deletar usuário do Firebase se falhar ao salvar dados
+        await userCredential.user.delete();
       }
-    } catch (error) {
-      setError('Erro ao conectar com o servidor');
+    } catch (error: any) {
+      console.error('Erro no registro:', error);
+      // Traduzir mensagens de erro comuns do Firebase
+      if (error.code === 'auth/email-already-in-use') {
+        setError('Este email já está em uso');
+      } else if (error.code === 'auth/invalid-email') {
+        setError('Email inválido');
+      } else if (error.code === 'auth/weak-password') {
+        setError('A senha deve ter pelo menos 6 caracteres');
+      } else if (error.code === 'auth/invalid-credential') {
+        setError('Credenciais inválidas');
+      } else {
+        setError(error.message || 'Erro ao criar conta');
+      }
     } finally {
       setLoading(false);
     }
@@ -149,7 +177,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
+                  Email (para login)
                 </label>
                 <input
                   id="email"
@@ -223,6 +251,37 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                   value={formData.telefone}
                   onChange={handleTelefoneChange}
                   placeholder="(00) 00000-0000"
+                  maxLength={15}
+                  required
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="endereco" className="block text-sm font-medium text-gray-700 mb-2">
+                  Endereço *
+                </label>
+                <input
+                  id="endereco"
+                  name="endereco"
+                  type="text"
+                  value={formData.endereco}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="cidade" className="block text-sm font-medium text-gray-700 mb-2">
+                  Cidade *
+                </label>
+                <input
+                  id="cidade"
+                  name="cidade"
+                  type="text"
+                  value={formData.cidade}
+                  onChange={handleChange}
                   required
                   className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
                 />
@@ -230,7 +289,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
 
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
+                  Email (para login) *
                 </label>
                 <input
                   id="email"
@@ -241,6 +300,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                   required
                   className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
                 />
+                <p className="text-xs text-gray-500 mt-1">Usado apenas para login. Use o telefone para contato.</p>
               </div>
 
               <div>
@@ -267,21 +327,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                   name="confirmarSenha"
                   type="password"
                   value={formData.confirmarSenha}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="endereco" className="block text-sm font-medium text-gray-700 mb-2">
-                  Endereço *
-                </label>
-                <input
-                  id="endereco"
-                  name="endereco"
-                  type="text"
-                  value={formData.endereco}
                   onChange={handleChange}
                   required
                   className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"

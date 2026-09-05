@@ -10,10 +10,17 @@ export default function Sobre() {
 
   useEffect(() => {
     fetch('/api/conteudo?pagina=sobre&chave=foto_equipe')
-      .then(res => res.json())
+      .then(res => {
+        console.log('Response status:', res.status);
+        return res.json();
+      })
       .then(data => {
+        console.log('Dados recebidos:', data);
         if (data && data.valor) {
+          console.log('Foto da equipe definida:', data.valor);
           setFotoEquipe(data.valor);
+        } else {
+          console.log('Sem foto da equipe nos dados');
         }
       })
       .catch(error => console.error('Erro ao buscar foto da equipe:', error));

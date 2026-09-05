@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useAuth } from '@/contexts/AuthContext';
+import AuthModal from '@/components/AuthModal';
 
 interface Avaliacao {
   id: string;
@@ -16,16 +18,19 @@ interface Avaliacao {
 }
 
 export default function Depoimentos() {
+  const { user, getToken } = useAuth();
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     texto: '',
     nota: 5,
+    foto: null as string | null,
   });
 
   useEffect(() => {
-    fetch('/api/avaliacoes')
+    fetch('/api/avaliacoes?tipo=depoimentos')
       .then(res => res.json())
       .then(data => {
         setAvaliacoes(data);
@@ -39,22 +44,41 @@ export default function Depoimentos() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     try {
+      const token = await getToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/api/avaliacoes', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        headers,
+        body: JSON.stringify({
+          texto: formData.texto,
+          nota: formData.nota,
+          foto: formData.foto,
+        }),
       });
 
       if (response.ok) {
         alert('Depoimento enviado com sucesso! Aguarde aprovação.');
         setMostrarFormulario(false);
-        setFormData({ texto: '', nota: 5 });
+        setFormData({ texto: '', nota: 5, foto: null });
         // Recarregar avaliações
         const data = await response.json();
         setAvaliacoes([...avaliacoes, data]);
       } else {
-        alert('Erro ao enviar depoimento');
+        const error = await response.json();
+        alert(error.error || 'Erro ao enviar depoimento');
       }
     } catch (error) {
       console.error('Erro ao enviar depoimento:', error);
@@ -99,7 +123,10 @@ export default function Depoimentos() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-900">Deixe seu Depoimento</h2>
               <button
-                onClick={() => setMostrarFormulario(false)}
+                onClick={() => {
+                  setMostrarFormulario(false);
+                  setFormData({ texto: '', nota: 5, foto: null });
+                }}
                 className="text-gray-500 hover:text-gray-700"
               >
                 ✕
@@ -132,6 +159,40 @@ export default function Depoimentos() {
                   ))}
                 </div>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Foto (opcional)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setFormData({ ...formData, foto: reader.result as string });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                />
+                {formData.foto && (
+                  <div className="mt-2">
+                    <img
+                      src={formData.foto}
+                      alt="Preview"
+                      className="w-32 h-32 object-cover rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, foto: null })}
+                      className="mt-2 text-sm text-red-600 hover:text-red-700"
+                    >
+                      Remover foto
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="flex gap-2">
                 <button
                   type="submit"
@@ -141,7 +202,10 @@ export default function Depoimentos() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setMostrarFormulario(false)}
+                  onClick={() => {
+                    setMostrarFormulario(false);
+                    setFormData({ texto: '', nota: 5, foto: null });
+                  }}
                   className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
                 >
                   Cancelar
@@ -186,6 +250,16 @@ export default function Depoimentos() {
                 
                 <p className="text-gray-700 mb-4 italic">&ldquo;{avaliacao.texto}&rdquo;</p>
                 
+                {avaliacao.foto && (
+                  <div className="mb-4">
+                    <img
+                      src={avaliacao.foto}
+                      alt="Foto do depoimento"
+                      className="w-32 h-32 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
+                
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-gray-900">
@@ -195,12 +269,6 @@ export default function Depoimentos() {
                       {formatarData(avaliacao.criado_em)}
                     </p>
                   </div>
-                  
-                  {avaliacao.foto && (
-                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                      <span className="text-gray-400 text-xs">Foto</span>
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
@@ -209,6 +277,12 @@ export default function Depoimentos() {
       </div>
 
       <Footer />
+      
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLoginSuccess={() => setIsAuthModalOpen(false)}
+      />
     </div>
   );
 }

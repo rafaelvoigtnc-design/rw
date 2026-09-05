@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { X, Clock, User, Package, DollarSign, Edit2, Check, AlertCircle, Trash2 } from 'lucide-react';
 
 interface Locacao {
   id: string;
@@ -9,13 +10,18 @@ interface Locacao {
   horario_inicio: string;
   horario_fim: string;
   status_locacao: string;
-  cliente: {
+  status_pagamento: string;
+  valor_total: number;
+  endereco: string;
+  cliente_nome?: string;
+  cliente?: {
     nome: string;
   };
-  locacao_item: Array<{
-    brinquedo: {
+  locacao_item?: Array<{
+    brinquedo?: {
       nome: string;
     };
+    brinquedo_nome?: string;
   }>;
 }
 
@@ -26,6 +32,17 @@ export default function AdminCalendario() {
   const [mesAtual, setMesAtual] = useState(new Date());
   const [diaSelecionado, setDiaSelecionado] = useState<Date | null>(null);
   const [view, setView] = useState<'mes' | 'semana'>('mes');
+  
+  // Drawer state
+  const [mostrarDrawer, setMostrarDrawer] = useState(false);
+  const [locacaoSelecionada, setLocacaoSelecionada] = useState<Locacao | null>(null);
+  
+  // Modal de edição state
+  const [mostrarModalEdicao, setMostrarModalEdicao] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    status_pagamento: '',
+    status_locacao: '',
+  });
 
   useEffect(() => {
     fetchData();
@@ -76,6 +93,15 @@ export default function AdminCalendario() {
     }
   };
 
+  const getPagamentoColor = (status: string) => {
+    switch (status) {
+      case 'pago': return 'bg-green-500';
+      case 'parcial': return 'bg-yellow-500';
+      case 'pendente': return 'bg-red-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
   const mesAnterior = () => {
     setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth() - 1, 1));
   };
@@ -86,6 +112,69 @@ export default function AdminCalendario() {
 
   const formatarData = (data: Date) => {
     return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  };
+
+  const abrirModalEdicao = (locacao: Locacao) => {
+    setLocacaoSelecionada(locacao);
+    setEditFormData({
+      status_pagamento: locacao.status_pagamento,
+      status_locacao: locacao.status_locacao,
+    });
+    setMostrarModalEdicao(true);
+  };
+
+  const fecharModalEdicao = () => {
+    setMostrarModalEdicao(false);
+    setLocacaoSelecionada(null);
+    setEditFormData({
+      status_pagamento: '',
+      status_locacao: '',
+    });
+  };
+
+  const salvarEdicao = async () => {
+    if (!locacaoSelecionada) return;
+
+    try {
+      const response = await fetch(`/api/admin/locacoes/${locacaoSelecionada.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editFormData),
+      });
+
+      if (response.ok) {
+        await fetchData();
+        fecharModalEdicao();
+      } else {
+        console.error('Erro ao salvar edição');
+      }
+    } catch (error) {
+      console.error('Erro ao salvar edição:', error);
+    }
+  };
+
+  const cancelarLocacao = async (id: string) => {
+    if (!confirm('Tem certeza que deseja cancelar esta locação?')) return;
+
+    try {
+      const response = await fetch(`/api/admin/locacoes/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status_locacao: 'cancelada' }),
+      });
+
+      if (response.ok) {
+        await fetchData();
+      } else {
+        console.error('Erro ao cancelar locação');
+      }
+    } catch (error) {
+      console.error('Erro ao cancelar locação:', error);
+    }
   };
 
   if (loading) {
@@ -165,9 +254,17 @@ export default function AdminCalendario() {
                       {locacoesDoDia.slice(0, 3).map((locacao) => (
                         <div
                           key={locacao.id}
-                          className={`text-xs px-1 py-0.5 rounded text-white truncate ${getStatusColor(locacao.status_locacao)}`}
+                          className="flex items-center gap-1"
                         >
-                          {locacao.horario_inicio}
+                          <div
+                            className={`text-xs px-1 py-0.5 rounded text-white truncate flex-1 ${getStatusColor(locacao.status_locacao)}`}
+                          >
+                            {locacao.horario_inicio}
+                          </div>
+                          <div
+                            className={`w-2 h-2 rounded-full ${getPagamentoColor(locacao.status_pagamento)}`}
+                            title={`Pagamento: ${locacao.status_pagamento}`}
+                          />
                         </div>
                       ))}
                       {locacoesDoDia.length > 3 && (
@@ -199,14 +296,43 @@ export default function AdminCalendario() {
                         <p className="font-semibold text-gray-900">
                           {locacao.horario_inicio} - {locacao.horario_fim}
                         </p>
-                        <p className="text-sm text-gray-900">{locacao.cliente.nome}</p>
-                        <p className="text-xs text-gray-900">
-                          {locacao.locacao_item.map(item => item.brinquedo.nome).join(', ')}
+                        <p className="text-sm text-gray-900">
+                          {locacao.cliente_nome || (locacao.cliente?.nome) || 'Cliente não informado'}
                         </p>
+                        <p className="text-xs text-gray-900">
+                          {locacao.locacao_item && locacao.locacao_item.length > 0
+                            ? locacao.locacao_item.map(item => 
+                                item.brinquedo?.nome || item.brinquedo_nome || 'Brinquedo'
+                              ).join(', ')
+                            : 'Nenhum brinquedo'
+                          }
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-xs text-gray-600">Pagamento:</span>
+                          <span className={`px-2 py-1 rounded text-xs text-white ${getPagamentoColor(locacao.status_pagamento)}`}>
+                            {locacao.status_pagamento}
+                          </span>
+                        </div>
                       </div>
-                      <span className={`px-2 py-1 rounded text-xs text-white ${getStatusColor(locacao.status_locacao)}`}>
-                        {locacao.status_locacao}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded text-xs text-white ${getStatusColor(locacao.status_locacao)}`}>
+                          {locacao.status_locacao}
+                        </span>
+                        <button
+                          onClick={() => abrirModalEdicao(locacao)}
+                          className="p-2 hover:bg-gray-100 rounded text-blue-600"
+                          title="Editar"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => cancelarLocacao(locacao.id)}
+                          className="p-2 hover:bg-gray-100 rounded text-red-600"
+                          title="Cancelar"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -222,25 +348,113 @@ export default function AdminCalendario() {
           </div>
         )}
 
+        {/* Modal de Edição */}
+        {mostrarModalEdicao && locacaoSelecionada && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Editar Locação</h3>
+                <button
+                  onClick={fecharModalEdicao}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status da Locação
+                  </label>
+                  <select
+                    value={editFormData.status_locacao}
+                    onChange={(e) => setEditFormData({ ...editFormData, status_locacao: e.target.value })}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900"
+                  >
+                    <option value="orcamento">Orçamento</option>
+                    <option value="confirmada">Confirmada</option>
+                    <option value="em_andamento">Em Andamento</option>
+                    <option value="concluida">Concluída</option>
+                    <option value="cancelada">Cancelada</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status do Pagamento
+                  </label>
+                  <select
+                    value={editFormData.status_pagamento}
+                    onChange={(e) => setEditFormData({ ...editFormData, status_pagamento: e.target.value })}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900"
+                  >
+                    <option value="pendente">Pendente</option>
+                    <option value="parcial">Parcial (Sinal)</option>
+                    <option value="pago">Pago</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end gap-2 mt-6">
+                  <button
+                    onClick={fecharModalEdicao}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={salvarEdicao}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Salvar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Legenda */}
         <div className="bg-white rounded-lg shadow p-4 mt-6">
           <h4 className="font-semibold mb-2">Legenda de Status</h4>
-          <div className="flex gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-500 rounded"></div>
-              <span className="text-sm">Confirmada</span>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-medium mb-2">Status da Locação:</p>
+              <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                  <span className="text-sm">Confirmada</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                  <span className="text-sm">Em Andamento</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <span className="text-sm">Concluída</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-500 rounded"></div>
+                  <span className="text-sm">Cancelada</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-              <span className="text-sm">Em Andamento</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-500 rounded"></div>
-              <span className="text-sm">Concluída</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-500 rounded"></div>
-              <span className="text-sm">Cancelada</span>
+            <div>
+              <p className="text-sm font-medium mb-2">Status do Pagamento:</p>
+              <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <span className="text-sm">Pago</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                  <span className="text-sm">Parcial (Sinal)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-500 rounded"></div>
+                  <span className="text-sm">Pendente</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

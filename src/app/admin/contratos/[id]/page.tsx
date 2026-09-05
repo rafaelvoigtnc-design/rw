@@ -2,15 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Printer, Download, FileText, Building2, User, Calendar, MapPin, DollarSign, Check } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 
 interface Contrato {
   id: string;
-  locacao_id: string;
   cliente_nome: string;
   cliente_cpf: string;
-  cliente_rg: string;
-  cliente_nascimento: string;
   cliente_endereco: string;
   cliente_numero: string;
   cliente_complemento: string;
@@ -19,18 +16,15 @@ interface Contrato {
   cliente_estado: string;
   cliente_cep: string;
   cliente_telefone: string;
-  cliente_email: string;
-  data_contrato: string;
   data_evento: string;
   horario_inicio: string;
   horario_fim: string;
+  endereco: string;
   local_evento: string;
   valor_total: number;
-  valor_sinal: number;
-  forma_pagamento: string;
   clausulas_adicionais: string;
   status: string;
-  observacoes: string;
+  data_contrato: string;
 }
 
 interface DadosEmpresa {
@@ -47,40 +41,65 @@ interface DadosEmpresa {
   cep: string;
   telefone: string;
   email: string;
+  site: string;
 }
 
-export default function VisualizarContrato({ params }: { params: { id: string } }) {
+export default function ContratoVisualizacao({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [contrato, setContrato] = useState<Contrato | null>(null);
-  const [empresa, setEmpresa] = useState<DadosEmpresa | null>(null);
+  const [dadosEmpresa, setDadosEmpresa] = useState<DadosEmpresa | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { id } = await params;
+
+        // Buscar contrato
+        const contratoResponse = await fetch(`/api/admin/contratos?id=${id}`);
+        if (contratoResponse.ok) {
+          const contratoData = await contratoResponse.json();
+          setContrato(contratoData);
+        } else {
+          setError('Erro ao carregar contrato');
+        }
+
+        // Buscar dados da empresa
+        const empresaResponse = await fetch('/api/dados-empresa');
+        if (empresaResponse.ok) {
+          const empresaData = await empresaResponse.json();
+          setDadosEmpresa(empresaData);
+        }
+      } catch (err) {
+        setError('Erro ao carregar dados');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchData();
-  }, [params.id]);
-
-  const fetchData = async () => {
-    try {
-      const [contratoRes, empresaRes] = await Promise.all([
-        fetch(`/api/admin/contratos/${params.id}`),
-        fetch('/api/admin/dados-empresa'),
-      ]);
-
-      const contratoData = await contratoRes.json();
-      const empresaData = await empresaRes.json();
-
-      setContrato(contratoData);
-      setEmpresa(empresaData);
-    } catch (error) {
-      console.error('Erro ao buscar dados:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [params]);
 
   const handlePrint = () => {
     window.print();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-gray-600">Carregando contrato...</div>
+      </div>
+    );
+  }
+
+  if (error || !contrato) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-red-600">{error || 'Contrato não encontrado'}</div>
+      </div>
+    );
+  }
 
   const formatarData = (data: string) => {
     return new Date(data).toLocaleDateString('pt-BR');
@@ -93,70 +112,23 @@ export default function VisualizarContrato({ params }: { params: { id: string } 
     }).format(valor);
   };
 
-  const clausulasPadrao = [
-    {
-      titulo: '1. DO OBJETO',
-      conteudo: `O presente contrato tem como objeto a locação de brinquedos e itens para festas, conforme descrição na locação nº ${contrato?.locacao_id}, para o evento realizado em ${contrato?.local_evento} na data ${formatarData(contrato.data_evento)}.`,
-    },
-    {
-      titulo: '2. DO VALOR E FORMA DE PAGAMENTO',
-      conteudo: `O valor total do contrato é de ${contrato ? formatarMoeda(contrato.valor_total) : ''}, a ser pago da seguinte forma: ${contrato?.forma_pagamento}. Sinal no valor de ${contrato ? formatarMoeda(contrato.valor_sinal) : ''} pago na assinatura deste contrato, e o saldo restante na entrega dos itens.`,
-    },
-    {
-      titulo: '3. DAS OBRIGAÇÕES DO LOCATÁRIO',
-      conteudo: `O LOCATÁRIO compromete-se a: a) Utilizar os brinquedos e itens de forma adequada e conforme as instruções fornecidas; b) Manter a vigilância sobre os brinquedos durante todo o período de locação; c) Não permitir que crianças brinquem sem supervisão de adulto responsável; d) Não alterar, modificar ou tentar reparar os brinquedos; e) Comunicar imediatamente qualquer dano ou defeito encontrado.`,
-    },
-    {
-      titulo: '4. DA RESPONSABILIDADE POR DANOS',
-      conteudo: `O LOCATÁRIO é integralmente responsável por qualquer dano, quebra, perda ou deterioração dos brinquedos e itens locados, ocorridos durante o período de locação. Em caso de dano por falta de cuidado, uso inadequado ou negligência, o LOCATÁRIO compromete-se a pagar o valor de reparação ou substituição do item, conforme tabela de preços da LOCADORA. Danos considerados leves terão desconto de até 30% do valor do item, enquanto danos graves ou perda total implicarão no pagamento integral do valor do item novo.`,
-    },
-    {
-      titulo: '5. DA SEGURANÇA',
-      conteudo: `A LOCADORA não se responsabiliza por acidentes ocorridos durante o uso dos brinquedos, desde que estes tenham sido instalados corretamente e de acordo com as normas de segurança. O LOCATÁRIO é responsável por garantir a segurança dos usuários durante todo o período de uso.`,
-    },
-    {
-      titulo: '6. DO PRAZO DE LOCAÇÃO',
-      conteudo: `A locação terá início às ${contrato?.horario_inicio} e término às ${contrato?.horario_fim} do dia ${contrato ? formatarData(contrato.data_evento) : ''}. Atrasos na devolução sujeitarão o LOCATÁRIO ao pagamento de multa correspondente a 50% do valor da diária por cada hora de atraso.`,
-    },
-    {
-      titulo: '7. DA ENTREGA E DEVOLUÇÃO',
-      conteudo: `A LOCADORA compromete-se a entregar os brinquedos e itens no local e horário acordados, em perfeitas condições de uso. O LOCATÁRIO compromete-se a devolver todos os itens no mesmo estado em que recebeu, salvo desgaste normal do uso.`,
-    },
-    {
-      titulo: '8. DAS CONDIÇÕES DE CANCELAMENTO',
-      conteudo: `O cancelamento da locação pelo LOCATÁRIO com antecedência mínima de 7 dias dará direito à devolução integral do valor pago. Cancelamentos com menos de 7 dias de antecedência terão retenção de 50% do valor total como multa. Cancelamentos com menos de 24 horas de antecedência não terão direito a reembolso.`,
-    },
-    {
-      titulo: '9. DO FORO',
-      conteudo: `As partes elegem o foro da comarca de ${empresa?.cidade} para dirimir quaisquer dúvidas ou controvérsias decorrentes deste contrato.`,
-    },
-  ];
-
-  if (loading) {
-    return <div className="p-8">Carregando...</div>;
-  }
-
-  if (!contrato || !empresa) {
-    return <div className="p-8">Dados não encontrados</div>;
-  }
-
   return (
     <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow print:hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b no-print">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex justify-between items-center">
             <button
-              onClick={() => router.push('/admin/contratos')}
-              className="flex items-center gap-2 text-gray-800 hover:text-gray-900"
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-5 h-5" />
               Voltar
             </button>
-            <h1 className="text-xl font-bold text-gray-900">Visualizar Contrato</h1>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-blue-500 text-white rounded-lg hover:bg-primary-blue-600 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
                 <Printer className="w-4 h-4" />
                 Imprimir
@@ -164,160 +136,163 @@ export default function VisualizarContrato({ params }: { params: { id: string } 
             </div>
           </div>
         </div>
-      </nav>
+      </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-2xl shadow-soft p-8 print:shadow-none print:rounded-none">
+      {/* Contrato */}
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-white shadow-lg p-6 md:p-8 print:shadow-none print:p-6 text-sm">
           {/* Cabeçalho */}
-          <div className="text-center mb-8 border-b pb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">CONTRATO DE LOCAÇÃO</h1>
-            <p className="text-gray-600">Nº {contrato.id.slice(0, 8).toUpperCase()}</p>
+          <div className="text-center mb-6 border-b pb-4">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
+              CONTRATO DE LOCAÇÃO DE BRINQUEDOS
+            </h1>
+            <p className="text-gray-600 text-sm">Para Festas e Eventos Infantis</p>
           </div>
 
           {/* Dados das Partes */}
-          <div className="mb-8 space-y-6">
-            <div className="flex items-start gap-3">
-              <Building2 className="w-5 h-5 text-primary-blue-600 mt-1" />
-              <div>
-                <h3 className="font-bold text-gray-900 mb-1">LOCADORA</h3>
-                <p className="text-sm text-gray-700">
-                  <strong>{empresa.razao_social}</strong>, inscrita no CNPJ sob o nº {empresa.cnpj}
-                  {empresa.inscricao_estadual && `, inscrição estadual nº ${empresa.inscricao_estadual}`},
-                  com sede à {empresa.endereco}, nº {empresa.numero}
-                  {empresa.complemento && `, ${empresa.complemento}`}, bairro {empresa.bairro},
-                  cidade {empresa.cidade}/{empresa.estado}, CEP {empresa.cep},
-                  telefone {empresa.telefone}, email {empresa.email}.
-                </p>
-              </div>
+          <div className="mb-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-3">DAS PARTES</h2>
+
+            <div className="mb-3">
+              <h3 className="font-medium text-gray-900 mb-1">LOCADOR:</h3>
+              <p className="text-gray-700">
+                <strong>{dadosEmpresa?.nome_fantasia || 'RW BRINQUEDOS'}</strong>, empresa de locação de brinquedos para festas e eventos infantis,
+                inscrita no CNPJ sob o nº {dadosEmpresa?.cnpj || '[CNPJ]'}{dadosEmpresa?.inscricao_estadual && `, inscrição estadual nº ${dadosEmpresa.inscricao_estadual}`},
+                com sede em {dadosEmpresa?.endereco || '[Endereço]'}, nº {dadosEmpresa?.numero || '[Número]'}
+                {dadosEmpresa?.complemento && `, ${dadosEmpresa.complemento}`}
+                , bairro {dadosEmpresa?.bairro || '[Bairro]'}, cidade {dadosEmpresa?.cidade || '[Cidade]'} - {dadosEmpresa?.estado || '[Estado]'},
+                CEP {dadosEmpresa?.cep || '[CEP]'}, telefone {dadosEmpresa?.telefone || '[Telefone]'}
+                {dadosEmpresa?.email && `, email ${dadosEmpresa.email}`}
+                {dadosEmpresa?.site && `, site ${dadosEmpresa.site}`}.
+              </p>
             </div>
 
-            <div className="flex items-start gap-3">
-              <User className="w-5 h-5 text-primary-green-600 mt-1" />
-              <div>
-                <h3 className="font-bold text-gray-900 mb-1">LOCATÁRIO</h3>
-                <p className="text-sm text-gray-700">
-                  <strong>{contrato.cliente_nome}</strong>, portador do CPF nº {contrato.cliente_cpf}
-                  {contrato.cliente_rg && `, RG nº ${contrato.cliente_rg}`}
-                  {contrato.cliente_nascimento && `, nascido em ${formatarData(contrato.cliente_nascimento)}`},
-                  residente e domiciliado à {contrato.cliente_endereco}, nº {contrato.cliente_numero}
-                  {contrato.cliente_complemento && `, ${contrato.cliente_complemento}`}, bairro {contrato.cliente_bairro},
-                  cidade {contrato.cliente_cidade}/{contrato.cliente_estado}, CEP {contrato.cliente_cep},
-                  telefone {contrato.cliente_telefone}
-                  {contrato.cliente_email && `, email ${contrato.cliente_email}`}.
-                </p>
-              </div>
+            <div>
+              <h3 className="font-medium text-gray-900 mb-1">LOCATÁRIO:</h3>
+              <p className="text-gray-700">
+                <strong>{contrato.cliente_nome}</strong>, portador do CPF nº {contrato.cliente_cpf},
+                residente em {contrato.cliente_endereco}, nº {contrato.cliente_numero}
+                {contrato.cliente_complemento && `, ${contrato.cliente_complemento}`}
+                , bairro {contrato.cliente_bairro}, cidade {contrato.cliente_cidade} - {contrato.cliente_estado},
+                CEP {contrato.cliente_cep}, telefone {contrato.cliente_telefone}.
+              </p>
             </div>
+          </div>
+
+          {/* Objeto do Contrato */}
+          <div className="mb-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-3">DO OBJETO</h2>
+            <p className="text-gray-700 mb-3">
+              O presente contrato tem como objeto a locação de brinquedos para festa infantil, conforme especificado abaixo,
+              mediante as condições aqui estabelecidas.
+            </p>
           </div>
 
           {/* Dados do Evento */}
-          <div className="mb-8 p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              DADOS DO EVENTO
-            </h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-gray-600">Data:</span>
-                <span className="ml-2 font-medium">{formatarData(contrato.data_evento)}</span>
+          <div className="mb-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-3">DADOS DO EVENTO</h2>
+            <div className="space-y-1 text-gray-700">
+              <p><strong>Data do Evento:</strong> {formatarData(contrato.data_evento)}</p>
+              <p><strong>Horário:</strong> das {contrato.horario_inicio} às {contrato.horario_fim}</p>
+              <p><strong>Endereço:</strong> {contrato.endereco || 'Não informado'}</p>
+              {contrato.local_evento && (
+                <p><strong>Local do Evento:</strong> {contrato.local_evento}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Valor e Condições de Pagamento */}
+          <div className="mb-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-3">DO VALOR E CONDIÇÕES DE PAGAMENTO</h2>
+            <div className="text-gray-700">
+              <p className="mb-2">
+                <strong>Valor Total da Locação:</strong> {formatarMoeda(contrato.valor_total)}
+              </p>
+              <p>
+                O valor deverá ser pago conforme acordado entre as partes, sendo 50% (cinquenta por cento)
+                no ato da assinatura deste contrato como sinal, e os 50% (cinquenta por cento) restantes
+                na entrega dos brinquedos.
+              </p>
+            </div>
+          </div>
+
+          {/* Obrigações e Responsabilidades */}
+          <div className="mb-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-3">DAS OBRIGAÇÕES E RESPONSABILIDADES</h2>
+            <div className="space-y-2 text-gray-700">
+              <div className="flex gap-2">
+                <span className="font-bold">1.</span>
+                <p>O LOCATÁRIO compromete-se a utilizar os brinquedos de forma adequada e responsável, seguindo todas as instruções de segurança fornecidas pelo LOCADOR.</p>
               </div>
-              <div>
-                <span className="text-gray-600">Horário:</span>
-                <span className="ml-2 font-medium">{contrato.horario_inicio} às {contrato.horario_fim}</span>
+              <div className="flex gap-2">
+                <span className="font-bold">2.</span>
+                <p>O LOCATÁRIO é inteiramente responsável por qualquer dano, quebra, perda ou deterioração dos brinquedos ocorridos durante o período de locação, exceto quando decorrente de defeito de fabricação ou má conservação prévia pelo LOCADOR.</p>
               </div>
-              <div className="col-span-2">
-                <span className="text-gray-600">Local:</span>
-                <span className="ml-2 font-medium">{contrato.local_evento}</span>
+              <div className="flex gap-2">
+                <span className="font-bold">3.</span>
+                <p>Em caso de dano por mau uso, negligência ou imprudência do LOCATÁRIO, este compromete-se a pagar o valor integral do reparo ou substituição do brinquedo danificado, conforme orçamento apresentado pelo LOCADOR.</p>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold">4.</span>
+                <p>O LOCATÁRIO não deve permitir que crianças utilizem os brinquedos sem supervisão adequada de um adulto responsável.</p>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold">5.</span>
+                <p>É proibido o uso de objetos pontiagudos, alimentos, bebidas ou qualquer substância que possa causar danos aos brinquedos.</p>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold">6.</span>
+                <p>O LOCATÁRIO deverá garantir que o local do evento seja adequado e seguro para a instalação dos brinquedos, com espaço suficiente e terreno plano.</p>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold">7.</span>
+                <p>O LOCADOR se compromete a entregar os brinquedos em perfeito estado de conservação, limpeza e funcionamento, e a realizar a montagem e desmontagem quando contratado.</p>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-bold">8.</span>
+                <p>O atraso na devolução dos brinquedos além do horário estipulado acarretará multa de 10% (dez por cento) do valor total da locação por hora de atraso, limitado ao valor de uma diária completa.</p>
               </div>
             </div>
           </div>
 
-          {/* Valores */}
-          <div className="mb-8 p-4 bg-green-50 rounded-lg">
-            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <DollarSign className="w-5 h-5" />
-              VALORES
-            </h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+          {/* Cláusulas Adicionais */}
+          {contrato.clausulas_adicionais && (
+            <div className="mb-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-3">CLÁUSULAS ADICIONAIS</h2>
               <div>
-                <span className="text-gray-600">Valor Total:</span>
-                <span className="ml-2 font-bold text-lg">{formatarMoeda(contrato.valor_total)}</span>
+                <p className="text-gray-700 whitespace-pre-line">{contrato.clausulas_adicionais}</p>
               </div>
-              <div>
-                <span className="text-gray-600">Sinal:</span>
-                <span className="ml-2 font-medium">{formatarMoeda(contrato.valor_sinal)}</span>
-              </div>
-              <div className="col-span-2">
-                <span className="text-gray-600">Forma de Pagamento:</span>
-                <span className="ml-2 font-medium">{contrato.forma_pagamento}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Cláusulas */}
-          <div className="mb-8 space-y-6">
-            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              CLÁUSULAS CONTRATUAIS
-            </h3>
-
-            {clausulasPadrao.map((clausula, index) => (
-              <div key={index} className="border-l-4 border-primary-blue-500 pl-4">
-                <h4 className="font-semibold text-gray-900 mb-2">{clausula.titulo}</h4>
-                <p className="text-sm text-gray-700 leading-relaxed">{clausula.conteudo}</p>
-              </div>
-            ))}
-
-            {contrato.clausulas_adicionais && (
-              <div className="border-l-4 border-primary-green-500 pl-4">
-                <h4 className="font-semibold text-gray-900 mb-2">CLÁUSULAS ADICIONAIS</h4>
-                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-                  {contrato.clausulas_adicionais}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Observações */}
-          {contrato.observacoes && (
-            <div className="mb-8 p-4 bg-yellow-50 rounded-lg">
-              <h3 className="font-bold text-gray-900 mb-2">OBSERVAÇÕES</h3>
-              <p className="text-sm text-gray-700">{contrato.observacoes}</p>
             </div>
           )}
 
-          {/* Assinaturas */}
-          <div className="mt-12 pt-8 border-t">
-            <h3 className="font-bold text-gray-900 mb-6 text-center">ASSINATURAS</h3>
-            <div className="grid grid-cols-2 gap-8">
-              <div className="text-center">
-                <div className="border-b-2 border-gray-400 mb-2 h-16"></div>
-                <p className="text-sm text-gray-700 font-medium">{empresa.nome_fantasia}</p>
-                <p className="text-xs text-gray-500">LOCADORA</p>
-                {contrato.empresa_assinou && (
-                  <p className="text-xs text-green-600 mt-1 flex items-center justify-center gap-1">
-                    <Check className="w-3 h-3" />
-                    Assinado em {formatarData(contrato.data_contrato)}
-                  </p>
-                )}
-              </div>
-              <div className="text-center">
-                <div className="border-b-2 border-gray-400 mb-2 h-16"></div>
-                <p className="text-sm text-gray-700 font-medium">{contrato.cliente_nome}</p>
-                <p className="text-xs text-gray-500">LOCATÁRIO</p>
-                {contrato.cliente_assinou && (
-                  <p className="text-xs text-green-600 mt-1 flex items-center justify-center gap-1">
-                    <Check className="w-3 h-3" />
-                    Assinado em {formatarData(contrato.data_contrato)}
-                  </p>
-                )}
-              </div>
-            </div>
+          {/* Foro */}
+          <div className="mb-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-3">DO FORO</h2>
+            <p className="text-gray-700">
+              As partes elegem o foro da comarca de {contrato.cliente_cidade} para dirimir quaisquer dúvidas ou controvérsias decorrentes deste contrato.
+            </p>
           </div>
 
-          {/* Rodapé */}
-          <div className="mt-8 pt-4 border-t text-center text-xs text-gray-500">
-            <p>{empresa.cidade}, {formatarData(contrato.data_contrato)}</p>
-            <p className="mt-2">Este contrato é firmado em duas vias de igual teor e forma.</p>
+          {/* Assinaturas */}
+          <div className="mt-8 pt-6 border-t">
+            <h2 className="text-base font-semibold text-gray-900 mb-6">ASSINATURAS</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="text-center">
+                <div className="border-b-2 border-gray-400 mb-2 pb-12"></div>
+                <p className="font-medium text-gray-900">LOCADOR</p>
+                <p className="text-xs text-gray-600">RW Brinquedos</p>
+              </div>
+              <div className="text-center">
+                <div className="border-b-2 border-gray-400 mb-2 pb-12"></div>
+                <p className="font-medium text-gray-900">LOCATÁRIO</p>
+                <p className="text-xs text-gray-600">{contrato.cliente_nome}</p>
+              </div>
+            </div>
+
+            <div className="mt-6 text-center text-xs text-gray-600">
+              <p>{contrato.cliente_cidade}, {formatarData(contrato.data_contrato)}</p>
+            </div>
           </div>
         </div>
       </div>

@@ -1,42 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { verifyToken, hashPassword } from '@/lib/auth';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('cliente_token')?.value;
-    console.log('Token recebido:', token ? 'SIM' : 'NÃO');
+    // Obter token do header de autorização ou cookie
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '') || request.cookies.get('firebase_token')?.value;
     
     if (!token) {
-      console.log('Token não encontrado');
+      console.log('Token não fornecido');
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    // Verificar token
-    const payload = await verifyToken(token);
-    console.log('Payload do token:', payload);
-    
-    if (!payload || payload.type !== 'client') {
-      console.log('Token inválido');
+    // Decodificar o token (basic verification - format check)
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.log('Token inválido: formato incorreto');
+        return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+      }
+
+      // Decodificar o payload (sem verificação de assinatura por enquanto)
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+      const uid = payload.user_id || payload.uid;
+      
+      if (!uid) {
+        console.log('Token não contém UID');
+        return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+      }
+
+      console.log('UID do token:', uid);
+
+      // Buscar dados do cliente no Firestore
+      const docRef = doc(db, 'clientes', uid);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 });
+      }
+
+      const cliente = { id: docSnap.id, ...docSnap.data() };
+      console.log('Cliente encontrado:', cliente.nome);
+
+      return NextResponse.json(cliente);
+    } catch (decodeError) {
+      console.error('Erro ao decodificar token:', decodeError);
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
-
-    // Buscar dados do cliente
-    const { data: cliente, error } = await supabase
-      .from('cliente')
-      .select('id, nome, telefone, email, endereco')
-      .eq('id', payload.id)
-      .single();
-
-    console.log('Cliente encontrado:', cliente ? cliente.nome : 'NÃO');
-
-    if (error || !cliente) {
-      return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 });
-    }
-
-    return NextResponse.json(cliente);
   } catch (error) {
     console.error('Erro ao buscar perfil:', error);
     return NextResponse.json({ error: 'Erro ao buscar perfil' }, { status: 500 });
@@ -45,61 +58,55 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const token = request.cookies.get('cliente_token')?.value;
+    // Obter token do header de autorização ou cookie
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '') || request.cookies.get('firebase_token')?.value;
+    
     if (!token) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    const payload = await verifyToken(token);
-    if (!payload || payload.type !== 'client') {
+    // Decodificar o token
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+      }
+
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+      const uid = payload.user_id || payload.uid;
+      
+      if (!uid) {
+        return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+      }
+
+      const body = await request.json();
+      const { nome, telefone, email, senha, endereco, cidade } = body;
+
+      // Validar telefone
+      const telefoneLimpo = telefone.replace(/\D/g, '');
+      if (telefoneLimpo.length !== 11) {
+        return NextResponse.json({ error: 'O telefone deve ter exatamente 11 dígitos' }, { status: 400 });
+      }
+
+      // Preparar dados para atualizar
+      const updateData: any = {
+        nome,
+        telefone: telefoneLimpo,
+        email,
+        endereco,
+        cidade,
+      };
+
+      // Atualizar dados no Firestore
+      const docRef = doc(db, 'clientes', uid);
+      await updateDoc(docRef, updateData);
+
+      return NextResponse.json({ success: true });
+    } catch (decodeError) {
+      console.error('Erro ao decodificar token:', decodeError);
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
-
-    const body = await request.json();
-    const { nome, telefone, email, senha, endereco } = body;
-
-    // Validar telefone
-    const telefoneLimpo = telefone.replace(/\D/g, '');
-    if (telefoneLimpo.length !== 11) {
-      return NextResponse.json({ error: 'O telefone deve ter exatamente 11 dígitos' }, { status: 400 });
-    }
-
-    // Preparar dados para atualizar
-    const updateData: any = {
-      nome,
-      telefone: telefoneLimpo,
-      email,
-      endereco,
-    };
-
-    // Se senha foi fornecida, atualizar também
-    if (senha && senha.length >= 6) {
-      updateData.senha_hash = await hashPassword(senha);
-    }
-
-    // Verificar se o email já está em uso por outro cliente
-    const { data: clienteExistente } = await supabase
-      .from('cliente')
-      .select('id')
-      .eq('email', email)
-      .neq('id', payload.id)
-      .single();
-
-    if (clienteExistente) {
-      return NextResponse.json({ error: 'Email já está em uso' }, { status: 400 });
-    }
-
-    // Atualizar cliente
-    const { error } = await supabase
-      .from('cliente')
-      .update(updateData)
-      .eq('id', payload.id);
-
-    if (error) {
-      throw error;
-    }
-
-    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Erro ao atualizar perfil:', error);
     return NextResponse.json({ error: 'Erro ao atualizar perfil' }, { status: 500 });

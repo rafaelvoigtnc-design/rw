@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getDocs, collection, query, where, orderBy, addDoc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
-      .from('transacao_financeira')
-      .select('*')
-      .order('data', { ascending: false });
+    const q = query(collection(db, 'transacoes'));
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    if (error) throw error;
+    // Ordenar por data no cliente
+    data.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
 
     return NextResponse.json(data);
   } catch (error) {
@@ -24,22 +25,17 @@ export async function POST(request: Request) {
   try {
     const { tipo, valor, data, descricao, categoria } = await request.json();
 
-    const { data: transacao, error } = await supabase
-      .from('transacao_financeira')
-      .insert({
-        id: crypto.randomUUID(),
-        tipo,
-        valor,
-        data,
-        descricao,
-        categoria: categoria || null,
-      })
-      .select()
-      .single();
+    const docRef = await addDoc(collection(db, 'transacoes'), {
+      tipo,
+      valor,
+      data,
+      descricao: descricao || '',
+      categoria: categoria || null,
+      criado_em: new Date().toISOString(),
+    });
 
-    if (error) throw error;
-
-    return NextResponse.json(transacao);
+    const docSnap = await getDoc(docRef);
+    return NextResponse.json({ id: docRef.id, ...docSnap.data() });
   } catch (error) {
     console.error('Erro ao criar transação financeira:', error);
     return NextResponse.json(

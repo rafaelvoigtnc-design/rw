@@ -1,29 +1,23 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { updatePromocao, deletePromocao } from '@/lib/firebase-db';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { titulo, descricao, data_inicio, data_fim, ativa } = await request.json();
 
-    const { data, error } = await supabase
-      .from('promocao')
-      .update({
-        titulo,
-        descricao,
-        data_inicio,
-        data_fim,
-        ativa,
-      })
-      .eq('id', params.id)
-      .select()
-      .single();
+    await updatePromocao(id, {
+      titulo,
+      descricao,
+      data_inicio,
+      data_fim,
+      ativa,
+    });
 
-    if (error) throw error;
-
-    return NextResponse.json(data);
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Erro ao atualizar promoção:', error);
     return NextResponse.json(
@@ -35,15 +29,12 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { error } = await supabase
-      .from('promocao')
-      .delete()
-      .eq('id', params.id);
+    const { id } = await params;
 
-    if (error) throw error;
+    await deletePromocao(id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,24 +1,22 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getDocs, collection, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export async function GET(request: Request) {
   try {
-    console.log('Buscando banners do Supabase...');
-    const { data, error } = await supabase
-      .from('banners')
-      .select('*')
-      .eq('ativo', true)
-      .order('ordem');
+    console.log('Buscando banners do Firebase...');
+    const q = query(
+      collection(db, 'banners'),
+      where('ativo', '==', true)
+    );
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    console.log('Resultado da query:', { data, error });
+    // Ordenar por ordem no cliente
+    data.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
 
-    if (error) {
-      console.error('Erro do Supabase:', error);
-      throw error;
-    }
-
-    console.log(`Retornando ${data?.length || 0} banners`);
-    return NextResponse.json(data || []);
+    console.log(`Retornando ${data.length} banners`);
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Erro ao buscar banners:', error);
     return NextResponse.json(

@@ -11,14 +11,22 @@ interface Avaliacao {
   nota: number;
   foto: string | null;
   aprovado_para_exibir: boolean;
+  recusada?: boolean;
   criado_em: string;
+  cliente?: {
+    nome: string;
+    telefone: string;
+  };
+  brinquedo?: {
+    nome: string;
+  };
 }
 
 export default function AdminAvaliacoes() {
   const router = useRouter();
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filtro, setFiltro] = useState<'todas' | 'pendentes' | 'aprovadas' | 'brinquedos'>('todas');
+  const [filtro, setFiltro] = useState<'todas' | 'pendentes' | 'aprovadas' | 'recusadas' | 'brinquedos' | 'depoimentos'>('todas');
 
   useEffect(() => {
     fetchData();
@@ -42,16 +50,50 @@ export default function AdminAvaliacoes() {
 
   const handleAprovar = async (id: string, aprovado: boolean) => {
     try {
-      const response = await fetch(`/api/admin/avaliacoes/${id}`, {
+      console.log('Enviando requisição para aprovar/recusar:', id, aprovado);
+      const response = await fetch('/api/admin/avaliacoes', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ aprovado }),
+        body: JSON.stringify({ id, aprovado }),
       });
+      console.log('Status da resposta:', response.status);
+      const data = await response.json();
+      console.log('Resposta:', data);
+      
       if (response.ok) {
+        if (aprovado) {
+          alert('Avaliação aprovada com sucesso!');
+        } else {
+          alert('Avaliação recusada com sucesso!');
+        }
         fetchData();
+      } else {
+        alert('Erro ao aprovar/recusar: ' + (data.error || 'Erro desconhecido'));
       }
     } catch (error) {
       console.error('Erro ao aprovar/recusar avaliação:', error);
+      alert('Erro ao aprovar/recusar avaliação');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta avaliação?')) return;
+    
+    try {
+      const response = await fetch('/api/admin/avaliacoes', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      
+      if (response.ok) {
+        fetchData();
+      } else {
+        alert('Erro ao excluir avaliação');
+      }
+    } catch (error) {
+      console.error('Erro ao excluir avaliação:', error);
+      alert('Erro ao excluir avaliação');
     }
   };
 
@@ -112,6 +154,22 @@ export default function AdminAvaliacoes() {
             >
               🧸 Avaliações de Brinquedos
             </button>
+            <button
+              onClick={() => setFiltro('depoimentos')}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                filtro === 'depoimentos' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              💬 Depoimentos
+            </button>
+            <button
+              onClick={() => setFiltro('recusadas')}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                filtro === 'recusadas' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              ❌ Recusadas
+            </button>
           </div>
         </div>
 
@@ -122,15 +180,27 @@ export default function AdminAvaliacoes() {
         ) : (
           <div className="space-y-4">
             {avaliacoes.map((avaliacao) => (
-              <div key={avaliacao.id} className="bg-white rounded-lg shadow p-6">
+              <div key={avaliacao.id} className={`rounded-lg shadow p-6 ${avaliacao.recusada ? 'bg-red-50 border-2 border-red-300' : 'bg-white'}`}>
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Cliente ID: {avaliacao.cliente_id}
+                      {avaliacao.cliente?.nome || 'Cliente não identificado'}
                     </h3>
-                    <p className="text-sm text-gray-600">
-                      {avaliacao.brinquedo_id ? `Brinquedo ID: ${avaliacao.brinquedo_id}` : 'Avaliação geral'}
-                    </p>
+                    {avaliacao.cliente?.telefone && (
+                      <p className="text-sm text-gray-600">
+                        📞 {avaliacao.cliente.telefone}
+                      </p>
+                    )}
+                    {avaliacao.brinquedo && (
+                      <p className="text-sm text-gray-600">
+                        🧸 {avaliacao.brinquedo.nome}
+                      </p>
+                    )}
+                    {!avaliacao.brinquedo_id && (
+                      <p className="text-sm text-gray-600">
+                        💬 Depoimento geral
+                      </p>
+                    )}
                     <p className="text-sm text-gray-600">
                       {new Date(avaliacao.criado_em).toLocaleDateString('pt-BR')}
                     </p>
@@ -140,9 +210,19 @@ export default function AdminAvaliacoes() {
                           Aprovada
                         </span>
                       )}
+                      {avaliacao.recusada && (
+                        <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
+                          ❌ Recusada
+                        </span>
+                      )}
                       {avaliacao.brinquedo_id && (
                         <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
                           🧸 Brinquedo
+                        </span>
+                      )}
+                      {!avaliacao.brinquedo_id && (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                          💬 Depoimento
                         </span>
                       )}
                     </div>
@@ -168,7 +248,7 @@ export default function AdminAvaliacoes() {
                     <img
                       src={avaliacao.foto}
                       alt="Foto da avaliação"
-                      className="w-32 h-32 object-cover rounded-lg"
+                      className="w-48 h-48 object-cover rounded-lg"
                     />
                   </div>
                 )}
@@ -197,6 +277,12 @@ export default function AdminAvaliacoes() {
                       Desaprovar
                     </button>
                   )}
+                  <button
+                    onClick={() => handleDelete(avaliacao.id)}
+                    className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                  >
+                    Excluir
+                  </button>
                 </div>
               </div>
             ))}

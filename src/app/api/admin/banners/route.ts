@@ -1,23 +1,71 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getAllBanners, createBanner } from '@/lib/firebase-db';
 
 export async function GET(request: Request) {
   try {
-    console.log('Buscando banners do Supabase (admin)...');
-    const { data, error } = await supabaseAdmin
-      .from('banners')
-      .select('*')
-      .order('ordem');
+    console.log('Buscando banners do Firebase (admin)...');
+    const banners = await getAllBanners();
 
-    console.log('Resultado da query (admin):', { data, error });
+    // Se não houver banners, criar banners padrão
+    if (banners.length === 0) {
+      console.log('Nenhum banner encontrado, criando banners padrão...');
+      const defaultBanners = [
+        {
+          titulo: 'Diversão Garantida para sua Festa!',
+          subtitulo: 'Locação de brinquedos, infláveis, decoração e itens para festas',
+          descricao: 'Transforme seu evento em uma experiência inesquecível com nossos brinquedos e serviços premium.',
+          botao_primario: 'Solicitar Orçamento',
+          link_primario: '/catalogo',
+          botao_secundario: 'Ver Catálogo',
+          link_secundario: '/catalogo',
+          gradiente: 'from-primary-blue-400 via-primary-blue-500 to-primary-green-400',
+          imagem: '/logo-sem-fundo.png',
+          badge: null,
+          ativo: true,
+          ordem: 1,
+        },
+        {
+          titulo: 'Combo Família',
+          subtitulo: '2 brinquedos com 10% OFF',
+          descricao: 'Aproveite nossa promoção exclusiva do mês e economize na festa dos seus filhos!',
+          botao_primario: 'Quero Aproveitar',
+          link_primario: '/promocoes',
+          botao_secundario: 'Ver Detalhes',
+          link_secundario: '/promocoes',
+          gradiente: 'from-primary-yellow-400 via-primary-orange-400 to-primary-orange-500',
+          imagem: '/logo-sem-fundo.png',
+          badge: 'Promoção do Mês',
+          ativo: true,
+          ordem: 2,
+        },
+        {
+          titulo: 'Transformamos sua festa em uma experiência inesquecível',
+          subtitulo: 'Aniversários, decorações, mesas e personagens',
+          descricao: 'Serviços completos para eventos memoráveis com qualidade e segurança.',
+          botao_primario: 'Conhecer Serviços',
+          link_primario: '/sobre',
+          botao_secundario: 'Ver Galeria',
+          link_secundario: '/depoimentos',
+          gradiente: 'from-primary-green-400 via-primary-blue-400 to-primary-blue-500',
+          imagem: '/logo-sem-fundo.png',
+          badge: null,
+          ativo: true,
+          ordem: 3,
+        },
+      ];
 
-    if (error) {
-      console.error('Erro do Supabase (admin):', error);
-      throw error;
+      for (const banner of defaultBanners) {
+        await createBanner(banner);
+      }
+
+      // Buscar novamente após criar
+      const newBanners = await getAllBanners();
+      console.log(`Criados e retornando ${newBanners.length} banners (admin)`);
+      return NextResponse.json(newBanners);
     }
 
-    console.log(`Retornando ${data?.length || 0} banners (admin)`);
-    return NextResponse.json(data || []);
+    console.log(`Retornando ${banners.length} banners (admin)`);
+    return NextResponse.json(banners);
   } catch (error) {
     console.error('Erro ao buscar banners (admin):', error);
     return NextResponse.json(
@@ -30,31 +78,17 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    
+
     // Buscar maior ordem atual
-    const { data: banners } = await supabaseAdmin
-      .from('banners')
-      .select('ordem')
-      .order('ordem', { ascending: false })
-      .limit(1);
-    
-    const novaOrdem = banners && banners.length > 0 ? (banners[0].ordem || 0) + 1 : 0;
+    const banners = await getAllBanners();
+    const novaOrdem = banners.length > 0 ? Math.max(...banners.map((b: any) => b.ordem || 0)) + 1 : 0;
 
-    const { data, error } = await supabaseAdmin
-      .from('banners')
-      .insert({
-        id: crypto.randomUUID(),
-        ...body,
-        ordem: body.ordem !== undefined ? body.ordem : novaOrdem,
-        criado_em: new Date().toISOString(),
-        atualizado_em: new Date().toISOString(),
-      })
-      .select()
-      .single();
+    const data = await createBanner({
+      ...body,
+      ordem: body.ordem !== undefined ? body.ordem : novaOrdem,
+    });
 
-    if (error) throw error;
-
-    return NextResponse.json(data);
+    return NextResponse.json({ id: data.id, ...body, ordem: body.ordem !== undefined ? body.ordem : novaOrdem });
   } catch (error) {
     console.error('Erro ao criar banner:', error);
     return NextResponse.json(

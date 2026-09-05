@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import ScrollObserver from "@/components/ScrollObserver";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const poppins = Poppins({ 
   subsets: ["latin"],
@@ -26,7 +27,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${poppins.className} font-sans`}>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <WhatsAppFloat />
         <ScrollObserver />
       </body>

@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Heart, Share2, Star, ChevronLeft, ChevronRight, Phone } from 'lucide-react';
+import { Heart, Share2, Star, ChevronLeft, ChevronRight, Phone, ShoppingCart } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AuthModal from '@/components/AuthModal';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Brinquedo {
   id: string;
@@ -34,16 +35,18 @@ interface Avaliacao {
 export default function BrinquedoPage() {
   const params = useParams();
   const id = params.id as string;
+  const { user, getToken } = useAuth();
   
   const [brinquedo, setBrinquedo] = useState<Brinquedo | null>(null);
   const [loading, setLoading] = useState(true);
   const [fotoAtual, setFotoAtual] = useState(0);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isFavorito, setIsFavorito] = useState(false);
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [novaAvaliacao, setNovaAvaliacao] = useState({ nota: 0, texto: '' });
   const [enviandoAvaliacao, setEnviandoAvaliacao] = useState(false);
+  const [adicionandoCarrinho, setAdicionandoCarrinho] = useState(false);
+  const [noCarrinho, setNoCarrinho] = useState(false);
 
 
   useEffect(() => {
@@ -58,18 +61,6 @@ export default function BrinquedoPage() {
         setLoading(false);
       });
 
-    // Verificar login via API
-    fetch('/api/cliente/perfil')
-      .then(res => {
-        if (res.ok) {
-          setIsLoggedIn(true);
-          checkFavorito();
-        }
-      })
-      .catch(error => {
-        console.error('Erro ao verificar login:', error);
-      });
-
     // Buscar avaliações
     fetch(`/api/avaliacoes?brinquedo_id=${id}`)
       .then(res => res.json())
@@ -82,6 +73,16 @@ export default function BrinquedoPage() {
       });
   }, [id]);
 
+  useEffect(() => {
+    if (user) {
+      checkFavorito();
+      checkCarrinho();
+    } else {
+      setIsFavorito(false);
+      setNoCarrinho(false);
+    }
+  }, [user]);
+
   const checkFavorito = async () => {
     try {
       const response = await fetch('/api/favoritos');
@@ -92,6 +93,25 @@ export default function BrinquedoPage() {
       }
     } catch (error) {
       console.error('Erro ao verificar favorito:', error);
+    }
+  };
+
+  const checkCarrinho = async () => {
+    try {
+      const token = await getToken();
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('/api/carrinho', { headers });
+      if (response.ok) {
+        const data = await response.json();
+        const noCarrinho = data.find((item: any) => item.brinquedo_id === id);
+        setNoCarrinho(!!noCarrinho);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar carrinho:', error);
     }
   };
 
@@ -118,12 +138,50 @@ export default function BrinquedoPage() {
   };
 
   const handleLoginSuccess = () => {
-    setIsLoggedIn(true);
     checkFavorito();
+    checkCarrinho();
+  };
+
+  const handleAdicionarCarrinho = async () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    setAdicionandoCarrinho(true);
+
+    try {
+      const token = await getToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('/api/carrinho', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ brinquedoId: id }),
+      });
+
+      if (response.ok) {
+        setNoCarrinho(true);
+        alert('Brinquedo adicionado ao carrinho!');
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Erro ao adicionar ao carrinho');
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar ao carrinho:', error);
+      alert('Erro ao adicionar ao carrinho');
+    } finally {
+      setAdicionandoCarrinho(false);
+    }
   };
 
   const handleEnviarAvaliacao = async () => {
-    if (!isLoggedIn) {
+    if (!user) {
       setIsAuthModalOpen(true);
       return;
     }
@@ -136,12 +194,21 @@ export default function BrinquedoPage() {
     setEnviandoAvaliacao(true);
 
     try {
+      const token = await getToken();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/api/avaliacoes', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           nota: novaAvaliacao.nota,
           texto: novaAvaliacao.texto,
+          brinquedo_id: id,
         }),
       });
 
@@ -157,7 +224,8 @@ export default function BrinquedoPage() {
           console.error('Erro ao recarregar avaliações:', error);
         }
       } else {
-        alert('Erro ao enviar avaliação');
+        const error = await response.json();
+        alert(error.error || 'Erro ao enviar avaliação');
       }
     } catch (error) {
       console.error('Erro ao enviar avaliação:', error);
@@ -301,15 +369,40 @@ export default function BrinquedoPage() {
             </p>
 
             {/* Botão Gigante WhatsApp */}
-            <a
-              href={`https://wa.me/5555997302463?text=${encodeURIComponent(`Olá! Gostaria de solicitar um orçamento para o brinquedo: ${brinquedo.nome}. Poderia me passar mais informações?`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => {
+                if (!user) {
+                  setIsAuthModalOpen(true);
+                  return;
+                }
+                const mensagem = userData?.nome 
+                  ? `Olá! Meu nome é ${userData.nome}. Gostaria de solicitar um orçamento para o brinquedo: ${brinquedo.nome}. Poderia me passar mais informações?`
+                  : `Olá! Gostaria de solicitar um orçamento para o brinquedo: ${brinquedo.nome}. Poderia me passar mais informações?`;
+                window.open(`https://wa.me/5555997302463?text=${encodeURIComponent(mensagem)}`, '_blank');
+              }}
               className="inline-flex items-center justify-center gap-3 w-full bg-primary-green-500 text-white py-5 rounded-2xl font-bold text-xl hover:bg-primary-green-600 transition-colors shadow-soft hover:scale-102 transition-transform"
             >
               <Phone className="w-8 h-8" />
               Solicitar Orçamento pelo WhatsApp
-            </a>
+            </button>
+
+            {/* Botão Adicionar ao Carrinho */}
+            <button
+              onClick={handleAdicionarCarrinho}
+              disabled={noCarrinho || adicionandoCarrinho}
+              className={`inline-flex items-center justify-center gap-3 w-full py-4 rounded-2xl font-bold text-lg transition-colors shadow-soft hover:scale-102 transition-transform ${
+                noCarrinho
+                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              <ShoppingCart className="w-6 h-6" />
+              {adicionandoCarrinho
+                ? 'Adicionando...'
+                : noCarrinho
+                ? 'No Carrinho ✓'
+                : 'Adicionar ao Carrinho'}
+            </button>
 
             {/* Formulário de Avaliação */}
             <div className="bg-gray-50 rounded-2xl p-6">

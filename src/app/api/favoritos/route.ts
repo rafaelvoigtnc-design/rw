@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getFavoritos, toggleFavorito } from '@/lib/firebase-db';
 import { verifyToken } from '@/lib/auth';
 
 export async function GET(request: Request) {
@@ -12,22 +12,9 @@ export async function GET(request: Request) {
     const payload = await verifyToken(token);
     const clienteId = payload.id;
 
-    const { data, error } = await supabase
-      .from('favorito')
-      .select(`
-        *,
-        brinquedo (
-          id,
-          nome,
-          fotos,
-          tema_layout
-        )
-      `)
-      .eq('cliente_id', clienteId);
+    const favoritos = await getFavoritos(clienteId);
 
-    if (error) throw error;
-
-    return NextResponse.json(data);
+    return NextResponse.json(favoritos);
   } catch (error) {
     console.error('Erro ao buscar favoritos:', error);
     return NextResponse.json(
@@ -49,40 +36,9 @@ export async function POST(request: Request) {
 
     const { brinquedoId } = await request.json();
 
-    // Verificar se já é favorito
-    const { data: existente } = await supabase
-      .from('favorito')
-      .select('*')
-      .eq('cliente_id', clienteId)
-      .eq('brinquedo_id', brinquedoId)
-      .single();
+    const result = await toggleFavorito(clienteId, brinquedoId);
 
-    if (existente) {
-      // Se já existe, remove (toggle)
-      const { error } = await supabase
-        .from('favorito')
-        .delete()
-        .eq('id', existente.id);
-
-      if (error) throw error;
-
-      return NextResponse.json({ favorito: false });
-    }
-
-    // Se não existe, adiciona
-    const { data, error } = await supabase
-      .from('favorito')
-      .insert({
-        id: crypto.randomUUID(),
-        cliente_id: clienteId,
-        brinquedo_id: brinquedoId,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return NextResponse.json({ favorito: true, data });
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Erro ao gerenciar favorito:', error);
     return NextResponse.json(

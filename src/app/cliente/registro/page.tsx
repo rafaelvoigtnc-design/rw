@@ -105,7 +105,7 @@ export default function ClienteRegistro() {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email *
+              Email (para login) *
             </label>
             <input
               id="email"
@@ -116,6 +116,7 @@ export default function ClienteRegistro() {
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <p className="text-xs text-gray-500 mt-1">Usado apenas para login. Use o telefone para contato.</p>
           </div>
 
           <div>
@@ -180,9 +181,9 @@ export default function ClienteRegistro() {
         </form>
 
         <div className="mt-6 text-center text-sm">
-          <a href="/cliente/login" className="text-blue-600 hover:underline">
-            Já tem conta? Faça login
-          </a>
+          <p className="text-gray-600">
+            Já tem conta? Use o botão "Entrar / Cadastrar" no menu superior
+          </p>
         </div>
       </div>
     </div>

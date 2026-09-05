@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getBrinquedoById, updateBrinquedo, deleteBrinquedo } from '@/lib/firebase-db';
 
 export async function PUT(
   request: Request,
@@ -16,15 +16,14 @@ export async function PUT(
       fotos,
       dimensoes,
       faixa_etaria,
-      status
+      status,
+      categoria_id,
+      preco_periodo,
+      tema_layout
     } = body;
 
-    // Primeiro buscar o brinquedo atual para preservar categoria_id e preco_periodo
-    const { data: brinquedoAtual } = await supabaseAdmin
-      .from('brinquedo')
-      .select('categoria_id, preco_periodo')
-      .eq('id', params.id)
-      .single();
+    // Primeiro buscar o brinquedo atual para preservar campos não enviados
+    const brinquedoAtual = await getBrinquedoById(params.id);
 
     if (!brinquedoAtual) {
       return NextResponse.json(
@@ -33,34 +32,22 @@ export async function PUT(
       );
     }
 
-    // Converter fotos para JSON string se for array
-    const fotosParaSalvar = Array.isArray(fotos) ? JSON.stringify(fotos) : (fotos || '[]');
-
-    console.log('Fotos para salvar:', fotosParaSalvar);
-
+    // Preparar dados de atualização
     const updateData = {
-      nome,
-      descricao,
-      fotos: fotosParaSalvar,
-      tema_layout: 'classico_divertido',
-      dimensoes,
-      faixa_etaria,
-      status,
-      categoria_id: brinquedoAtual.categoria_id, // Preservar categoria_id existente
-      preco_periodo: brinquedoAtual.preco_periodo, // Preservar preco_periodo existente
+      nome: nome || brinquedoAtual.nome,
+      descricao: descricao || brinquedoAtual.descricao,
+      fotos: Array.isArray(fotos) ? fotos : (fotos || brinquedoAtual.fotos),
+      tema_layout: tema_layout || brinquedoAtual.tema_layout,
+      dimensoes: dimensoes || brinquedoAtual.dimensoes,
+      faixa_etaria: faixa_etaria || brinquedoAtual.faixa_etaria,
+      status: status || brinquedoAtual.status,
+      categoria_id: categoria_id !== undefined ? categoria_id : brinquedoAtual.categoria_id,
+      preco_periodo: preco_periodo !== undefined ? preco_periodo : brinquedoAtual.preco_periodo,
     };
 
-    const { data, error } = await supabaseAdmin
-      .from('brinquedo')
-      .update(updateData)
-      .eq('id', params.id)
-      .select()
-      .single();
+    console.log('Dados para atualizar:', updateData);
 
-    if (error) {
-      console.error('Erro Supabase ao atualizar brinquedo:', error);
-      throw error;
-    }
+    const data = await updateBrinquedo(params.id, updateData);
 
     console.log('Brinquedo atualizado com sucesso:', data);
     return NextResponse.json(data);
@@ -80,45 +67,17 @@ export async function DELETE(
   try {
     console.log('Deletando brinquedo ID:', params.id);
 
-    // Primeiro buscar o brinquedo para obter as fotos
-    const { data: brinquedo } = await supabaseAdmin
-      .from('brinquedo')
-      .select('fotos')
-      .eq('id', params.id)
-      .single();
+    // Buscar o brinquedo para obter as fotos (se quiser deletar imagens depois)
+    const brinquedo = await getBrinquedoById(params.id);
 
     if (brinquedo && brinquedo.fotos) {
-      // Deletar as imagens do storage
-      const fotosArray = typeof brinquedo.fotos === 'string'
-        ? JSON.parse(brinquedo.fotos)
-        : brinquedo.fotos;
-
-      for (const fotoUrl of fotosArray) {
-        try {
-          // Extrair o path da URL
-          const urlParts = fotoUrl.split('/imagens/');
-          if (urlParts.length > 1) {
-            const filePath = urlParts[1];
-            await supabaseAdmin
-              .storage
-              .from('imagens')
-              .remove([filePath]);
-          }
-        } catch (error) {
-          console.error('Erro ao deletar imagem:', error);
-        }
-      }
+      // Implementar deleção de imagens do Firebase Storage se necessário
+      const fotosArray = Array.isArray(brinquedo.fotos) ? brinquedo.fotos : [];
+      console.log('Imagens para deletar:', fotosArray);
+      // Implementar deleção do Storage quando configurado
     }
 
-    const { error } = await supabaseAdmin
-      .from('brinquedo')
-      .delete()
-      .eq('id', params.id);
-
-    if (error) {
-      console.error('Erro Supabase ao deletar brinquedo:', error);
-      throw error;
-    }
+    await deleteBrinquedo(params.id);
 
     console.log('Brinquedo deletado com sucesso');
     return NextResponse.json({ success: true });

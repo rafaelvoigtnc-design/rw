@@ -1,81 +1,65 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getLocacaoById, updateLocacao, deleteLocacao, getLocacaoItens, deleteLocacaoItens } from '@/lib/firebase-db';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    const body = await request.json();
     const {
       data_evento,
       horario_inicio,
       horario_fim,
       endereco,
-      valor_total,
-      valor_sinal,
+      local_evento,
       status_pagamento,
       status_locacao,
+      valor_total,
+      sinal_pago,
       cuidador_nome,
       cuidador_valor,
-      observacoes,
-    } = await request.json();
+      observacoes
+    } = body;
 
-    // Buscar locação atual para verificar mudança de status de pagamento
-    const { data: locacaoAtual } = await supabase
-      .from('locacao')
-      .select('*')
-      .eq('id', params.id)
-      .single();
+    console.log('Atualizando locação ID:', id, 'com dados:', body);
 
-    if (!locacaoAtual) {
-      return NextResponse.json({ error: 'Locação não encontrada' }, { status: 404 });
+    // Verificar se a locação existe
+    const locacaoExistente = await getLocacaoById(id);
+    if (!locacaoExistente) {
+      console.log('Locação não encontrada:', id);
+      return NextResponse.json(
+        { error: 'Locação não encontrada' },
+        { status: 404 }
+      );
     }
 
-    // Atualizar locação
-    const { data, error } = await supabase
-      .from('locacao')
-      .update({
-        data_evento,
-        horario_inicio,
-        horario_fim,
-        endereco,
-        valor_total,
-        valor_sinal,
-        status_pagamento,
-        status_locacao,
-        cuidador_nome,
-        cuidador_valor,
-        observacoes,
-      })
-      .eq('id', params.id)
-      .select()
-      .single();
+    const updateData: any = {};
 
-    if (error) throw error;
+    if (data_evento !== undefined) updateData.data_evento = data_evento;
+    if (horario_inicio !== undefined) updateData.horario_inicio = horario_inicio;
+    if (horario_fim !== undefined) updateData.horario_fim = horario_fim;
+    if (endereco !== undefined) updateData.endereco = endereco;
+    if (local_evento !== undefined) updateData.local_evento = local_evento;
+    if (status_pagamento !== undefined) updateData.status_pagamento = status_pagamento;
+    if (status_locacao !== undefined) updateData.status_locacao = status_locacao;
+    if (valor_total !== undefined) updateData.valor_total = valor_total;
+    if (sinal_pago !== undefined) updateData.sinal_pago = sinal_pago;
+    if (cuidador_nome !== undefined) updateData.cuidador_nome = cuidador_nome;
+    if (cuidador_valor !== undefined) updateData.cuidador_valor = cuidador_valor;
+    if (observacoes !== undefined) updateData.observacoes = observacoes;
 
-    // Gerar transação financeira se status mudou para pago ou parcial
-    if (
-      (status_pagamento === 'pago' || status_pagamento === 'parcial') &&
-      locacaoAtual.status_pagamento !== 'pago' &&
-      locacaoAtual.status_pagamento !== 'parcial'
-    ) {
-      const valorTransacao = valor_total - (cuidador_valor || 0);
-      
-      await supabase.from('transacao_financeira').insert({
-        id: crypto.randomUUID(),
-        tipo: 'entrada_locacao',
-        valor: valorTransacao,
-        data: new Date().toISOString().split('T')[0],
-        descricao: `Locação #${params.id}`,
-        locacao_id: params.id,
-      });
-    }
+    console.log('Dados de atualização:', updateData);
+    
+    const result = await updateLocacao(id, updateData);
 
-    return NextResponse.json(data);
+    console.log('Locação atualizada com sucesso:', result);
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Erro ao atualizar locação:', error);
     return NextResponse.json(
-      { error: 'Erro ao atualizar locação' },
+      { error: 'Erro ao atualizar locação', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
@@ -83,28 +67,34 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Deletar itens da locação primeiro
-    await supabase
-      .from('locacao_item')
-      .delete()
-      .eq('locacao_id', params.id);
+    const { id } = await params;
+    console.log('Deletando locação ID:', id);
 
-    // Deletar locação
-    const { error } = await supabase
-      .from('locacao')
-      .delete()
-      .eq('id', params.id);
+    // Verificar se a locação existe
+    const locacaoExistente = await getLocacaoById(id);
+    if (!locacaoExistente) {
+      console.log('Locação não encontrada:', id);
+      return NextResponse.json(
+        { error: 'Locação não encontrada' },
+        { status: 404 }
+      );
+    }
 
-    if (error) throw error;
+    // Primeiro deletar os itens da locação
+    await deleteLocacaoItens(id);
 
+    // Depois deletar a locação
+    await deleteLocacao(id);
+
+    console.log('Locação deletada com sucesso');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Erro ao deletar locação:', error);
     return NextResponse.json(
-      { error: 'Erro ao deletar locação' },
+      { error: 'Erro ao deletar locação', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
