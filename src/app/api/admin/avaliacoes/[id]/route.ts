@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export async function PUT(
   request: Request,
@@ -9,18 +10,13 @@ export async function PUT(
     const id = params.id;
     const body = await request.json();
 
-    const { data, error } = await supabaseAdmin
-      .from('avaliacao')
-      .update({
-        ...(body.aprovado !== undefined && { aprovado_para_exibir: body.aprovado }),
-      })
-      .eq('id', id)
-      .select()
-      .single();
+    const docRef = doc(db, 'avaliacoes', id);
+    await updateDoc(docRef, {
+      aprovado_para_exibir: body.aprovado,
+      atualizado_em: new Date().toISOString(),
+    });
 
-    if (error) throw error;
-
-    return NextResponse.json(data);
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Erro ao atualizar avaliação:', error);
     return NextResponse.json(

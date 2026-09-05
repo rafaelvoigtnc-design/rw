@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminByEmail, createAdminRecord } from '@/lib/supabase';
+import { getAdminByEmail, createAdminRecord } from '@/lib/firebase-admin';
 import { verifyPassword, createAdminToken } from '@/lib/auth';
 import { hashPassword } from '@/lib/auth';
 

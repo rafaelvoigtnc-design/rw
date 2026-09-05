@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export async function GET(
   request: Request,
@@ -8,15 +9,17 @@ export async function GET(
   try {
     const id = params.id;
 
-    const { data, error } = await supabaseAdmin
-      .from('contratos')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const docRef = doc(db, 'contratos', id);
+    const docSnap = await getDoc(docRef);
 
-    if (error) throw error;
+    if (!docSnap.exists()) {
+      return NextResponse.json(
+        { error: 'Contrato não encontrado' },
+        { status: 404 }
+      );
+    }
 
-    return NextResponse.json(data);
+    return NextResponse.json({ id: docSnap.id, ...docSnap.data() });
   } catch (error) {
     console.error('Erro ao buscar contrato:', error);
     return NextResponse.json(
@@ -34,19 +37,13 @@ export async function PUT(
     const id = params.id;
     const body = await request.json();
 
-    const { data, error } = await supabaseAdmin
-      .from('contratos')
-      .update({
-        ...body,
-        atualizado_em: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .select()
-      .single();
+    const docRef = doc(db, 'contratos', id);
+    await updateDoc(docRef, {
+      ...body,
+      atualizado_em: new Date().toISOString(),
+    });
 
-    if (error) throw error;
-
-    return NextResponse.json(data);
+    return NextResponse.json({ id, ...body });
   } catch (error) {
     console.error('Erro ao atualizar contrato:', error);
     return NextResponse.json(
@@ -63,12 +60,8 @@ export async function DELETE(
   try {
     const id = params.id;
 
-    const { error } = await supabaseAdmin
-      .from('contratos')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
+    const docRef = doc(db, 'contratos', id);
+    await deleteDoc(docRef);
 
     return NextResponse.json({ success: true });
   } catch (error) {

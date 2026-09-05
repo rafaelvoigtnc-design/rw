@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getDocs, collection, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export async function GET(
   request: Request,
@@ -15,23 +16,27 @@ export async function GET(
     const inicio = dataInicio ? new Date(dataInicio) : hoje;
     const fim = dataFim ? new Date(dataFim) : new Date(hoje.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // Buscar locações que incluem este brinquedo no período
-    const { data: locacoes, error } = await supabase
-      .from('locacao_item')
-      .select(`
-        locacao_id,
-        brinquedo_id,
-        locacao (
-          data_evento,
-          horario_inicio,
-          horario_fim
-        )
-      `)
-      .eq('brinquedo_id', params.id)
-      .gte('locacao.data_evento', inicio.toISOString().split('T')[0])
-      .lte('locacao.data_evento', fim.toISOString().split('T')[0]);
+    // Buscar locações no período
+    const locacoesQuery = query(
+      collection(db, 'locacoes'),
+      where('data_evento', '>=', inicio.toISOString().split('T')[0]),
+      where('data_evento', '<=', fim.toISOString().split('T')[0])
+    );
+    const locacoesSnapshot = await getDocs(locacoesQuery);
+    const locacoes = locacoesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    if (error) throw error;
+    // Buscar itens de locação que incluem este brinquedo
+    const itensQuery = query(
+      collection(db, 'locacao_itens'),
+      where('brinquedo_id', '==', params.id)
+    );
+    const itensSnapshot = await getDocs(itensQuery);
+    const itens = itensSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Filtrar locações que têm este brinquedo
+    const locacoesBrinquedo = locacoes.filter(locacao =>
+      itens.some(item => item.locacao_id === locacao.id)
+    );
 
     // Formatar disponibilidade por data e horário
     const disponibilidade: Record<string, Record<string, boolean>> = {};
@@ -43,36 +48,31 @@ export async function GET(
       const dataStr = dataAtual.toISOString().split('T')[0];
       dias.push(dataStr);
       disponibilidade[dataStr] = {};
-      
+
       // Horários de 8h às 20h em intervalos de 1 hora
       for (let hora = 8; hora <= 20; hora++) {
         const horarioStr = `${hora.toString().padStart(2, '0')}:00`;
         disponibilidade[dataStr][horarioStr] = true; // true = livre
       }
-      
+
       dataAtual.setDate(dataAtual.getDate() + 1);
     }
 
     // Marcar horários ocupados
-    if (locacoes) {
-      locacoes.forEach((item: any) => {
-        const locacao = item.locacao;
-        if (!locacao) return;
+    locacoesBrinquedo.forEach((locacao: any) => {
+      const dataStr = locacao.data_evento;
+      const inicioHora = parseInt(locacao.horario_inicio.split(':')[0]);
+      const fimHora = parseInt(locacao.horario_fim.split(':')[0]);
 
-        const dataStr = locacao.data_evento;
-        const inicioHora = parseInt(locacao.horario_inicio.split(':')[0]);
-        const fimHora = parseInt(locacao.horario_fim.split(':')[0]);
-
-        if (disponibilidade[dataStr]) {
-          for (let hora = inicioHora; hora < fimHora; hora++) {
-            const horarioStr = `${hora.toString().padStart(2, '0')}:00`;
-            if (disponibilidade[dataStr][horarioStr] !== undefined) {
-              disponibilidade[dataStr][horarioStr] = false; // false = ocupado
-            }
+      if (disponibilidade[dataStr]) {
+        for (let hora = inicioHora; hora < fimHora; hora++) {
+          const horarioStr = `${hora.toString().padStart(2, '0')}:00`;
+          if (disponibilidade[dataStr][horarioStr] !== undefined) {
+            disponibilidade[dataStr][horarioStr] = false; // false = ocupado
           }
         }
-      });
-    }
+      }
+    });
 
     return NextResponse.json({
       dias,
