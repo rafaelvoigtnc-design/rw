@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { storage, ref, uploadBytes, getDownloadURL } from '@/lib/firebase';
 import IconPicker from '@/components/IconPicker';
 import ImageEditor from '@/components/ImageEditor';
 
@@ -65,37 +66,45 @@ export default function AdminConteudo() {
       const conteudoExistente = conteudos.find(c => c.id === id);
       const campoDefinido = camposPorPagina[paginaSelecionada]?.find(c => c.chave === id);
 
-      // Criar FormData para enviar arquivo
-      const formData = new FormData();
-      formData.append('pagina', paginaSelecionada);
-      formData.append('chave', campoDefinido?.chave || conteudoExistente?.chave);
-      formData.append('valor', valor);
-      formData.append('tipo', campoDefinido?.tipo || conteudoExistente?.tipo);
+      let finalValor = valor;
 
-      // Se houver arquivo, enviar
+      // Se houver arquivo, fazer upload direto para Firebase Storage (client-side)
       if (uploadFile && (conteudoExistente?.tipo === 'imagem' || campoDefinido?.tipo === 'imagem')) {
-        formData.append('arquivo', uploadFile);
+        console.log('Fazendo upload para Firebase Storage (client-side)...');
+        console.log('Tamanho do arquivo:', uploadFile.size);
+
+        const timestamp = Date.now();
+        const extensao = uploadFile.name.split('.').pop();
+        const chaveFinal = campoDefinido?.chave || conteudoExistente?.chave;
+        const fileName = `${chaveFinal}_${timestamp}.${extensao}`;
+        const storagePath = `conteudo/${paginaSelecionada}/${fileName}`;
+
+        // Upload direto para Firebase Storage
+        const storageRef = ref(storage, storagePath);
+        const bytes = await uploadFile.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        await uploadBytes(storageRef, buffer);
+
+        // Obter URL
+        finalValor = await getDownloadURL(storageRef);
+        console.log('URL obtida:', finalValor);
       }
 
+      // Enviar apenas os dados (sem arquivo) para a API
       const response = await fetch('/api/admin/conteudo', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pagina: paginaSelecionada,
+          chave: campoDefinido?.chave || conteudoExistente?.chave,
+          valor: finalValor,
+          tipo: campoDefinido?.tipo || conteudoExistente?.tipo,
+        }),
       });
 
       console.log('Status da resposta:', response.status);
-      console.log('Status text:', response.statusText);
 
-      const textResponse = await response.text();
-      console.log('Resposta bruta:', textResponse);
-
-      let responseData;
-      try {
-        responseData = JSON.parse(textResponse);
-      } catch (e) {
-        console.error('Erro ao fazer parse da resposta:', e);
-        alert('Erro ao salvar: Resposta inválida do servidor');
-        return;
-      }
+      const responseData = await response.json();
 
       if (response.ok) {
         setEditando(null);
