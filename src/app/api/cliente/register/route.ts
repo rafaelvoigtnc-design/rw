@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
       email,
       endereco,
       cidade,
+      origem_cadastro: 'site',
       criado_em: new Date().toISOString()
     });
 

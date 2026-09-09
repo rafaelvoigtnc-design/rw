@@ -61,6 +61,7 @@ export async function POST(request: Request) {
       endereco: endereco || '',
       cidade: '',
       senha_hash: senha_hash || '',
+      origem_cadastro: 'admin',
       criado_em: new Date().toISOString()
     });
 

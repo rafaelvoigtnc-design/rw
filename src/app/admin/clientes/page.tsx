@@ -13,6 +13,7 @@ interface Cliente {
   endereco: string;
   cidade: string;
   criado_em: string;
+  origem_cadastro?: string; // 'admin' ou 'site'
 }
 
 interface Locacao {
@@ -50,6 +51,8 @@ export default function AdminClientes() {
   const [mostrarDrawer, setMostrarDrawer] = useState(false);
   const [clienteDetalhes, setClienteDetalhes] = useState<any>(null);
   const [locacoesCliente, setLocacoesCliente] = useState<Locacao[]>([]);
+  const [carrinhoCliente, setCarrinhoCliente] = useState<any[]>([]);
+  const [favoritosCliente, setFavoritosCliente] = useState<any[]>([]);
 
   useEffect(() => {
     console.log('Carregando dados de clientes...');
@@ -223,23 +226,19 @@ export default function AdminClientes() {
   const handleVerDetalhes = async (cliente: Cliente) => {
     console.log('Buscando detalhes do cliente:', cliente.id);
     try {
-      // Buscar cliente primeiro
-      const clienteResponse = await fetch('/api/admin/clientes');
-      const clientes = await clienteResponse.json();
-      const clienteEncontrado = clientes.find((c: any) => c.id === cliente.id);
-      
-      if (!clienteEncontrado) {
-        alert('Cliente não encontrado na lista');
+      // Usar a API que já retorna carrinho, favoritos, locações, etc.
+      const response = await fetch(`/api/admin/clientes/${cliente.id}`);
+      const data = await response.json();
+
+      if (!data.cliente) {
+        alert('Cliente não encontrado');
         return;
       }
-      
-      // Buscar locações do cliente usando a função do firebase-db
-      const locacoesResponse = await fetch('/api/admin/locacoes');
-      const locacoes = await locacoesResponse.json();
-      const locacoesDoCliente = locacoes.filter((l: any) => l.cliente_id === cliente.id);
-      
-      setClienteDetalhes(clienteEncontrado);
-      setLocacoesCliente(locacoesDoCliente);
+
+      setClienteDetalhes(data.cliente);
+      setLocacoesCliente(data.locacoes || []);
+      setCarrinhoCliente(data.carrinho || []);
+      setFavoritosCliente(data.favoritos || []);
       setMostrarDrawer(true);
     } catch (error) {
       console.error('Erro ao buscar detalhes:', error);
@@ -488,6 +487,17 @@ export default function AdminClientes() {
               </button>
             </div>
             <div className="p-6 space-y-6">
+              {/* Origem do Cadastro */}
+              <div className="flex items-center gap-2 mb-4">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  clienteDetalhes.origem_cadastro === 'site' 
+                    ? 'bg-purple-100 text-purple-800' 
+                    : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {clienteDetalhes.origem_cadastro === 'site' ? '🌐 Cadastro via Site' : '🔧 Cadastro via Admin'}
+                </span>
+              </div>
+
               {/* Informações pessoais */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -498,26 +508,117 @@ export default function AdminClientes() {
                   <p className="font-medium text-gray-900 text-lg">{clienteDetalhes.nome}</p>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Phone className="w-4 h-4" />
-                    {clienteDetalhes.telefone}
+                    {clienteDetalhes.telefone || 'Não informado'}
                   </div>
+                  {clienteDetalhes.email && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Mail className="w-4 h-4" />
+                      {clienteDetalhes.email}
+                    </div>
+                  )}
                   {clienteDetalhes.endereco && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <MapPin className="w-4 h-4" />
                       {clienteDetalhes.endereco}
                     </div>
                   )}
+                  {clienteDetalhes.cidade && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <MapPin className="w-4 h-4" />
+                      {clienteDetalhes.cidade}
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     <Calendar className="w-4 h-4" />
                     Cadastrado em: {new Date(clienteDetalhes.criado_em).toLocaleDateString('pt-BR')}
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <Mail className="w-3 h-3" />
-                    {clienteDetalhes.email} (login)
-                  </div>
                 </div>
               </div>
 
-              {/* Histórico de locações */}
+              {/* Informações específicas para clientes do site */}
+              {clienteDetalhes.origem_cadastro === 'site' && (
+                <>
+                  {/* Carrinho Atual */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <Calendar className="w-5 h-5" />
+                      Carrinho Atual ({carrinhoCliente.length})
+                      {carrinhoCliente.length > 0 && (
+                        <span className="ml-2 text-sm font-normal text-amber-600">
+                          - Ainda sem locação fechada
+                        </span>
+                      )}
+                    </h3>
+                    {carrinhoCliente.length === 0 ? (
+                      <div className="bg-gray-50 rounded-lg p-4 text-center text-gray-500">
+                        Carrinho vazio.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {carrinhoCliente.map((item) => (
+                          <div key={item.id} className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                            <div className="flex items-center gap-4">
+                              {item.brinquedo?.fotos && item.brinquedo.fotos.length > 0 && (
+                                <img
+                                  src={item.brinquedo.fotos[0]}
+                                  alt={item.brinquedo.nome}
+                                  className="w-16 h-16 object-cover rounded"
+                                />
+                              )}
+                              <div className="flex-1">
+                                <p className="font-medium text-gray-900">{item.brinquedo?.nome || 'Brinquedo'}</p>
+                                {item.brinquedo?.tema_layout && (
+                                  <p className="text-sm text-gray-500">Tema: {item.brinquedo.tema_layout}</p>
+                                )}
+                              </div>
+                              <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded">
+                                No Carrinho
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Favoritos */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <User className="w-5 h-5" />
+                      Favoritos ({favoritosCliente.length})
+                    </h3>
+                    {favoritosCliente.length === 0 ? (
+                      <div className="bg-gray-50 rounded-lg p-4 text-center text-gray-500">
+                        Nenhum favorito.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {favoritosCliente.map((fav) => (
+                          <div key={fav.id} className="bg-pink-50 rounded-lg p-4 border border-pink-200">
+                            <div className="flex items-center gap-4">
+                              {fav.brinquedo?.fotos && fav.brinquedo.fotos.length > 0 && (
+                                <img
+                                  src={fav.brinquedo.fotos[0]}
+                                  alt={fav.brinquedo.nome}
+                                  className="w-16 h-16 object-cover rounded"
+                                />
+                              )}
+                              <div className="flex-1">
+                                <p className="font-medium text-gray-900">{fav.brinquedo?.nome || 'Brinquedo'}</p>
+                              </div>
+                              <span className="text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded">
+                                ❤️ Favorito
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Histórico de locações (aparece para ambos) */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
                   <Calendar className="w-5 h-5" />
