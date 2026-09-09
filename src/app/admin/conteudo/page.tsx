@@ -63,6 +63,7 @@ export default function AdminConteudo() {
 
   const handleSalvar = async (id: string, valor: string) => {
     try {
+      console.log('=== INICIANDO SALVAMENTO ===');
       // Se o ID for igual a uma chave (campo não salvo ainda), precisamos criar novo
       const conteudoExistente = conteudos.find(c => c.id === id);
       const campoDefinido = camposPorPagina[paginaSelecionada]?.find(c => c.chave === id);
@@ -73,6 +74,7 @@ export default function AdminConteudo() {
       if (uploadFile && (conteudoExistente?.tipo === 'imagem' || campoDefinido?.tipo === 'imagem')) {
         console.log('Fazendo upload para Firebase Storage (client-side)...');
         console.log('Tamanho do arquivo:', uploadFile.size);
+        console.log('Nome do arquivo:', uploadFile.name);
 
         const timestamp = Date.now();
         const extensao = uploadFile.name.split('.').pop();
@@ -80,16 +82,36 @@ export default function AdminConteudo() {
         const fileName = `${chaveFinal}_${timestamp}.${extensao}`;
         const storagePath = `conteudo/${paginaSelecionada}/${fileName}`;
 
-        // Upload direto para Firebase Storage
-        const storageRef = ref(storage, storagePath);
-        const bytes = await uploadFile.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        await uploadBytes(storageRef, buffer);
+        console.log('Storage path:', storagePath);
 
-        // Obter URL
-        finalValor = await getDownloadURL(storageRef);
-        console.log('URL obtida:', finalValor);
+        try {
+          // Upload direto para Firebase Storage
+          const storageRef = ref(storage, storagePath);
+          console.log('Storage ref criado');
+
+          const bytes = await uploadFile.arrayBuffer();
+          console.log('Bytes lidos:', bytes.byteLength);
+
+          const buffer = Buffer.from(bytes);
+          console.log('Buffer criado');
+
+          console.log('Iniciando uploadBytes...');
+          await uploadBytes(storageRef, buffer);
+          console.log('Upload concluído com sucesso');
+
+          // Obter URL
+          console.log('Obtendo URL de download...');
+          finalValor = await getDownloadURL(storageRef);
+          console.log('URL obtida:', finalValor);
+        } catch (uploadError) {
+          console.error('Erro no upload:', uploadError);
+          console.error('Detalhes:', uploadError instanceof Error ? uploadError.message : String(uploadError));
+          alert('Erro ao fazer upload da imagem: ' + (uploadError instanceof Error ? uploadError.message : String(uploadError)));
+          return;
+        }
       }
+
+      console.log('Enviando dados para API...');
 
       // Enviar apenas os dados (sem arquivo) para a API
       const response = await fetch('/api/admin/conteudo', {
@@ -106,6 +128,7 @@ export default function AdminConteudo() {
       console.log('Status da resposta:', response.status);
 
       const responseData = await response.json();
+      console.log('Resposta da API:', responseData);
 
       if (response.ok) {
         setEditando(null);
@@ -117,7 +140,8 @@ export default function AdminConteudo() {
       }
     } catch (error) {
       console.error('Erro ao salvar conteúdo:', error);
-      alert('Erro ao salvar conteúdo: ' + error);
+      console.error('Stack:', error instanceof Error ? error.stack : 'No stack');
+      alert('Erro ao salvar conteúdo: ' + (error instanceof Error ? error.message : String(error)));
     }
   };
 
