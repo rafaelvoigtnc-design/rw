@@ -26,6 +26,20 @@ export async function GET(
       const carrinhoQuery = query(collection(db, 'carrinho'), where('cliente_id', '==', id));
       const carrinhoSnapshot = await getDocs(carrinhoQuery);
       carrinho = carrinhoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Para cada item do carrinho, buscar dados do brinquedo
+      for (const item of carrinho) {
+        if (item.brinquedo_id) {
+          try {
+            const brinquedoDoc = await getDoc(doc(db, 'brinquedos', item.brinquedo_id));
+            if (brinquedoDoc.exists()) {
+              item.brinquedo = { id: brinquedoDoc.id, ...brinquedoDoc.data() };
+            }
+          } catch (error) {
+            console.error('Erro ao buscar brinquedo do carrinho:', error);
+          }
+        }
+      }
     } catch (error) {
       console.error('Erro ao buscar carrinho:', error);
     }
@@ -36,6 +50,20 @@ export async function GET(
       const favoritosQuery = query(collection(db, 'favoritos'), where('cliente_id', '==', id));
       const favoritosSnapshot = await getDocs(favoritosQuery);
       favoritos = favoritosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Para cada favorito, buscar dados do brinquedo
+      for (const fav of favoritos) {
+        if (fav.brinquedo_id) {
+          try {
+            const brinquedoDoc = await getDoc(doc(db, 'brinquedos', fav.brinquedo_id));
+            if (brinquedoDoc.exists()) {
+              fav.brinquedo = { id: brinquedoDoc.id, ...brinquedoDoc.data() };
+            }
+          } catch (error) {
+            console.error('Erro ao buscar brinquedo do favorito:', error);
+          }
+        }
+      }
     } catch (error) {
       console.error('Erro ao buscar favoritos:', error);
     }

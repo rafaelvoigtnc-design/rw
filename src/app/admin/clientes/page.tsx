@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Filter, Plus, Edit, Trash2, X, Phone, Mail, MapPin, Calendar, User, Clock, DollarSign } from 'lucide-react';
+import { Search, Filter, Plus, Edit, Trash2, X, Phone, Mail, MapPin, Calendar, User, Clock, DollarSign, MessageCircle } from 'lucide-react';
 import { updateCliente, deleteCliente, getLocacoesByCliente, getClienteById } from '@/lib/firebase-db';
 
 interface Cliente {
@@ -532,6 +532,18 @@ export default function AdminClientes() {
                     <Calendar className="w-4 h-4" />
                     Cadastrado em: {new Date(clienteDetalhes.criado_em).toLocaleDateString('pt-BR')}
                   </div>
+                  {/* Botão WhatsApp */}
+                  {clienteDetalhes.telefone && (
+                    <a
+                      href={`https://wa.me/55${clienteDetalhes.telefone.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 mt-3 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      Chamar no WhatsApp
+                    </a>
+                  )}
                 </div>
               </div>
 
@@ -558,15 +570,12 @@ export default function AdminClientes() {
                         {carrinhoCliente.map((item) => (
                           <div key={item.id} className="bg-amber-50 rounded-lg p-4 border border-amber-200">
                             <div className="flex items-center gap-4">
-                              {item.brinquedo_id && (
-                                <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                                  <span className="text-xs text-gray-500">ID: {item.brinquedo_id}</span>
-                                </div>
-                              )}
                               <div className="flex-1">
-                                <p className="font-medium text-gray-900">Item do Carrinho</p>
-                                {item.brinquedo_id && (
-                                  <p className="text-sm text-gray-500">Brinquedo ID: {item.brinquedo_id}</p>
+                                <p className="font-medium text-gray-900">
+                                  {item.brinquedo?.nome || 'Brinquedo não encontrado'}
+                                </p>
+                                {item.brinquedo?.tema_layout && (
+                                  <p className="text-sm text-gray-500">Tema: {item.brinquedo.tema_layout}</p>
                                 )}
                               </div>
                               <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded">
@@ -594,15 +603,12 @@ export default function AdminClientes() {
                         {favoritosCliente.map((fav) => (
                           <div key={fav.id} className="bg-pink-50 rounded-lg p-4 border border-pink-200">
                             <div className="flex items-center gap-4">
-                              {fav.brinquedo_id && (
-                                <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                                  <span className="text-xs text-gray-500">ID: {fav.brinquedo_id}</span>
-                                </div>
-                              )}
                               <div className="flex-1">
-                                <p className="font-medium text-gray-900">Favorito</p>
-                                {fav.brinquedo_id && (
-                                  <p className="text-sm text-gray-500">Brinquedo ID: {fav.brinquedo_id}</p>
+                                <p className="font-medium text-gray-900">
+                                  {fav.brinquedo?.nome || 'Brinquedo não encontrado'}
+                                </p>
+                                {fav.brinquedo?.tema_layout && (
+                                  <p className="text-sm text-gray-500">Tema: {fav.brinquedo.tema_layout}</p>
                                 )}
                               </div>
                               <span className="text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded">
