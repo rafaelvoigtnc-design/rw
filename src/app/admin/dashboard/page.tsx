@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface DashboardData {
   entradaLocacao: number;
   injecaoCapital: number;
   gastos: number;
   investimentos: number;
+  perdas: number;
   lucro: number;
   margemLucro: number;
   totalCuidadores: number;
@@ -16,17 +19,14 @@ interface DashboardData {
   brinquedosAtivos: number;
   brinquedosIndisponiveis: number;
   brinquedosManutencao: number;
+  brinquedosAposentados: number;
   ticketMedio: number;
+  saldoEmCaixa: number;
   dadosGrafico: Array<{
     mes: string;
     entradas: number;
     gastos: number;
   }>;
-  comparativo: {
-    periodoAnterior: number;
-    periodoAtual: number;
-    variacao: number;
-  } | null;
 }
 
 export default function AdminDashboard() {
@@ -44,9 +44,9 @@ export default function AdminDashboard() {
 
     switch (filtro) {
       case 'todos':
-        // Período indefinido (não filtra por data)
-        inicio = new Date('2000-01-01');
-        fim = new Date('2100-12-31');
+        // Período indefinido (não filtra por data) - usa ano atual
+        inicio = new Date(hoje.getFullYear(), 0, 1);
+        fim = new Date(hoje.getFullYear(), 11, 31);
         break;
       case 'mes':
         inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -65,8 +65,15 @@ export default function AdminDashboard() {
         return;
     }
 
-    setDataInicio(inicio.toISOString().split('T')[0]);
-    setDataFim(fim.toISOString().split('T')[0]);
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    setDataInicio(formatDate(inicio));
+    setDataFim(formatDate(fim));
   }, [filtro]);
 
   useEffect(() => {
@@ -133,17 +140,43 @@ export default function AdminDashboard() {
 
             {filtro === 'customizado' && (
               <>
-                <input
-                  type="date"
-                  value={dataInicio}
-                  onChange={(e) => setDataInicio(e.target.value)}
+                <DatePicker
+                  selected={dataInicio ? new Date(dataInicio + 'T00:00:00') : null}
+                  onChange={(date: Date | null) => {
+                    if (date) {
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(2, '0');
+                      const day = String(date.getDate()).padStart(2, '0');
+                      setDataInicio(`${year}-${month}-${day}`);
+                    } else {
+                      setDataInicio('');
+                    }
+                  }}
+                  dateFormat="dd/MM/yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
                   className="px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                  placeholderText="Data início"
                 />
-                <input
-                  type="date"
-                  value={dataFim}
-                  onChange={(e) => setDataFim(e.target.value)}
+                <DatePicker
+                  selected={dataFim ? new Date(dataFim + 'T00:00:00') : null}
+                  onChange={(date: Date | null) => {
+                    if (date) {
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(2, '0');
+                      const day = String(date.getDate()).padStart(2, '0');
+                      setDataFim(`${year}-${month}-${day}`);
+                    } else {
+                      setDataFim('');
+                    }
+                  }}
+                  dateFormat="dd/MM/yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
                   className="px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                  placeholderText="Data fim"
                 />
               </>
             )}
@@ -181,8 +214,8 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Lucro e Margem */}
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6 mb-4 md:mb-6">
+        {/* Lucro, Margem e Caixa */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-4 md:mb-6">
           <div className="bg-white rounded-xl md:rounded-lg shadow-soft p-3 md:p-6">
             <h3 className="text-[10px] md:text-sm font-medium text-gray-500 mb-1 md:mb-2">Lucro/Prejuízo</h3>
             <p className={`text-xl md:text-3xl font-bold ${data.lucro >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -196,32 +229,14 @@ export default function AdminDashboard() {
               {data.margemLucro.toFixed(1)}%
             </p>
           </div>
-        </div>
 
-        {/* Comparativo */}
-        {data.comparativo && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Comparativo com Período Anterior</h3>
-            <div className="flex items-center gap-4">
-              <div>
-                <p className="text-sm text-gray-500">Período Anterior</p>
-                <p className="text-lg font-semibold">R$ {data.comparativo.periodoAnterior.toFixed(2)}</p>
-              </div>
-              <div className="text-2xl">→</div>
-              <div>
-                <p className="text-sm text-gray-500">Período Atual</p>
-                <p className="text-lg font-semibold">R$ {data.comparativo.periodoAtual.toFixed(2)}</p>
-              </div>
-              <div className={`px-4 py-2 rounded ${
-                data.comparativo.variacao >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                <p className="font-semibold">
-                  {data.comparativo.variacao >= 0 ? '+' : ''}{data.comparativo.variacao.toFixed(1)}%
-                </p>
-              </div>
-            </div>
+          <div className="bg-white rounded-xl md:rounded-lg shadow-soft p-3 md:p-6">
+            <h3 className="text-[10px] md:text-sm font-medium text-gray-500 mb-1 md:mb-2">Em Caixa</h3>
+            <p className={`text-xl md:text-3xl font-bold ${data.saldoEmCaixa >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+              R$ {data.saldoEmCaixa.toFixed(2)}
+            </p>
           </div>
-        )}
+        </div>
 
         {/* Métricas Adicionais */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
@@ -248,6 +263,7 @@ export default function AdminDashboard() {
               <p>{data.brinquedosAtivos} disponíveis</p>
               <p>{data.brinquedosIndisponiveis} indisponíveis</p>
               <p>{data.brinquedosManutencao} em manutenção</p>
+              <p>{data.brinquedosAposentados} aposentados</p>
             </div>
           </div>
 

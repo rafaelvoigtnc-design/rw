@@ -13,10 +13,16 @@ export async function GET(request: Request) {
     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     // Ordenar por ordem no cliente
-    data.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+    data.sort((a: any, b: any) => (a.ordem || 0) - (b.ordem || 0));
 
     console.log(`Retornando ${data.length} banners`);
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     console.error('Erro ao buscar banners:', error);
     return NextResponse.json(

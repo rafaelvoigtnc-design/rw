@@ -23,7 +23,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { tipo, valor, data, descricao, categoria } = await request.json();
+    const { tipo, valor, data, descricao, categoria, origem } = await request.json();
 
     const docRef = await addDoc(collection(db, 'transacoes'), {
       tipo,
@@ -31,6 +31,7 @@ export async function POST(request: Request) {
       data,
       descricao: descricao || '',
       categoria: categoria || null,
+      origem: origem || 'caixa_empresa',
       criado_em: new Date().toISOString(),
     });
 

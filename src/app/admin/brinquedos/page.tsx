@@ -11,6 +11,7 @@ interface Brinquedo {
   dimensoes: string;
   faixa_etaria: string;
   status: string;
+  destaque_home: boolean;
 }
 
 export default function AdminBrinquedos() {
@@ -27,7 +28,18 @@ export default function AdminBrinquedos() {
     dimensoes: '',
     faixa_etaria: '',
     status: 'DISPONIVEL',
+    destaque_home: false,
   });
+
+  // Calcular tamanho total das fotos em base64
+  const calcularTamanhoTotalFotos = () => {
+    return formData.fotos.reduce((total, foto) => total + foto.length, 0);
+  };
+
+  const tamanhoTotalFotos = calcularTamanhoTotalFotos();
+  const limiteFirestore = 1000000; // 1MB em caracteres
+  const tamanhoRestante = limiteFirestore - tamanhoTotalFotos;
+  const porcentagemUsada = (tamanhoTotalFotos / limiteFirestore) * 100;
 
   useEffect(() => {
     fetchData();
@@ -56,33 +68,54 @@ export default function AdminBrinquedos() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    console.log('🔍 Iniciando upload de imagens...');
+    console.log('📦 Quantidade de arquivos:', files.length);
+
+    // Limite de 10 imagens por brinquedo
+    const MAX_FOTOS = 10;
+    if (formData.fotos.length + files.length > MAX_FOTOS) {
+      alert(`Você pode ter no máximo ${MAX_FOTOS} fotos por brinquedo. Atualmente tem ${formData.fotos.length} fotos.`);
+      return;
+    }
+
     setUploading(true);
     const novasFotos = [...formData.fotos];
 
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        console.log(`📄 Processando arquivo ${i + 1}/${files.length}:`, file.name);
+        console.log('   Tamanho:', file.size, 'bytes');
+        console.log('   Tipo:', file.type);
+
         const formDataUpload = new FormData();
         formDataUpload.append('file', file);
 
+        console.log('⬆️ Enviando para API...');
         const response = await fetch('/api/admin/upload', {
           method: 'POST',
           body: formDataUpload,
         });
 
+        console.log('📡 Status da resposta:', response.status);
+
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.error || 'Erro ao fazer upload');
+          console.error('❌ Erro na resposta:', error);
+          throw new Error(error.error || error.details || 'Erro ao fazer upload');
         }
 
         const data = await response.json();
+        console.log('✅ Upload bem-sucedido:', data.url);
+        console.log('📏 Tamanho da imagem em base64:', data.size, 'caracteres');
         novasFotos.push(data.url);
       }
 
       setFormData({ ...formData, fotos: novasFotos });
+      console.log('🎉 Todos os uploads concluídos!');
     } catch (error) {
-      console.error('Erro ao fazer upload:', error);
-      alert('Erro ao fazer upload das imagens');
+      console.error('❌ Erro ao fazer upload:', error);
+      alert(`Erro ao fazer upload das imagens: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setUploading(false);
     }
@@ -91,56 +124,60 @@ export default function AdminBrinquedos() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const dadosParaEnviar = {
-      nome: formData.nome,
-      descricao: formData.descricao,
-      fotos: formData.fotos,
-      dimensoes: formData.dimensoes,
-      faixa_etaria: formData.faixa_etaria,
-      status: formData.status,
-    };
+    // Verificar se o tamanho total das fotos excede o limite do Firestore (1MB)
+    if (tamanhoTotalFotos > limiteFirestore) {
+      alert(`O tamanho total das imagens (${(tamanhoTotalFotos / 1024).toFixed(2)} KB) excede o limite do Firestore (1024 KB). Remova algumas imagens ou reduza a qualidade.`);
+      return;
+    }
 
     try {
-      let response;
-      
       if (editando) {
-        // Atualizar brinquedo existente
-        response = await fetch(`/api/admin/brinquedos/${editando.id}`, {
+        const response = await fetch(`/api/admin/brinquedos/${editando.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(dadosParaEnviar),
+          body: JSON.stringify(formData),
         });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || error.details || 'Erro ao atualizar brinquedo');
+        }
+
+        const data = await response.json();
+        setBrinquedos(brinquedos.map(b => b.id === editando.id ? { ...data, fotos: formData.fotos } : b));
+        alert('Brinquedo atualizado com sucesso!');
       } else {
-        // Criar novo brinquedo
-        response = await fetch('/api/admin/brinquedos', {
+        const response = await fetch('/api/admin/brinquedos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(dadosParaEnviar),
+          body: JSON.stringify(formData),
         });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || error.details || 'Erro ao criar brinquedo');
+        }
+
+        const data = await response.json();
+        setBrinquedos([...brinquedos, { ...data, fotos: formData.fotos }]);
+        alert('Brinquedo criado com sucesso.');
       }
 
-      const result = await response.json();
-
-      if (response.ok) {
-        alert(editando ? 'Brinquedo atualizado com sucesso!' : 'Brinquedo criado com sucesso!');
-        setMostrarFormulario(false);
-        setEditando(null);
-        setFormData({
-          nome: '',
-          descricao: '',
-          fotos: [],
-          dimensoes: '',
-          faixa_etaria: '',
-          status: 'DISPONIVEL',
-        });
-        fetchData();
-      } else {
-        alert(`Erro: ${result.error || 'Erro ao salvar brinquedo'}`);
-        console.error('Erro completo:', result);
-      }
+      setMostrarFormulario(false);
+      setEditando(null);
+      setFormData({
+        nome: '',
+        descricao: '',
+        fotos: [],
+        dimensoes: '',
+        faixa_etaria: '',
+        status: 'DISPONIVEL',
+        destaque_home: false,
+      });
+      fetchData();
     } catch (error) {
       console.error('Erro ao salvar brinquedo:', error);
-      alert('Erro ao salvar brinquedo');
+      alert(`Erro ao salvar brinquedo: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 
@@ -153,6 +190,7 @@ export default function AdminBrinquedos() {
       dimensoes: brinquedo.dimensoes,
       faixa_etaria: brinquedo.faixa_etaria,
       status: brinquedo.status,
+      destaque_home: brinquedo.destaque_home || false,
     });
     setMostrarFormulario(true);
   };
@@ -212,6 +250,7 @@ export default function AdminBrinquedos() {
                 dimensoes: '',
                 faixa_etaria: '',
                 status: 'DISPONIVEL',
+                destaque_home: false,
               });
               setMostrarFormulario(true);
             }}
@@ -259,6 +298,23 @@ export default function AdminBrinquedos() {
                   disabled={uploading}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                 />
+                <div className="mt-2 text-sm">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-gray-600">Uso de armazenamento:</span>
+                    <span className={`font-medium ${porcentagemUsada > 90 ? 'text-red-600' : porcentagemUsada > 70 ? 'text-yellow-600' : 'text-green-600'}`}>
+                      {porcentagemUsada.toFixed(1)}% ({(tamanhoTotalFotos / 1024).toFixed(2)} KB / 1024 KB)
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${porcentagemUsada > 90 ? 'bg-red-600' : porcentagemUsada > 70 ? 'bg-yellow-600' : 'bg-green-600'}`}
+                      style={{ width: `${Math.min(porcentagemUsada, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Restante: {(tamanhoRestante / 1024).toFixed(2)} KB
+                  </p>
+                </div>
                 {uploading && <p className="text-sm text-gray-500 mt-1">Fazendo upload...</p>}
               </div>
 
@@ -316,6 +372,19 @@ export default function AdminBrinquedos() {
                   <option value="MANUTENCAO">Manutenção</option>
                   <option value="APOSENTADO">Aposentado</option>
                 </select>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="destaque_home"
+                  checked={formData.destaque_home}
+                  onChange={(e) => setFormData({ ...formData, destaque_home: e.target.checked })}
+                  className="mr-2"
+                />
+                <label htmlFor="destaque_home" className="text-sm font-medium text-gray-700">
+                  Destacar na página inicial
+                </label>
               </div>
 
               <div className="flex gap-2">

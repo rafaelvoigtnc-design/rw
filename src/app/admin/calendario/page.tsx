@@ -259,7 +259,7 @@ export default function AdminCalendario() {
                           <div
                             className={`text-xs px-1 py-0.5 rounded text-white truncate flex-1 ${getStatusColor(locacao.status_locacao)}`}
                           >
-                            {locacao.horario_inicio}
+                            {locacao.cliente_nome || (locacao.cliente?.nome) || 'Cliente'}
                           </div>
                           <div
                             className={`w-2 h-2 rounded-full ${getPagamentoColor(locacao.status_pagamento)}`}
@@ -302,7 +302,7 @@ export default function AdminCalendario() {
                         <p className="text-xs text-gray-900">
                           {locacao.locacao_item && locacao.locacao_item.length > 0
                             ? locacao.locacao_item.map(item => 
-                                item.brinquedo?.nome || item.brinquedo_nome || 'Brinquedo'
+                                item.brinquedo_nome || item.brinquedo?.nome || 'Brinquedo não informado'
                               ).join(', ')
                             : 'Nenhum brinquedo'
                           }

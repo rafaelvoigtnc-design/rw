@@ -5,6 +5,8 @@ import { Clock, Gift, Sparkles, Phone } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
+export const dynamic = 'force-dynamic';
+
 interface Promocao {
   id: string;
   titulo: string;
@@ -20,16 +22,39 @@ export default function Promocoes() {
   const [countdowns, setCountdowns] = useState<Record<string, { days: number; hours: number; minutes: number; seconds: number }>>({});
 
   useEffect(() => {
-    fetch('/api/promocoes')
-      .then(res => res.json())
-      .then(data => {
-        setPromocoes(data);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Erro ao buscar promoções:', error);
-        setLoading(false);
-      });
+    const fetchPromocoes = () => {
+      const timestamp = new Date().getTime();
+      fetch(`/api/promocoes?_t=${timestamp}`)
+        .then(res => res.json())
+        .then(data => {
+          setPromocoes(data);
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Erro ao buscar promoções:', error);
+          setLoading(false);
+        });
+    };
+
+    // Buscar imediatamente
+    fetchPromocoes();
+
+    // Buscar a cada 5 segundos para atualizações ao vivo
+    const interval = setInterval(fetchPromocoes, 5000);
+
+    // Atualizar quando a aba ganha foco
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchPromocoes();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -180,8 +205,9 @@ export default function Promocoes() {
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4" />
                           <span>
-                            Desde {formatarData(promocao.data_inicio)}
-                            {!isIndeterminada && ` até ${formatarData(promocao.data_fim)}`}
+                            {promocao.data_inicio ? `Desde ${formatarData(promocao.data_inicio)}` : ''}
+                            {!isIndeterminada && promocao.data_inicio && ` até ${formatarData(promocao.data_fim)}`}
+                            {isIndeterminada && ' - Tempo indeterminado'}
                           </span>
                         </div>
                       </div>

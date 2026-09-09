@@ -199,7 +199,6 @@ export default function AdminPromocoes() {
                     value={formData.data_inicio}
                     onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                    required
                   />
                 </div>
 
@@ -289,7 +288,7 @@ export default function AdminPromocoes() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">
-                      {new Date(promocao.data_inicio).toLocaleDateString('pt-BR')} - {new Date(promocao.data_fim).toLocaleDateString('pt-BR')}
+                      {promocao.data_inicio ? new Date(promocao.data_inicio).toLocaleDateString('pt-BR') : 'Não definido'} - {promocao.data_fim ? new Date(promocao.data_fim).toLocaleDateString('pt-BR') : 'Indeterminado'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

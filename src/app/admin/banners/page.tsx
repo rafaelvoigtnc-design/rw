@@ -56,8 +56,10 @@ export default function AdminBanners() {
       console.log('Dados recebidos:', data);
       
       if (Array.isArray(data)) {
-        console.log(`Carregando ${data.length} banners`);
-        setBanners(data);
+        // Ordenar por ordem
+        const sortedBanners = data.sort((a: Banner, b: Banner) => (a.ordem || 0) - (b.ordem || 0));
+        console.log(`Carregando ${sortedBanners.length} banners ordenados`);
+        setBanners(sortedBanners);
       } else if (data.error) {
         console.error('Erro na API:', data.error);
         setBanners([]);
@@ -81,10 +83,17 @@ export default function AdminBanners() {
       
       const method = editingBanner ? 'PUT' : 'POST';
 
+      // Se for novo banner, calcular a ordem automaticamente
+      let dataToSend = { ...bannerData };
+      if (!editingBanner && !dataToSend.ordem) {
+        const maxOrdem = banners.length > 0 ? Math.max(...banners.map(b => b.ordem || 0)) : 0;
+        dataToSend.ordem = maxOrdem + 1;
+      }
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bannerData),
+        body: JSON.stringify(dataToSend),
       });
 
       if (response.ok) {

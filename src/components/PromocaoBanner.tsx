@@ -16,18 +16,43 @@ export default function PromocaoBanner() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/promocoes')
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.length > 0) {
-          setPromocao(data[0]);
-        }
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Erro ao buscar promoções:', error);
-        setLoading(false);
-      });
+    const fetchPromocoes = () => {
+      const timestamp = new Date().getTime();
+      fetch(`/api/promocoes?_t=${timestamp}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            setPromocao(data[0]);
+          } else {
+            setPromocao(null);
+          }
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Erro ao buscar promoções:', error);
+          setLoading(false);
+        });
+    };
+
+    // Buscar imediatamente
+    fetchPromocoes();
+
+    // Buscar a cada 5 segundos para atualizações ao vivo
+    const interval = setInterval(fetchPromocoes, 5000);
+
+    // Atualizar quando a aba ganha foco
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchPromocoes();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   if (loading) {

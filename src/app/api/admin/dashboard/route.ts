@@ -44,16 +44,36 @@ export async function GET(request: Request) {
       console.log('Locações filtradas:', locacoesFiltradas.length);
     }
 
-    // Calcular entrada de locação a partir dos valores das locações
-    const entradaLocacao = locacoesFiltradas
-      .reduce((sum, l) => sum + (l.valor_total || 0), 0);
+    // Calcular entrada de locação a partir dos valores das locações (considerando status de pagamento)
+    const entradaLocacao = locacoesFiltradas.reduce((sum, l: any) => {
+      const sinalPago = l.sinal_pago || 0;
+      const valorTotal = l.valor_total || 0;
+      
+      if (l.status_pagamento === 'pago') {
+        return sum + valorTotal;
+      } else if (l.status_pagamento === 'parcial' || l.status_pagamento === 'parcialmente_pago') {
+        return sum + sinalPago;
+      } else if (l.status_pagamento === 'pendente') {
+        return sum;
+      } else {
+        return sum + sinalPago;
+      }
+    }, 0);
     console.log('Entrada de locação:', entradaLocacao);
 
     // Transações financeiras manuais
-    const injecaoCapital = transacoesFiltradas
+    const injecaoCapitalBruto = transacoesFiltradas
       .filter(t => t.tipo === 'injecao_capital')
       .reduce((sum, t) => sum + (t.valor || 0), 0);
-    console.log('Injeção de capital:', injecaoCapital);
+    
+    const devolucaoCapital = transacoesFiltradas
+      .filter(t => t.tipo === 'devolucao_capital')
+      .reduce((sum, t) => sum + (t.valor || 0), 0);
+    
+    const injecaoCapital = injecaoCapitalBruto - devolucaoCapital;
+    console.log('Injeção de capital (bruto):', injecaoCapitalBruto);
+    console.log('Devolução de capital:', devolucaoCapital);
+    console.log('Injeção de capital (líquido):', injecaoCapital);
 
     const gastos = transacoesFiltradas
       .filter(t => t.tipo === 'gasto')
@@ -61,18 +81,26 @@ export async function GET(request: Request) {
     console.log('Gastos:', gastos);
 
     const investimentos = transacoesFiltradas
-      .filter(t => t.tipo === 'investimento')
-      .reduce((sum, t) => sum + (t.valor || 0), 0);
-    console.log('Investimentos:', investimentos);
+      .filter((t: any) => t.tipo === 'investimento')
+      .reduce((sum: number, t: any) => sum + (t.valor || 0), 0);
+    console.log('Investimentos (todos):', investimentos);
+
+    const perdas = transacoesFiltradas
+      .filter((t: any) => t.tipo === 'perda')
+      .reduce((sum: number, t: any) => sum + (t.valor || 0), 0);
+    console.log('Perdas (todas):', perdas);
 
     // Total pago a cuidadores
     const totalCuidadores = locacoesFiltradas
       .reduce((sum, l) => sum + (l.cuidador_valor || 0), 0);
     console.log('Total cuidadores:', totalCuidadores);
 
-    // Cálculo do lucro: entradas de locação + injeção de capital - gastos - investimentos - cuidadores
-    const lucro = entradaLocacao + injecaoCapital - gastos - investimentos - totalCuidadores;
-    const receitaTotal = entradaLocacao + injecaoCapital;
+    // Cálculo do lucro: entradas de locação - gastos - cuidadores
+    // Injeções de capital não entram no lucro (são aportes, não receita operacional)
+    // Investimentos não afetam o lucro (são patrimônio, não despesa operacional)
+    // Perdas/roubos não afetam o lucro, apenas o patrimônio
+    const lucro = entradaLocacao - gastos - totalCuidadores;
+    const receitaTotal = entradaLocacao;
     const margemLucro = receitaTotal > 0 ? (lucro / receitaTotal) * 100 : 0;
     console.log('Lucro:', lucro);
     console.log('Margem de lucro:', margemLucro);
@@ -90,11 +118,59 @@ export async function GET(request: Request) {
     const brinquedosAtivos = brinquedos.filter(b => b.status === 'DISPONIVEL').length;
     const brinquedosIndisponiveis = brinquedos.filter(b => b.status === 'INDISPONIVEL').length;
     const brinquedosManutencao = brinquedos.filter(b => b.status === 'MANUTENCAO').length;
+    const brinquedosAposentados = brinquedos.filter(b => b.status === 'APOSENTADO').length;
 
     console.log('Brinquedos:', numeroBrinquedos);
     console.log('Brinquedos ativos:', brinquedosAtivos);
     console.log('Brinquedos indisponíveis:', brinquedosIndisponiveis);
     console.log('Brinquedos em manutenção:', brinquedosManutencao);
+
+    // Calcular entrada de locação a partir dos valores das locações (considerando status de pagamento)
+    const todasLocacoes = locacoes.reduce((sum: number, l: any) => {
+      const sinalPago = l.sinal_pago || 0;
+      const valorTotal = l.valor_total || 0;
+      
+      if (l.status_pagamento === 'pago') {
+        return sum + valorTotal;
+      } else if (l.status_pagamento === 'parcial' || l.status_pagamento === 'parcialmente_pago') {
+        return sum + sinalPago;
+      } else if (l.status_pagamento === 'pendente') {
+        return sum;
+      } else {
+        return sum + sinalPago;
+      }
+    }, 0);
+
+    const todasInjecoesBruto = transacoes
+      .filter((t: any) => t.tipo === 'injecao_capital')
+      .reduce((sum: number, t: any) => sum + (t.valor || 0), 0);
+
+    const todasDevolucoes = transacoes
+      .filter((t: any) => t.tipo === 'devolucao_capital')
+      .reduce((sum: number, t: any) => sum + (t.valor || 0), 0);
+
+    const todasInjecoes = todasInjecoesBruto - todasDevolucoes;
+
+    const todosGastos = transacoes
+      .filter((t: any) => t.tipo === 'gasto')
+      .reduce((sum: number, t: any) => sum + (t.valor || 0), 0);
+
+    const todosInvestimentos = transacoes
+      .filter((t: any) => t.tipo === 'investimento')
+      .reduce((sum: number, t: any) => sum + (t.valor || 0), 0);
+
+    const todasPerdas = transacoes
+      .filter((t: any) => t.tipo === 'perda')
+      .reduce((sum: number, t: any) => sum + (t.valor || 0), 0);
+
+    // Patrimônio: Investimentos (todos) - Perdas (todas)
+    const patrimonio = todosInvestimentos - todasPerdas;
+    console.log('Patrimônio:', patrimonio);
+
+    // Saldo em caixa: Injeções (líquido) + Locações - Gastos - Investimentos
+    // Nota: Devoluções já estão descontadas das injeções líquidas
+    const saldoEmCaixa = todasInjecoes + todasLocacoes - todosGastos - todosInvestimentos;
+    console.log('Saldo em caixa:', saldoEmCaixa);
 
     // Dados para gráfico de evolução mensal (últimos 12 meses)
     const dadosGrafico = [];
@@ -114,11 +190,11 @@ export async function GET(request: Request) {
         })
         .reduce((sum, l) => sum + (l.valor_total || 0), 0);
 
-      // Gastos do mês
+      // Gastos do mês (apenas gastos, sem investimentos e perdas)
       const gastosMes = transacoes
         .filter(t => {
           const dataTransacao = new Date(t.data);
-          return (t.tipo === 'gasto' || t.tipo === 'investimento') &&
+          return t.tipo === 'gasto' &&
                  dataTransacao >= dataMes &&
                  dataTransacao <= proximoMes;
         })
@@ -131,40 +207,13 @@ export async function GET(request: Request) {
       });
     }
 
-    // Comparativo com período anterior
-    let comparativo = null;
-    if (dataInicio && dataFim && dataInicio !== '2000-01-01') {
-      const inicioAtual = new Date(dataInicio);
-      const fimAtual = new Date(dataFim);
-      const diasPeriodo = (fimAtual.getTime() - inicioAtual.getTime()) / (1000 * 60 * 60 * 24);
-
-      const inicioAnterior = new Date(inicioAtual.getTime() - diasPeriodo * 24 * 60 * 60 * 1000);
-      const fimAnterior = new Date(inicioAtual.getTime() - 1);
-
-      const locacoesAnterior = locacoes.filter(l => {
-        const dataEvento = new Date(l.data_evento);
-        return dataEvento >= inicioAnterior && dataEvento <= fimAnterior;
-      });
-
-      const entradaAnterior = locacoesAnterior
-        .reduce((sum, l) => sum + (l.valor_total || 0), 0);
-
-      const variacao = entradaAnterior > 0
-        ? ((entradaLocacao - entradaAnterior) / entradaAnterior) * 100
-        : 0;
-
-      comparativo = {
-        periodoAnterior: entradaAnterior,
-        periodoAtual: entradaLocacao,
-        variacao,
-      };
-    }
-
     return NextResponse.json({
       entradaLocacao,
-      injecaoCapital,
+      injecaoCapital, // Valor bruto das injeções
+      devolucaoCapital, // Devoluções separadas
       gastos,
       investimentos,
+      perdas,
       lucro,
       margemLucro,
       totalCuidadores,
@@ -173,9 +222,10 @@ export async function GET(request: Request) {
       brinquedosAtivos,
       brinquedosIndisponiveis,
       brinquedosManutencao,
+      brinquedosAposentados,
       ticketMedio,
+      saldoEmCaixa,
       dadosGrafico,
-      comparativo,
     });
   } catch (error) {
     console.error('Erro ao buscar dados do dashboard:', error);

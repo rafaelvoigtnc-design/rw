@@ -116,7 +116,7 @@ export default function BrinquedoPage() {
   };
 
   const handleFavoritar = async () => {
-    if (!isLoggedIn) {
+    if (!user) {
       setIsAuthModalOpen(true);
       return;
     }
@@ -299,13 +299,13 @@ export default function BrinquedoPage() {
                     onClick={() => setFotoAtual((prev) => (prev - 1 + brinquedo.fotos.length) % brinquedo.fotos.length)}
                     className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors"
                   >
-                    <ChevronLeft className="w-6 h-6" />
+                    <ChevronLeft className="w-6 h-6 text-gray-800" />
                   </button>
                   <button
                     onClick={() => setFotoAtual((prev) => (prev + 1) % brinquedo.fotos.length)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors"
                   >
-                    <ChevronRight className="w-6 h-6" />
+                    <ChevronRight className="w-6 h-6 text-gray-800" />
                   </button>
                 </>
               )}
@@ -375,9 +375,7 @@ export default function BrinquedoPage() {
                   setIsAuthModalOpen(true);
                   return;
                 }
-                const mensagem = userData?.nome 
-                  ? `Olá! Meu nome é ${userData.nome}. Gostaria de solicitar um orçamento para o brinquedo: ${brinquedo.nome}. Poderia me passar mais informações?`
-                  : `Olá! Gostaria de solicitar um orçamento para o brinquedo: ${brinquedo.nome}. Poderia me passar mais informações?`;
+                const mensagem = `Olá! Gostaria de solicitar um orçamento para o brinquedo: ${brinquedo.nome}. Poderia me passar mais informações?`;
                 window.open(`https://wa.me/5555997302463?text=${encodeURIComponent(mensagem)}`, '_blank');
               }}
               className="inline-flex items-center justify-center gap-3 w-full bg-primary-green-500 text-white py-5 rounded-2xl font-bold text-xl hover:bg-primary-green-600 transition-colors shadow-soft hover:scale-102 transition-transform"

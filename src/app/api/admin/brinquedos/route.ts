@@ -29,7 +29,8 @@ export async function POST(request: Request) {
       status,
       categoria_id,
       preco_periodo,
-      tema_layout
+      tema_layout,
+      destaque_home
     } = body;
 
     // Validar campos obrigatórios
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
       status: String(status || 'DISPONIVEL'),
       categoria_id: categoria_id || null,
       preco_periodo: Number(preco_periodo) || 0,
-      mostrar_home: false,
+      destaque_home: Boolean(destaque_home),
     };
 
     console.log('Dados para inserir:', brinquedoData);

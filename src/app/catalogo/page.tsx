@@ -18,15 +18,11 @@ interface Brinquedo {
 export default function Catalogo() {
   const [brinquedos, setBrinquedos] = useState<Brinquedo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filtroFaixaEtaria, setFiltroFaixaEtaria] = useState('');
   const [busca, setBusca] = useState('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
-  const [ordenacao, setOrdenacao] = useState('nome');
-
-  const faixasEtarias = ['0-2 anos', '3-5 anos', '6-8 anos', '9-12 anos'];
 
   useEffect(() => {
     fetchBrinquedos();
@@ -42,13 +38,11 @@ export default function Catalogo() {
       .catch(() => {
         setIsLoggedIn(false);
       });
-  }, [filtroFaixaEtaria, busca, ordenacao]);
+  }, [busca]);
 
   const fetchBrinquedos = () => {
     const params = new URLSearchParams();
-    if (filtroFaixaEtaria) params.append('faixaEtaria', filtroFaixaEtaria);
     if (busca) params.append('busca', busca);
-    params.append('ordenacao', ordenacao);
 
     fetch(`/api/brinquedos?${params}`)
       .then(res => res.json())
@@ -108,11 +102,10 @@ export default function Catalogo() {
   };
 
   const clearFilters = () => {
-    setFiltroFaixaEtaria('');
     setBusca('');
   };
 
-  const hasActiveFilters = filtroFaixaEtaria || busca;
+  const hasActiveFilters = busca;
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
@@ -161,40 +154,6 @@ export default function Catalogo() {
                       className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 bg-gray-50 text-gray-900"
                     />
                   </div>
-                </div>
-
-                {/* Faixa Etária */}
-                <div>
-                  <label className="block text-sm font-medium text-secondary-gray-700 mb-2">
-                    Faixa Etária
-                  </label>
-                  <select
-                    value={filtroFaixaEtaria}
-                    onChange={(e) => setFiltroFaixaEtaria(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 bg-gray-50 text-gray-900"
-                  >
-                    <option value="">Todas as faixas etárias</option>
-                    {faixasEtarias.map((faixa) => (
-                      <option key={faixa} value={faixa}>
-                        {faixa}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Ordenação */}
-                <div>
-                  <label className="block text-sm font-medium text-secondary-gray-700 mb-2">
-                    Ordenar por
-                  </label>
-                  <select
-                    value={ordenacao}
-                    onChange={(e) => setOrdenacao(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 bg-gray-50 text-gray-900"
-                  >
-                    <option value="nome">Nome (A-Z)</option>
-                    <option value="nome_desc">Nome (Z-A)</option>
-                  </select>
                 </div>
 
                 {/* Limpar Filtros */}

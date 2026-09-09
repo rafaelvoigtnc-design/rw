@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       data_evento,
       horario_inicio,
       horario_fim,
+      dia_inteiro,
       endereco,
       local_evento,
       brinquedos,
@@ -45,7 +46,11 @@ export async function POST(request: Request) {
       observacoes,
     } = await request.json();
 
-    console.log('Dados recebidos:', { cliente_id, cliente_novo, data_evento, horario_inicio, horario_fim, brinquedos });
+    // Se dia inteiro, define horários automaticamente
+    const inicioFinal = dia_inteiro ? '00:00' : horario_inicio;
+    const fimFinal = dia_inteiro ? '23:59' : horario_fim;
+
+    console.log('Dados recebidos:', { cliente_id, cliente_novo, data_evento, horario_inicio: inicioFinal, horario_fim: fimFinal, dia_inteiro, brinquedos });
 
     // Se for cliente novo, cadastrar primeiro
     let finalClienteId = cliente_id;
@@ -80,8 +85,8 @@ export async function POST(request: Request) {
       cliente_id: finalClienteId,
       cliente_nome: clienteNome, // Salvar nome do cliente para evitar problema de busca
       data_evento,
-      horario_inicio,
-      horario_fim,
+      horario_inicio: inicioFinal,
+      horario_fim: fimFinal,
       endereco,
       local_evento,
       valor_total,
@@ -101,19 +106,20 @@ export async function POST(request: Request) {
         await createLocacaoItem({
           locacao_id: locacao.id,
           brinquedo_id: brinquedo.brinquedo_id,
+          brinquedo_nome: brinquedo.nome, // Salvar nome do brinquedo para exibição
         });
       }
     }
 
-    // Gerar transação financeira automaticamente se pago ou parcial
-    if (status_pagamento === 'pago' || status_pagamento === 'parcial') {
+    // Gerar transação financeira automaticamente se pago ou parcialmente_pago
+    if (status_pagamento === 'pago' || status_pagamento === 'parcialmente_pago') {
       const valorTransacao = valor_total - (cuidador_valor || 0);
 
       await createTransacao({
         tipo: 'ENTRADA_LOCACAO',
         valor: valorTransacao,
-        data: new Date().toISOString().split('T')[0],
-        descricao: `Locação #${locacao.id}`,
+        data: data_evento,
+        descricao: `${clienteNome} - ${local_evento || endereco || 'Local não informado'}`,
         locacao_id: locacao.id,
       });
     }

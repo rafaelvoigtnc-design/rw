@@ -254,7 +254,34 @@ export async function getAdminByEmail(email: string) {
 // Locações
 export async function getLocacoes() {
   const snapshot = await getDocs(collection(db, 'locacoes'));
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const locacoes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+
+  // Buscar itens de cada locação
+  for (const locacao of locacoes) {
+    const itensSnapshot = await getDocs(
+      query(collection(db, 'locacao_itens'), where('locacao_id', '==', locacao.id))
+    );
+    const itens = itensSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+
+    // Buscar nome do brinquedo para cada item se não tiver salvo
+    for (const item of itens) {
+      if (!item.brinquedo_nome && item.brinquedo_id) {
+        const brinquedoDoc = await getDoc(doc(db, 'brinquedos', item.brinquedo_id));
+        if (brinquedoDoc.exists()) {
+          item.brinquedo_nome = brinquedoDoc.data().nome;
+        }
+      }
+      
+      // Se ainda não tiver nome, usar 'Brinquedo não informado'
+      if (!item.brinquedo_nome) {
+        item.brinquedo_nome = 'Brinquedo não informado';
+      }
+    }
+
+    locacao.locacao_item = itens;
+  }
+
+  return locacoes;
 }
 
 export async function getLocacoesByCliente(clienteId: string) {
@@ -375,4 +402,28 @@ export async function uploadImagem(file: File, path: string): Promise<string> {
 export async function deleteImagem(path: string): Promise<void> {
   const storageRef = ref(storage, path);
   await deleteObject(storageRef);
+}
+
+// Fotos de Brinquedos (subcoleção para contornar limite de 1MB)
+export async function addFotoBrinquedo(brinquedoId: string, fotoData: string) {
+  return await addDoc(collection(db, 'brinquedos', brinquedoId, 'fotos'), {
+    data: fotoData,
+    criado_em: new Date().toISOString()
+  });
+}
+
+export async function getFotosBrinquedo(brinquedoId: string) {
+  const snapshot = await getDocs(collection(db, 'brinquedos', brinquedoId, 'fotos'));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+export async function deleteFotoBrinquedo(brinquedoId: string, fotoId: string) {
+  await deleteDoc(doc(db, 'brinquedos', brinquedoId, 'fotos', fotoId));
+}
+
+export async function deleteTodasFotosBrinquedo(brinquedoId: string) {
+  const snapshot = await getDocs(collection(db, 'brinquedos', brinquedoId, 'fotos'));
+  for (const doc of snapshot.docs) {
+    await deleteDoc(doc.ref);
+  }
 }

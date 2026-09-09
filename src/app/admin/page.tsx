@@ -27,10 +27,19 @@ export default function AdminDashboard() {
     clientes: 0,
     faturamento: 0,
   });
+  const [saldoEmCaixa, setSaldoEmCaixa] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Verificar se tem token no localStorage
+    const token = localStorage.getItem('admin_token');
+    if (!token) {
+      router.push('/admin/login');
+      return;
+    }
+    
     fetchStats();
+    fetchSaldoEmCaixa();
   }, []);
 
   const fetchStats = async () => {
@@ -47,7 +56,20 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchSaldoEmCaixa = async () => {
+    try {
+      const response = await fetch('/api/admin/caixa');
+      if (response.ok) {
+        const data = await response.json();
+        setSaldoEmCaixa(data.saldoEmCaixa);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar saldo em caixa:', error);
+    }
+  };
+
   const handleLogout = async () => {
+    localStorage.removeItem('admin_token');
     await fetch('/api/admin/logout', { method: 'POST' });
     router.push('/admin/login');
   };
@@ -137,6 +159,13 @@ export default function AdminDashboard() {
       color: 'bg-gray-500',
       path: '/admin/conteudo',
     },
+    {
+      title: 'Backup/Restore',
+      description: 'Fazer backup e restore do sistema',
+      icon: FileCheck,
+      color: 'bg-purple-500',
+      path: '/admin/backup',
+    },
   ];
 
   return (
@@ -169,12 +198,13 @@ export default function AdminDashboard() {
 
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-4 md:py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6 mb-4 md:mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4 lg:gap-6 mb-4 md:mb-8">
           {[
             { label: 'Brinquedos', value: loading ? '...' : stats.brinquedos, icon: Package, color: 'bg-primary-blue-500' },
             { label: 'Locações', value: loading ? '...' : stats.locacoes, icon: ShoppingCart, color: 'bg-primary-green-500' },
             { label: 'Clientes', value: loading ? '...' : stats.clientes, icon: Users, color: 'bg-primary-orange-500' },
             { label: 'Faturamento', value: loading ? '...' : stats.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), prefix: 'R$', icon: TrendingUp, color: 'bg-primary-yellow-500' },
+            { label: 'Em Caixa', value: loading ? '...' : saldoEmCaixa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), prefix: 'R$', icon: DollarSign, color: 'bg-emerald-500' },
           ].map((stat, index) => {
             const displayValue = loading ? '...' : (stat.prefix ? `${stat.prefix} ${stat.value}` : stat.value);
             return (

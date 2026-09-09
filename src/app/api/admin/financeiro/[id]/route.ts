@@ -8,7 +8,7 @@ export async function PUT(
 ) {
   try {
     const id = params.id;
-    const { tipo, valor, data, descricao, categoria } = await request.json();
+    const { tipo, valor, data, descricao, categoria, origem } = await request.json();
 
     const docRef = doc(db, 'transacoes', id);
     await updateDoc(docRef, {
@@ -17,10 +17,11 @@ export async function PUT(
       data,
       descricao: descricao || '',
       categoria: categoria || null,
+      origem: origem || 'caixa_empresa',
       atualizado_em: new Date().toISOString(),
     });
 
-    return NextResponse.json({ id, tipo, valor, data, descricao, categoria });
+    return NextResponse.json({ id, tipo, valor, data, descricao, categoria, origem });
   } catch (error) {
     console.error('Erro ao atualizar transação financeira:', error);
     return NextResponse.json(

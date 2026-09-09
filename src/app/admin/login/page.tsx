@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -16,20 +18,34 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
+      console.log('🔐 Iniciando login...');
       const response = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('📡 Status:', response.status);
       const data = await response.json();
+      console.log('📦 Dados:', data);
 
       if (response.ok) {
-        router.push('/admin');
+        console.log('✅ Login bem-sucedido, salvando token no localStorage...');
+        
+        // Salvar token no localStorage
+        if (data.token) {
+          localStorage.setItem('admin_token', data.token);
+          console.log('✅ Token salvo no localStorage');
+        }
+        
+        // Usar window.location.href para garantir o redirecionamento
+        window.location.href = '/admin';
       } else {
+        console.log('❌ Erro no login:', data.error);
         setError(data.error || 'Erro ao fazer login');
       }
     } catch (error) {
+      console.log('❌ Erro na requisição:', error);
       setError('Erro ao conectar com o servidor');
     } finally {
       setLoading(false);
@@ -56,7 +72,6 @@ export default function AdminLogin() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="admin@rwbrinquedos.com"
             />
           </div>
 
@@ -64,15 +79,23 @@ export default function AdminLogin() {
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
               Senha
             </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
           {error && (

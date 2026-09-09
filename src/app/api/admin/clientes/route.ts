@@ -33,30 +33,33 @@ export async function POST(request: Request) {
 
     console.log('POST recebido:', body);
 
-    // Criação normal
-    if (!nome || !telefone || !email) {
+    // Apenas nome é obrigatório
+    if (!nome) {
       return NextResponse.json(
-        { error: 'Nome, telefone e email são obrigatórios' },
+        { error: 'Nome é obrigatório' },
         { status: 400 }
       );
     }
 
-    // Verificar se email já existe
-    const q = query(collection(db, 'clientes'), where('email', '==', email));
-    const snapshot = await getDocs(q);
-    
-    if (!snapshot.empty) {
-      return NextResponse.json(
-        { error: 'Email já cadastrado' },
-        { status: 400 }
-      );
+    // Se email for fornecido, verificar se já existe
+    if (email && email.trim() !== '') {
+      const q = query(collection(db, 'clientes'), where('email', '==', email));
+      const snapshot = await getDocs(q);
+      
+      if (!snapshot.empty) {
+        return NextResponse.json(
+          { error: 'Email já cadastrado' },
+          { status: 400 }
+        );
+      }
     }
 
     const docRef = await addDoc(collection(db, 'clientes'), {
       nome,
-      telefone,
-      email,
+      telefone: telefone || '',
+      email: email || '',
       endereco: endereco || '',
+      cidade: '',
       senha_hash: senha_hash || '',
       criado_em: new Date().toISOString()
     });

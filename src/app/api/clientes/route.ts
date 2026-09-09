@@ -6,7 +6,13 @@ export async function GET() {
   try {
     const snapshot = await getDocs(collection(db, 'clientes'));
     const clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    return NextResponse.json(clientes);
+    return NextResponse.json(clientes, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     console.error('Erro ao buscar clientes:', error);
     return NextResponse.json(

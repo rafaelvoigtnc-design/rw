@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Filter, ArrowUpDown, X, Calendar, MapPin, Phone, DollarSign, Clock, User, Package, Edit, Trash2, Save } from 'lucide-react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface Cliente {
   id: string;
@@ -35,6 +37,12 @@ interface Locacao {
   cuidador_valor?: number;
   observacoes?: string;
   criado_em: string;
+  locacao_item?: Array<{
+    brinquedo?: {
+      nome: string;
+    };
+    brinquedo_nome?: string;
+  }>;
 }
 
 const generateHorarios = () => {
@@ -66,6 +74,9 @@ export default function AdminLocacoes() {
   const [locacaoSelecionada, setLocacaoSelecionada] = useState<Locacao | null>(null);
   const [mostrarDrawer, setMostrarDrawer] = useState(false);
   
+  // Busca de cliente no formulário
+  const [buscaCliente, setBuscaCliente] = useState('');
+  
   // Modal de edição
   const [mostrarModalEdicao, setMostrarModalEdicao] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -88,13 +99,14 @@ export default function AdminLocacoes() {
     data_evento: '',
     horario_inicio: '',
     horario_fim: '',
+    dia_inteiro: true,
     endereco: '',
     local_evento: '',
     brinquedos: [] as Array<{ brinquedo_id: string; nome: string }>,
     valor_total: 0,
     valor_sinal: 0,
-    status_pagamento: 'pendente',
-    status_locacao: 'confirmada',
+    status_pagamento: 'pago',
+    status_locacao: 'concluida',
     cuidador_nome: '',
     cuidador_valor: 0,
     observacoes: '',
@@ -104,10 +116,51 @@ export default function AdminLocacoes() {
     fetchData();
   }, []);
 
+  // Atualização ao vivo via localStorage events
+  useEffect(() => {
+    const fetchClientes = () => {
+      const timestamp = new Date().getTime();
+      fetch(`/api/admin/clientes?t=${timestamp}`)
+        .then(res => res.json())
+        .then(data => setClientes(data))
+        .catch(err => console.error('Erro ao atualizar clientes:', err));
+    };
+
+    // Escutar mudanças no localStorage (quando outras abas modificam)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'clientes_updated') {
+        console.log('Clientes atualizados em outra aba, recarregando...');
+        fetchClientes();
+      }
+    };
+
+    // Polling como fallback (a cada 5 segundos)
+    const interval = setInterval(fetchClientes, 5000);
+
+    // Event listener para quando a aba ficar visível
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchClientes();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('focus', fetchClientes);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', fetchClientes);
+    };
+  }, []);
+
   const fetchData = async () => {
     try {
+      const timestamp = new Date().getTime();
       const [clientesRes, brinqRes, locacoesRes] = await Promise.all([
-        fetch('/api/clientes'),
+        fetch(`/api/admin/clientes?t=${timestamp}`),
         fetch('/api/brinquedos'),
         fetch('/api/admin/locacoes'),
       ]);
@@ -180,12 +233,13 @@ export default function AdminLocacoes() {
       data_evento: '',
       horario_inicio: '',
       horario_fim: '',
+      dia_inteiro: true,
       endereco: '',
       brinquedos: [],
       valor_total: 0,
       valor_sinal: 0,
-      status_pagamento: 'pendente',
-      status_locacao: 'confirmada',
+      status_pagamento: 'pago',
+      status_locacao: 'concluida',
       cuidador_nome: '',
       cuidador_valor: 0,
       observacoes: '',
@@ -392,6 +446,13 @@ export default function AdminLocacoes() {
               {/* Cliente */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Cliente *</label>
+                <input
+                  type="text"
+                  placeholder="Buscar cliente pelo nome..."
+                  value={buscaCliente}
+                  onChange={(e) => setBuscaCliente(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 mb-2"
+                />
                 <select
                   value={formData.cliente_id}
                   onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
@@ -399,55 +460,96 @@ export default function AdminLocacoes() {
                   required
                 >
                   <option value="">Selecione um cliente</option>
-                  {clientes.map((cliente) => (
+                  {clientes
+                    .filter((cliente) => 
+                      cliente.nome.toLowerCase().includes(buscaCliente.toLowerCase()) ||
+                      (cliente.telefone && cliente.telefone.includes(buscaCliente))
+                    )
+                    .map((cliente) => (
                     <option key={cliente.id} value={cliente.id}>
-                      {cliente.nome} - {cliente.telefone}
+                      {cliente.nome}{cliente.telefone ? ` - ${cliente.telefone}` : ''}
                     </option>
                   ))}
                 </select>
               </div>
 
               {/* Data e Horários */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Data do Evento</label>
-                  <input
-                    type="date"
-                    value={formData.data_evento}
-                    onChange={(e) => setFormData({ ...formData, data_evento: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Horário Início</label>
-                  <select
-                    value={formData.horario_inicio}
-                    onChange={(e) => setFormData({ ...formData, horario_inicio: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                    required
-                  >
-                    <option value="">Selecione</option>
-                    {generateHorarios().map((hora) => (
-                      <option key={hora} value={hora}>{hora}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Horário Fim</label>
-                  <select
-                    value={formData.horario_fim}
-                    onChange={(e) => setFormData({ ...formData, horario_fim: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                    required
-                  >
-                    <option value="">Selecione</option>
-                    {generateHorarios().map((hora) => (
-                      <option key={hora} value={hora}>{hora}</option>
-                    ))}
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data do Evento</label>
+                <DatePicker
+                  selected={formData.data_evento ? new Date(formData.data_evento + 'T00:00:00') : null}
+                  onChange={(date: Date | null) => {
+                    if (date) {
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(2, '0');
+                      const day = String(date.getDate()).padStart(2, '0');
+                      setFormData({ ...formData, data_evento: `${year}-${month}-${day}` });
+                    } else {
+                      setFormData({ ...formData, data_evento: '' });
+                    }
+                  }}
+                  dateFormat="dd/MM/yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                  required
+                  placeholderText="Selecione a data"
+                />
               </div>
+
+              <div className="flex items-center gap-2 mb-4">
+                <input
+                  type="checkbox"
+                  id="dia_inteiro"
+                  checked={formData.dia_inteiro}
+                  onChange={(e) => {
+                    setFormData({ 
+                      ...formData, 
+                      dia_inteiro: e.target.checked,
+                      horario_inicio: e.target.checked ? '00:00' : '',
+                      horario_fim: e.target.checked ? '23:59' : ''
+                    });
+                  }}
+                  className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                />
+                <label htmlFor="dia_inteiro" className="text-sm font-medium text-gray-700">
+                  Dia inteiro (00:00 - 23:59)
+                </label>
+              </div>
+
+              {!formData.dia_inteiro && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Horário Início</label>
+                    <select
+                      value={formData.horario_inicio}
+                      onChange={(e) => setFormData({ ...formData, horario_inicio: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                      required
+                    >
+                      <option value="">Selecione</option>
+                      {generateHorarios().map((hora) => (
+                        <option key={hora} value={hora}>{hora}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Horário Fim</label>
+                    <select
+                      value={formData.horario_fim}
+                      onChange={(e) => setFormData({ ...formData, horario_fim: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                      required
+                    >
+                      <option value="">Selecione</option>
+                      {generateHorarios().map((hora) => (
+                        <option key={hora} value={hora}>{hora}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
 
               {/* Endereço */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -513,7 +615,7 @@ export default function AdminLocacoes() {
                   <input
                     type="number"
                     value={formData.valor_total}
-                    onChange={(e) => setFormData({ ...formData, valor_total: parseFloat(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, valor_total: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                     required
                   />
@@ -523,9 +625,8 @@ export default function AdminLocacoes() {
                   <input
                     type="number"
                     value={formData.valor_sinal}
-                    onChange={(e) => setFormData({ ...formData, valor_sinal: parseFloat(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, valor_sinal: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                    required
                   />
                 </div>
               </div>
@@ -575,7 +676,7 @@ export default function AdminLocacoes() {
                   <input
                     type="number"
                     value={formData.cuidador_valor}
-                    onChange={(e) => setFormData({ ...formData, cuidador_valor: parseFloat(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, cuidador_valor: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                   />
                 </div>
@@ -735,7 +836,10 @@ export default function AdminLocacoes() {
                         <div className="flex items-center gap-4 text-sm text-gray-600">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
-                            {new Date(locacao.data_evento).toLocaleDateString('pt-BR')}
+                            {(() => {
+                              const [year, month, day] = locacao.data_evento.split('-');
+                              return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString('pt-BR');
+                            })()}
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
@@ -847,7 +951,10 @@ export default function AdminLocacoes() {
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-gray-500" />
                       <span className="text-gray-900 font-medium">
-                        {new Date(locacaoSelecionada.data_evento).toLocaleDateString('pt-BR')}
+                        {(() => {
+                          const [year, month, day] = locacaoSelecionada.data_evento.split('-');
+                          return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString('pt-BR');
+                        })()}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -868,6 +975,23 @@ export default function AdminLocacoes() {
                     )}
                   </div>
                 </div>
+
+                {/* Brinquedos */}
+                {locacaoSelecionada.locacao_item && locacaoSelecionada.locacao_item.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <Package className="w-5 h-5" />
+                      Brinquedos
+                    </h3>
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                      {locacaoSelecionada.locacao_item.map((item: any, index: number) => (
+                        <div key={index} className="text-gray-900">
+                          {item.brinquedo_nome || item.brinquedo?.nome || 'Brinquedo não informado'}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Valores */}
                 <div>
