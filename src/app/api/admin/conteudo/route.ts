@@ -31,24 +31,35 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    console.log('Iniciando POST de conteúdo...');
     const formData = await request.formData();
+    console.log('FormData recebido');
+
     const pagina = formData.get('pagina') as string;
     const chave = formData.get('chave') as string;
     const valor = formData.get('valor') as string;
     const tipo = formData.get('tipo') as string;
     const arquivo = formData.get('arquivo') as File | null;
 
+    console.log('Dados recebidos:', { pagina, chave, tipo, hasFile: !!arquivo });
+
     let finalValor = valor;
 
     // Se for upload de arquivo, salvar no servidor local
     if (arquivo && tipo === 'imagem') {
+      console.log('Iniciando upload de arquivo...');
+      console.log('Nome do arquivo:', arquivo.name);
+      console.log('Tamanho do arquivo:', arquivo.size);
+
       const bytes = await arquivo.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
       // Criar diretório de uploads se não existir
       const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'conteudo', pagina);
+      console.log('Diretório de upload:', uploadDir);
       if (!existsSync(uploadDir)) {
         await mkdir(uploadDir, { recursive: true });
+        console.log('Diretório criado');
       }
 
       // Gerar nome único do arquivo
@@ -59,6 +70,7 @@ export async function POST(request: Request) {
 
       // Salvar arquivo
       await writeFile(filePath, buffer);
+      console.log('Arquivo salvo:', filePath);
 
       // Retornar URL relativa
       finalValor = `/uploads/conteudo/${pagina}/${fileName}`;
@@ -99,8 +111,9 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     console.error('Erro ao salvar conteúdo:', error);
+    console.error('Detalhes do erro:', error instanceof Error ? error.message : String(error));
     return NextResponse.json(
-      { error: 'Erro ao salvar conteúdo: ' + error },
+      { error: 'Erro ao salvar conteúdo: ' + (error instanceof Error ? error.message : String(error)) },
       { status: 500 }
     );
   }

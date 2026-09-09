@@ -82,7 +82,20 @@ export default function AdminConteudo() {
         body: formData,
       });
 
-      const responseData = await response.json();
+      console.log('Status da resposta:', response.status);
+      console.log('Status text:', response.statusText);
+
+      const textResponse = await response.text();
+      console.log('Resposta bruta:', textResponse);
+
+      let responseData;
+      try {
+        responseData = JSON.parse(textResponse);
+      } catch (e) {
+        console.error('Erro ao fazer parse da resposta:', e);
+        alert('Erro ao salvar: Resposta inválida do servidor');
+        return;
+      }
 
       if (response.ok) {
         setEditando(null);
