@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDocs, collection, query, where, addDoc, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
+import { db, storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export async function GET(request: Request) {
   try {
@@ -45,36 +43,29 @@ export async function POST(request: Request) {
 
     let finalValor = valor;
 
-    // Se for upload de arquivo, salvar no servidor local
+    // Se for upload de arquivo, salvar no Firebase Storage
     if (arquivo && tipo === 'imagem') {
-      console.log('Iniciando upload de arquivo...');
+      console.log('Iniciando upload de arquivo para Firebase Storage...');
       console.log('Nome do arquivo:', arquivo.name);
       console.log('Tamanho do arquivo:', arquivo.size);
 
       const bytes = await arquivo.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // Criar diretório de uploads se não existir
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'conteudo', pagina);
-      console.log('Diretório de upload:', uploadDir);
-      if (!existsSync(uploadDir)) {
-        await mkdir(uploadDir, { recursive: true });
-        console.log('Diretório criado');
-      }
-
       // Gerar nome único do arquivo
       const timestamp = Date.now();
       const extensao = arquivo.name.split('.').pop();
       const fileName = `${chave}_${timestamp}.${extensao}`;
-      const filePath = path.join(uploadDir, fileName);
+      const storagePath = `conteudo/${pagina}/${fileName}`;
 
-      // Salvar arquivo
-      await writeFile(filePath, buffer);
-      console.log('Arquivo salvo:', filePath);
+      // Fazer upload para Firebase Storage
+      const storageRef = ref(storage, storagePath);
+      await uploadBytes(storageRef, buffer);
+      console.log('Arquivo enviado para Firebase Storage');
 
-      // Retornar URL relativa
-      finalValor = `/uploads/conteudo/${pagina}/${fileName}`;
-      console.log('Imagem salva no servidor:', finalValor);
+      // Obter URL de download
+      finalValor = await getDownloadURL(storageRef);
+      console.log('URL obtida:', finalValor);
     }
 
     // Verificar se já existe um conteúdo com a mesma página e chave
