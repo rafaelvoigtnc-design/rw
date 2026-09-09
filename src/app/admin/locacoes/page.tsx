@@ -1166,9 +1166,9 @@ export default function AdminLocacoes() {
                       onChange={(e) => setEditFormData({ ...editFormData, status_pagamento: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                     >
-                      <option value="PENDENTE">Pendente</option>
-                      <option value="PARCIAL">Parcial</option>
-                      <option value="PAGO">Pago</option>
+                      <option value="pendente">Pendente</option>
+                      <option value="parcial">Parcial</option>
+                      <option value="pago">Pago</option>
                     </select>
                   </div>
                   <div>
@@ -1178,11 +1178,11 @@ export default function AdminLocacoes() {
                       onChange={(e) => setEditFormData({ ...editFormData, status_locacao: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                     >
-                      <option value="ORCAMENTO">Orçamento</option>
-                      <option value="CONFIRMADA">Confirmada</option>
-                      <option value="EM_ANDAMENTO">Em Andamento</option>
-                      <option value="CONCLUIDA">Concluída</option>
-                      <option value="CANCELADA">Cancelada</option>
+                      <option value="orcamento">Orçamento</option>
+                      <option value="confirmada">Confirmada</option>
+                      <option value="em_andamento">Em Andamento</option>
+                      <option value="concluida">Concluída</option>
+                      <option value="cancelada">Cancelada</option>
                     </select>
                   </div>
                 </div>
@@ -1193,8 +1193,8 @@ export default function AdminLocacoes() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Valor Total</label>
                     <input
                       type="number"
-                      value={editFormData.valor_total}
-                      onChange={(e) => setEditFormData({ ...editFormData, valor_total: parseFloat(e.target.value) })}
+                      value={editFormData.valor_total || 0}
+                      onChange={(e) => setEditFormData({ ...editFormData, valor_total: parseFloat(e.target.value) || 0 })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                       step="0.01"
                     />
@@ -1203,8 +1203,8 @@ export default function AdminLocacoes() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Sinal Pago</label>
                     <input
                       type="number"
-                      value={editFormData.sinal_pago}
-                      onChange={(e) => setEditFormData({ ...editFormData, sinal_pago: parseFloat(e.target.value) })}
+                      value={editFormData.sinal_pago || 0}
+                      onChange={(e) => setEditFormData({ ...editFormData, sinal_pago: parseFloat(e.target.value) || 0 })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                       step="0.01"
                     />
@@ -1217,7 +1217,7 @@ export default function AdminLocacoes() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Cuidador</label>
                     <input
                       type="text"
-                      value={editFormData.cuidador_nome}
+                      value={editFormData.cuidador_nome || ''}
                       onChange={(e) => setEditFormData({ ...editFormData, cuidador_nome: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                     />
@@ -1226,8 +1226,8 @@ export default function AdminLocacoes() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Valor do Cuidador</label>
                     <input
                       type="number"
-                      value={editFormData.cuidador_valor}
-                      onChange={(e) => setEditFormData({ ...editFormData, cuidador_valor: parseFloat(e.target.value) })}
+                      value={editFormData.cuidador_valor || 0}
+                      onChange={(e) => setEditFormData({ ...editFormData, cuidador_valor: parseFloat(e.target.value) || 0 })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                       step="0.01"
                     />
