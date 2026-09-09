@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className="light">
       <body className={`${poppins.className} font-sans`}>
         <AuthProvider>
           {children}
