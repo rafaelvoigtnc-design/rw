@@ -19,10 +19,10 @@ export async function GET(request: Request) {
       brinquedosFiltrados = brinquedos.filter((b: any) => b.destaque_home === true);
     }
 
-    // Temporariamente: não filtrar por status para debug
-    // const brinquedosDisponiveis = brinquedosFiltrados.filter((b: any) => b.status === 'DISPONIVEL');
+    // Filtrar apenas brinquedos disponíveis (não manutenção, não aposentados)
+    const brinquedosDisponiveis = brinquedosFiltrados.filter((b: any) => b.status === 'DISPONIVEL');
 
-    return NextResponse.json(brinquedosFiltrados);
+    return NextResponse.json(brinquedosDisponiveis);
   } catch (error) {
     console.error('Erro ao buscar brinquedos:', error);
     return NextResponse.json(

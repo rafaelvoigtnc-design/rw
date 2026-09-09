@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, SlidersHorizontal, X, Heart, Star } from 'lucide-react';
+import { Search, SlidersHorizontal, X, Star } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import AuthModal from '@/components/AuthModal';
 import Link from 'next/link';
 
 interface Brinquedo {
@@ -19,25 +18,10 @@ export default function Catalogo() {
   const [brinquedos, setBrinquedos] = useState<Brinquedo[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     fetchBrinquedos();
-
-    // Verificar login via API
-    fetch('/api/cliente/perfil')
-      .then(res => {
-        if (res.ok) {
-          setIsLoggedIn(true);
-          fetchFavoritos();
-        }
-      })
-      .catch(() => {
-        setIsLoggedIn(false);
-      });
   }, [busca]);
 
   const fetchBrinquedos = () => {
@@ -54,51 +38,6 @@ export default function Catalogo() {
         console.error('Erro ao buscar brinquedos:', error);
         setLoading(false);
       });
-  };
-
-  const fetchFavoritos = () => {
-    fetch('/api/favoritos')
-      .then(res => res.json())
-      .then(data => {
-        const favIds = new Set<string>(data.map((f: any) => f.brinquedo_id));
-        setFavoritos(favIds);
-      })
-      .catch(error => console.error('Erro ao buscar favoritos:', error));
-  };
-
-  const handleFavoritar = async (brinquedoId: string) => {
-    if (!isLoggedIn) {
-      setIsAuthModalOpen(true);
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/favoritos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ brinquedoId }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.favorito) {
-          setFavoritos(prev => new Set(Array.from(prev).concat(brinquedoId)));
-        } else {
-          setFavoritos(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(brinquedoId);
-            return newSet;
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao favoritar:', error);
-    }
-  };
-
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true);
-    fetchFavoritos();
   };
 
   const clearFilters = () => {
@@ -238,16 +177,6 @@ export default function Catalogo() {
                                 </span>
                               </div>
                             )}
-
-                            <button
-                              className="absolute top-2 md:top-3 left-2 md:left-3 w-8 h-8 md:w-10 md:h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 transition-transform"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleFavoritar(brinquedo.id);
-                              }}
-                            >
-                              <Heart className={`w-5 h-5 ${favoritos.has(brinquedo.id) ? 'text-red-500 fill-current' : 'text-secondary-gray-600'}`} />
-                            </button>
                           </div>
 
                           <div className="p-3 md:p-5">
@@ -278,12 +207,6 @@ export default function Catalogo() {
       </div>
 
       <Footer />
-      
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
     </div>
   );
 }

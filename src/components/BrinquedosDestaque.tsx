@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Star, Heart } from 'lucide-react';
+import { Star } from 'lucide-react';
 import Link from 'next/link';
 
 interface Brinquedo {
@@ -89,17 +89,6 @@ export default function BrinquedosDestaque() {
                     </span>
                   </div>
                 )}
-
-                {/* Botão de favorito */}
-                <button
-                  className="absolute top-2 md:top-3 left-2 md:left-3 w-8 h-8 md:w-10 md:h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 transition-transform"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // Implementar favorito
-                  }}
-                >
-                  <Heart className="w-4 h-4 md:w-5 md:h-5 text-secondary-gray-600 hover:text-red-500 transition-colors" />
-                </button>
               </div>
 
               {/* Conteúdo */}

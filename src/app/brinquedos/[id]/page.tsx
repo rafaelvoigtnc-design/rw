@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Heart, Share2, Star, ChevronLeft, ChevronRight, Phone, ShoppingCart } from 'lucide-react';
+import { Share2, Star, ChevronLeft, ChevronRight, Phone, ShoppingCart } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AuthModal from '@/components/AuthModal';
@@ -41,7 +41,6 @@ export default function BrinquedoPage() {
   const [loading, setLoading] = useState(true);
   const [fotoAtual, setFotoAtual] = useState(0);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isFavorito, setIsFavorito] = useState(false);
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [novaAvaliacao, setNovaAvaliacao] = useState({ nota: 0, texto: '' });
   const [enviandoAvaliacao, setEnviandoAvaliacao] = useState(false);
@@ -75,26 +74,11 @@ export default function BrinquedoPage() {
 
   useEffect(() => {
     if (user) {
-      checkFavorito();
       checkCarrinho();
     } else {
-      setIsFavorito(false);
       setNoCarrinho(false);
     }
   }, [user]);
-
-  const checkFavorito = async () => {
-    try {
-      const response = await fetch('/api/favoritos');
-      if (response.ok) {
-        const data = await response.json();
-        const favorito = data.find((f: any) => f.brinquedo_id === id);
-        setIsFavorito(!!favorito);
-      }
-    } catch (error) {
-      console.error('Erro ao verificar favorito:', error);
-    }
-  };
 
   const checkCarrinho = async () => {
     try {
@@ -133,12 +117,11 @@ export default function BrinquedoPage() {
         setIsFavorito(data.favorito);
       }
     } catch (error) {
-      console.error('Erro ao favoritar:', error);
+      console.error('Erro ao verificar carrinho:', error);
     }
   };
 
   const handleLoginSuccess = () => {
-    checkFavorito();
     checkCarrinho();
   };
 
@@ -319,14 +302,6 @@ export default function BrinquedoPage() {
                   </span>
                 </div>
               )}
-
-              {/* Botão de favorito */}
-              <button
-                onClick={handleFavoritar}
-                className="absolute top-4 left-4 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors hover:scale-110 transition-transform"
-              >
-                <Heart className={`w-6 h-6 ${isFavorito ? 'text-red-500 fill-current' : 'text-secondary-gray-600'}`} />
-              </button>
             </div>
 
             {/* Thumbnails */}

@@ -44,30 +44,6 @@ export async function GET(
       console.error('Erro ao buscar carrinho:', error);
     }
 
-    // Buscar favoritos do cliente (com tratamento de erro)
-    let favoritos = [];
-    try {
-      const favoritosQuery = query(collection(db, 'favoritos'), where('cliente_id', '==', id));
-      const favoritosSnapshot = await getDocs(favoritosQuery);
-      favoritos = favoritosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      // Para cada favorito, buscar dados do brinquedo
-      for (const fav of favoritos) {
-        if (fav.brinquedo_id) {
-          try {
-            const brinquedoDoc = await getDoc(doc(db, 'brinquedos', fav.brinquedo_id));
-            if (brinquedoDoc.exists()) {
-              fav.brinquedo = { id: brinquedoDoc.id, ...brinquedoDoc.data() };
-            }
-          } catch (error) {
-            console.error('Erro ao buscar brinquedo do favorito:', error);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao buscar favoritos:', error);
-    }
-
     // Buscar locações do cliente (com tratamento de erro)
     let locacoes = [];
     try {
@@ -93,7 +69,6 @@ export async function GET(
     return NextResponse.json({
       cliente,
       carrinho,
-      favoritos,
       locacoes
     });
   } catch (error) {

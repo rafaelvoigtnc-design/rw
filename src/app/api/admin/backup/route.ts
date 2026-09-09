@@ -16,7 +16,6 @@ export async function GET() {
       'promocoes',
       'banners',
       'admins',
-      'favoritos',
     ];
 
     const backupData: any = {

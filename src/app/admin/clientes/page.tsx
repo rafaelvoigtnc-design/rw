@@ -52,7 +52,6 @@ export default function AdminClientes() {
   const [clienteDetalhes, setClienteDetalhes] = useState<any>(null);
   const [locacoesCliente, setLocacoesCliente] = useState<Locacao[]>([]);
   const [carrinhoCliente, setCarrinhoCliente] = useState<any[]>([]);
-  const [favoritosCliente, setFavoritosCliente] = useState<any[]>([]);
 
   useEffect(() => {
     console.log('Carregando dados de clientes...');
@@ -238,7 +237,6 @@ export default function AdminClientes() {
       setClienteDetalhes(data.cliente);
       setLocacoesCliente(data.locacoes || []);
       setCarrinhoCliente(data.carrinho || []);
-      setFavoritosCliente(data.favoritos || []);
       setMostrarDrawer(true);
     } catch (error) {
       console.error('Erro ao buscar detalhes:', error);
@@ -580,39 +578,6 @@ export default function AdminClientes() {
                               </div>
                               <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded">
                                 No Carrinho
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Favoritos */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <User className="w-5 h-5" />
-                      Favoritos ({favoritosCliente.length})
-                    </h3>
-                    {favoritosCliente.length === 0 ? (
-                      <div className="bg-gray-50 rounded-lg p-4 text-center text-gray-500">
-                        Nenhum favorito.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {favoritosCliente.map((fav) => (
-                          <div key={fav.id} className="bg-pink-50 rounded-lg p-4 border border-pink-200">
-                            <div className="flex items-center gap-4">
-                              <div className="flex-1">
-                                <p className="font-medium text-gray-900">
-                                  {fav.brinquedo?.nome || 'Brinquedo não encontrado'}
-                                </p>
-                                {fav.brinquedo?.tema_layout && (
-                                  <p className="text-sm text-gray-500">Tema: {fav.brinquedo.tema_layout}</p>
-                                )}
-                              </div>
-                              <span className="text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded">
-                                ❤️ Favorito
                               </span>
                             </div>
                           </div>

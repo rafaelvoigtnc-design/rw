@@ -25,7 +25,6 @@ export async function POST(request: Request) {
       'promocoes',
       'banners',
       'admins',
-      'favoritos',
     ];
 
     // Limpar dados existentes e restaurar
