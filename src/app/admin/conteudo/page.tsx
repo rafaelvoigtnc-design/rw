@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { storage, ref, uploadBytes, getDownloadURL } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/lib/firebase';
 import IconPicker from '@/components/IconPicker';
 import ImageEditor from '@/components/ImageEditor';
 
