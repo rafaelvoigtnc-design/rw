@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
 import IconPicker from '@/components/IconPicker';
 import ImageEditor from '@/components/ImageEditor';
 
@@ -70,50 +68,36 @@ export default function AdminConteudo() {
 
       let finalValor = valor;
 
-      // Se houver arquivo, fazer upload direto para Firebase Storage (client-side)
+      // Se houver arquivo, fazer upload via API (base64)
       if (uploadFile && (conteudoExistente?.tipo === 'imagem' || campoDefinido?.tipo === 'imagem')) {
-        console.log('Fazendo upload para Firebase Storage (client-side)...');
+        console.log('Fazendo upload via API (base64)...');
         console.log('Tamanho do arquivo:', uploadFile.size);
-        console.log('Nome do arquivo:', uploadFile.name);
 
-        const timestamp = Date.now();
-        const extensao = uploadFile.name.split('.').pop();
-        const chaveFinal = campoDefinido?.chave || conteudoExistente?.chave;
-        const fileName = `${chaveFinal}_${timestamp}.${extensao}`;
-        const storagePath = `conteudo/${paginaSelecionada}/${fileName}`;
+        const formData = new FormData();
+        formData.append('file', uploadFile);
 
-        console.log('Storage path:', storagePath);
+        const uploadResponse = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: formData,
+        });
 
-        try {
-          // Upload direto para Firebase Storage
-          const storageRef = ref(storage, storagePath);
-          console.log('Storage ref criado');
+        console.log('Status do upload:', uploadResponse.status);
 
-          const bytes = await uploadFile.arrayBuffer();
-          console.log('Bytes lidos:', bytes.byteLength);
-
-          const buffer = Buffer.from(bytes);
-          console.log('Buffer criado');
-
-          console.log('Iniciando uploadBytes...');
-          await uploadBytes(storageRef, buffer);
-          console.log('Upload concluído com sucesso');
-
-          // Obter URL
-          console.log('Obtendo URL de download...');
-          finalValor = await getDownloadURL(storageRef);
-          console.log('URL obtida:', finalValor);
-        } catch (uploadError) {
+        if (!uploadResponse.ok) {
+          const uploadError = await uploadResponse.json();
           console.error('Erro no upload:', uploadError);
-          console.error('Detalhes:', uploadError instanceof Error ? uploadError.message : String(uploadError));
-          alert('Erro ao fazer upload da imagem: ' + (uploadError instanceof Error ? uploadError.message : String(uploadError)));
+          alert('Erro ao fazer upload: ' + (uploadError.error || 'Erro desconhecido'));
           return;
         }
+
+        const uploadData = await uploadResponse.json();
+        finalValor = uploadData.url;
+        console.log('URL obtida (base64):', finalValor.substring(0, 50) + '...');
       }
 
-      console.log('Enviando dados para API...');
+      console.log('Enviando dados para API de conteúdo...');
 
-      // Enviar apenas os dados (sem arquivo) para a API
+      // Enviar dados para a API de conteúdo
       const response = await fetch('/api/admin/conteudo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
