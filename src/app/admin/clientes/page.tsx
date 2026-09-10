@@ -370,7 +370,7 @@ export default function AdminClientes() {
                           ? 'bg-blue-100 text-blue-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {cliente.origem_cadastro === 'site' ? '🌐' : cliente.origem_cadastro === 'admin' ? '🔧' : '?'}
+                        {cliente.origem_cadastro === 'site' ? 'site' : cliente.origem_cadastro === 'admin' ? 'admin' : '?'}
                       </span>
                     </td>
                     <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap">
