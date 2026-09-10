@@ -422,7 +422,7 @@ export default function AdminBrinquedos() {
                   </th>
                 </tr>
               </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-200">
               {brinquedos.map((brinquedo) => (
                 <tr key={brinquedo.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -464,6 +464,7 @@ export default function AdminBrinquedos() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>
