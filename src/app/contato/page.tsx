@@ -19,12 +19,25 @@ export default function Contato() {
     e.preventDefault();
     setEnviando(true);
 
-    // Simular envio
-    setTimeout(() => {
-      setEnviando(false);
-      setEnviado(true);
-      setFormData({ nome: '', email: '', telefone: '', mensagem: '' });
-    }, 1500);
+    // Montar mensagem para WhatsApp
+    const mensagemWhatsApp = `*Nova mensagem do site RW Brinquedos*%0A%0A` +
+      `*Nome:* ${formData.nome}%0A` +
+      (formData.email ? `*Email:* ${formData.email}%0A` : '') +
+      (formData.telefone ? `*Telefone:* ${formData.telefone}%0A` : '') +
+      `%0A*Mensagem:*%0A${formData.mensagem}`;
+
+    // Telefone do WhatsApp (já está no site)
+    const telefoneWhatsApp = '5555997302463';
+
+    // Abrir WhatsApp com a mensagem
+    const whatsappUrl = `https://wa.me/${telefoneWhatsApp}?text=${encodeURIComponent(mensagemWhatsApp)}`;
+    
+    // Abrir em nova aba
+    window.open(whatsappUrl, '_blank');
+
+    setEnviando(false);
+    setEnviado(true);
+    setFormData({ nome: '', email: '', telefone: '', mensagem: '' });
   };
 
   return (
@@ -151,13 +164,12 @@ export default function Contato() {
 
                     <div>
                       <label className="block text-sm font-medium text-secondary-gray-700 mb-2">
-                        Email
+                        Email (opcional)
                       </label>
                       <input
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        required
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-blue-500 focus:border-primary-blue-500 bg-gray-50 text-gray-900"
                         placeholder="seu@email.com"
                       />
@@ -166,7 +178,7 @@ export default function Contato() {
 
                   <div>
                     <label className="block text-sm font-medium text-secondary-gray-700 mb-2">
-                      Telefone
+                      Telefone (opcional)
                     </label>
                     <input
                       type="tel"
