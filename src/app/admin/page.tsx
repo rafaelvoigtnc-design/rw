@@ -198,86 +198,115 @@ export default function AdminDashboard() {
 
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-4 md:py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-2 md:gap-4 lg:gap-6 mb-4 md:mb-8">
-          {/* Coluna Esquerda: Faturamento e Em Caixa */}
-          <div className="space-y-2 md:space-y-4">
-            {/* Faturamento */}
-            <div className="bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6">
-              <div className="flex items-center justify-between mb-2 md:mb-4">
-                <div className="w-8 h-8 md:w-12 md:h-12 bg-primary-yellow-500 rounded-lg md:rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-white" />
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4 lg:gap-6 mb-4 md:mb-8">
+          {/* Desktop: 5 cards separados */}
+          {[
+            { label: 'Brinquedos', value: loading ? '...' : stats.brinquedos, icon: Package, color: 'bg-primary-blue-500' },
+            { label: 'Locações', value: loading ? '...' : stats.locacoes, icon: ShoppingCart, color: 'bg-primary-green-500' },
+            { label: 'Clientes', value: loading ? '...' : stats.clientes, icon: Users, color: 'bg-primary-orange-500' },
+            { label: 'Faturamento', value: loading ? '...' : stats.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), prefix: 'R$', icon: TrendingUp, color: 'bg-primary-yellow-500' },
+            { label: 'Em Caixa', value: loading ? '...' : saldoEmCaixa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), prefix: 'R$', icon: DollarSign, color: 'bg-emerald-500' },
+          ].map((stat, index) => {
+            const displayValue = loading ? '...' : (stat.prefix ? `${stat.prefix} ${stat.value}` : stat.value);
+            return (
+              <div
+                key={index}
+                className="hidden md:block bg-white rounded-2xl shadow-soft p-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center`}>
+                    <stat.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <span className="text-2xl font-bold text-secondary-gray-900 block">
+                      {displayValue}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs md:text-2xl font-bold text-secondary-gray-900 block">
-                    {loading ? '...' : `R$ ${stats.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                  </span>
-                </div>
+                <p className="text-base text-secondary-gray-600 font-medium">{stat.label}</p>
               </div>
-              <p className="text-[10px] md:text-base text-secondary-gray-600 font-medium">Faturamento</p>
-            </div>
+            );
+          })}
 
-            {/* Em Caixa */}
-            <div className="bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6">
-              <div className="flex items-center justify-between mb-2 md:mb-4">
-                <div className="w-8 h-8 md:w-12 md:h-12 bg-emerald-500 rounded-lg md:rounded-xl flex items-center justify-center">
-                  <DollarSign className="w-4 h-4 md:w-6 md:h-6 text-white" />
-                </div>
-                <div className="text-right">
-                  <span className="text-xs md:text-2xl font-bold text-secondary-gray-900 block">
-                    {loading ? '...' : `R$ ${saldoEmCaixa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                  </span>
-                </div>
+          {/* Mobile: 2 cards agrupados */}
+          {/* Card Esquerdo: Faturamento e Em Caixa */}
+          <div className="md:hidden bg-white rounded-xl shadow-soft p-3">
+            {/* Faturamento */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-8 h-8 bg-primary-yellow-500 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-white" />
               </div>
-              <p className="text-[10px] md:text-base text-secondary-gray-600 font-medium">Em Caixa</p>
+              <div className="text-right">
+                <span className="text-xs font-bold text-secondary-gray-900 block">
+                  {loading ? '...' : `R$ ${stats.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                </span>
+              </div>
             </div>
+            <p className="text-[10px] text-secondary-gray-600 font-medium mb-2">Faturamento</p>
+            
+            {/* Separador */}
+            <div className="border-t border-gray-200 my-2"></div>
+            
+            {/* Em Caixa */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-white" />
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-bold text-secondary-gray-900 block">
+                  {loading ? '...' : `R$ ${saldoEmCaixa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                </span>
+              </div>
+            </div>
+            <p className="text-[10px] text-secondary-gray-600 font-medium">Em Caixa</p>
           </div>
 
-          {/* Coluna Direita: Brinquedos, Locações e Clientes */}
-          <div className="space-y-2 md:space-y-4">
+          {/* Card Direito: Brinquedos, Locações e Clientes (com fonte/ícone menores) */}
+          <div className="md:hidden bg-white rounded-xl shadow-soft p-3">
             {/* Brinquedos */}
-            <div className="bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6">
-              <div className="flex items-center justify-between mb-2 md:mb-4">
-                <div className="w-8 h-8 md:w-12 md:h-12 bg-primary-blue-500 rounded-lg md:rounded-xl flex items-center justify-center">
-                  <Package className="w-4 h-4 md:w-6 md:h-6 text-white" />
-                </div>
-                <div className="text-right">
-                  <span className="text-xs md:text-2xl font-bold text-secondary-gray-900 block">
-                    {loading ? '...' : stats.brinquedos}
-                  </span>
-                </div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-6 h-6 bg-primary-blue-500 rounded-lg flex items-center justify-center">
+                <Package className="w-3 h-3 text-white" />
               </div>
-              <p className="text-[10px] md:text-base text-secondary-gray-600 font-medium">Brinquedos</p>
+              <div className="text-right">
+                <span className="text-[10px] font-bold text-secondary-gray-900 block">
+                  {loading ? '...' : stats.brinquedos}
+                </span>
+              </div>
             </div>
-
+            <p className="text-[8px] text-secondary-gray-600 font-medium mb-2">Brinquedos</p>
+            
+            {/* Separador */}
+            <div className="border-t border-gray-200 my-2"></div>
+            
             {/* Locações */}
-            <div className="bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6">
-              <div className="flex items-center justify-between mb-2 md:mb-4">
-                <div className="w-8 h-8 md:w-12 md:h-12 bg-primary-green-500 rounded-lg md:rounded-xl flex items-center justify-center">
-                  <ShoppingCart className="w-4 h-4 md:w-6 md:h-6 text-white" />
-                </div>
-                <div className="text-right">
-                  <span className="text-xs md:text-2xl font-bold text-secondary-gray-900 block">
-                    {loading ? '...' : stats.locacoes}
-                  </span>
-                </div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-6 h-6 bg-primary-green-500 rounded-lg flex items-center justify-center">
+                <ShoppingCart className="w-3 h-3 text-white" />
               </div>
-              <p className="text-[10px] md:text-base text-secondary-gray-600 font-medium">Locações</p>
+              <div className="text-right">
+                <span className="text-[10px] font-bold text-secondary-gray-900 block">
+                  {loading ? '...' : stats.locacoes}
+                </span>
+              </div>
             </div>
-
+            <p className="text-[8px] text-secondary-gray-600 font-medium mb-2">Locações</p>
+            
+            {/* Separador */}
+            <div className="border-t border-gray-200 my-2"></div>
+            
             {/* Clientes */}
-            <div className="bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6">
-              <div className="flex items-center justify-between mb-2 md:mb-4">
-                <div className="w-8 h-8 md:w-12 md:h-12 bg-primary-orange-500 rounded-lg md:rounded-xl flex items-center justify-center">
-                  <Users className="w-4 h-4 md:w-6 md:h-6 text-white" />
-                </div>
-                <div className="text-right">
-                  <span className="text-xs md:text-2xl font-bold text-secondary-gray-900 block">
-                    {loading ? '...' : stats.clientes}
-                  </span>
-                </div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-6 h-6 bg-primary-orange-500 rounded-lg flex items-center justify-center">
+                <Users className="w-3 h-3 text-white" />
               </div>
-              <p className="text-[10px] md:text-base text-secondary-gray-600 font-medium">Clientes</p>
+              <div className="text-right">
+                <span className="text-[10px] font-bold text-secondary-gray-900 block">
+                  {loading ? '...' : stats.clientes}
+                </span>
+              </div>
             </div>
+            <p className="text-[8px] text-secondary-gray-600 font-medium">Clientes</p>
           </div>
         </div>
 
