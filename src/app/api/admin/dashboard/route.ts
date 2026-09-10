@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     const dataInicio = searchParams.get('dataInicio');
     const dataFim = searchParams.get('dataFim');
 
-    console.log('Buscando dados do dashboard...');
+    console.log('=== DASHBOARD DEBUG ===');
     console.log('Data início:', dataInicio);
     console.log('Data fim:', dataFim);
 
@@ -45,21 +45,28 @@ export async function GET(request: Request) {
     }
 
     // Calcular entrada de locação a partir dos valores das locações (considerando status de pagamento)
+    console.log('=== CALCULANDO ENTRADA DE LOCAÇÃO ===');
     const entradaLocacao = locacoesFiltradas.reduce((sum, l: any) => {
       const sinalPago = l.sinal_pago || 0;
       const valorTotal = l.valor_total || 0;
-      
-      if (l.status_pagamento === 'pago') {
-        return sum + valorTotal;
-      } else if (l.status_pagamento === 'parcial' || l.status_pagamento === 'parcialmente_pago') {
-        return sum + sinalPago;
-      } else if (l.status_pagamento === 'pendente') {
-        return sum;
+      const status = l.status_pagamento || 'desconhecido';
+
+      let valorAdicionado = 0;
+      if (status === 'pago') {
+        valorAdicionado = valorTotal;
+      } else if (status === 'parcial' || status === 'parcialmente_pago') {
+        valorAdicionado = sinalPago;
+      } else if (status === 'pendente') {
+        valorAdicionado = 0;
       } else {
-        return sum + sinalPago;
+        valorAdicionado = sinalPago;
       }
+
+      console.log(`Locação: ${l.id} | Status: ${status} | Valor Total: R$${valorTotal} | Sinal: R$${sinalPago} | Adicionado: R$${valorAdicionado}`);
+
+      return sum + valorAdicionado;
     }, 0);
-    console.log('Entrada de locação:', entradaLocacao);
+    console.log('Total entrada de locação:', entradaLocacao);
 
     // Transações financeiras manuais
     const injecaoCapitalBruto = transacoesFiltradas
