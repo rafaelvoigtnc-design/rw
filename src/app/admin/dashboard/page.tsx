@@ -271,11 +271,10 @@ export default function AdminDashboard() {
         </div>
 
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Ticket Médio</h3>
-            <p className="text-2xl font-bold text-gray-800">
-              R$ {data.ticketMedio.toFixed(2)}
-            </p>
-          </div>
+          <h3 className="text-sm font-medium text-gray-500 mb-2">Ticket Médio</h3>
+          <p className="text-2xl font-bold text-gray-800">
+            R$ {data.ticketMedio.toFixed(2)}
+          </p>
         </div>
 
         {/* Gráfico de Evolução Mensal */}
