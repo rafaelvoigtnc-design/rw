@@ -313,34 +313,35 @@ export default function AdminClientes() {
 
         {/* Tabela de clientes */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-lg font-semibold text-gray-900">
+          <div className="px-4 md:px-6 py-3 md:py-4 border-b">
+            <h2 className="text-base md:text-lg font-semibold text-gray-900">
               Clientes ({clientesFiltrados.length})
             </h2>
           </div>
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                  Nome
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                  Telefone
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                  Cidade
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                  Origem
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                  Data Cadastro
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                  Ações
-                </th>
-              </tr>
-            </thead>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Nome
+                  </th>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Telefone
+                  </th>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Cidade
+                  </th>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Origem
+                  </th>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Data Cadastro
+                  </th>
+                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {clientesFiltrados.length === 0 ? (
                 <tr>
@@ -351,18 +352,18 @@ export default function AdminClientes() {
               ) : (
                 clientesFiltrados.map((cliente) => (
                   <tr key={cliente.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{cliente.nome || 'Sem nome'}</div>
-                      <div className="text-sm text-gray-500">{cliente.endereco || 'Sem endereço'}</div>
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
+                      <div className="text-[10px] md:text-sm font-medium text-gray-900">{cliente.nome || 'Sem nome'}</div>
+                      <div className="text-[10px] md:text-sm text-gray-500 hidden md:block">{cliente.endereco || 'Sem endereço'}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{cliente.telefone || 'Sem telefone'}</div>
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
+                      <div className="text-[10px] md:text-sm text-gray-500">{cliente.telefone || 'Sem telefone'}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{cliente.cidade || 'Sem cidade'}</div>
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
+                      <div className="text-[10px] md:text-sm text-gray-500">{cliente.cidade || 'Sem cidade'}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-block px-2 py-1 text-xs rounded ${
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
+                      <span className={`inline-block px-1 md:px-2 py-0.5 md:py-1 text-[8px] md:text-xs rounded ${
                         cliente.origem_cadastro === 'site' 
                           ? 'bg-purple-100 text-purple-800' 
                           : cliente.origem_cadastro === 'admin'
@@ -372,8 +373,8 @@ export default function AdminClientes() {
                         {cliente.origem_cadastro === 'site' ? '🌐 Site' : cliente.origem_cadastro === 'admin' ? '🔧 Admin' : 'Desconhecido'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">
+                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
+                      <div className="text-[10px] md:text-sm text-gray-500">
                         {cliente.criado_em ? new Date(cliente.criado_em).toLocaleDateString('pt-BR') : 'N/A'}
                       </div>
                     </td>
