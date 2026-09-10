@@ -262,63 +262,67 @@ export default function AdminPromocoes() {
         )}
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Título
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Período
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {promocoes.map((promocao) => (
-                <tr key={promocao.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{promocao.titulo}</div>
-                    <div className="text-sm text-gray-500">{promocao.descricao}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
-                      {promocao.data_inicio ? new Date(promocao.data_inicio).toLocaleDateString('pt-BR') : 'Não definido'} - {promocao.data_fim ? new Date(promocao.data_fim).toLocaleDateString('pt-BR') : 'Indeterminado'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => toggleAtiva(promocao)}
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        promocao.ativa ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {promocao.ativa ? 'Ativa' : 'Inativa'}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(promocao)}
-                      className="text-emerald-600 hover:text-emerald-900 mr-4"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(promocao.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Deletar
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Título
+                  </th>
+                  <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Período
+                  </th>
+                  <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ações
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {promocoes.map((promocao) => (
+                  <tr key={promocao.id}>
+                    <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap">
+                      <div className="text-[8px] md:text-sm font-medium text-gray-900">{promocao.titulo}</div>
+                      <div className="text-[8px] md:text-sm text-gray-500 hidden md:block">{promocao.descricao}</div>
+                    </td>
+                    <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap">
+                      <div className="text-[8px] md:text-sm text-gray-500">
+                        {promocao.data_inicio ? new Date(promocao.data_inicio).toLocaleDateString('pt-BR') : 'Não definido'} - {promocao.data_fim ? new Date(promocao.data_fim).toLocaleDateString('pt-BR') : 'Indeterminado'}
+                      </div>
+                    </td>
+                    <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => toggleAtiva(promocao)}
+                        className={`px-1 md:px-2 inline-flex text-[6px] md:text-xs leading-5 font-semibold rounded-full ${
+                          promocao.ativa ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {promocao.ativa ? 'Ativa' : 'Inativa'}
+                      </button>
+                    </td>
+                    <td className="px-2 md:px-6 py-2 md:py-4 whitespace-nowrap text-[8px] md:text-sm font-medium">
+                      <div className="flex flex-col gap-2 md:flex-row md:gap-4 items-start md:items-center">
+                        <button
+                          onClick={() => handleEdit(promocao)}
+                          className="px-3 py-2 md:px-0 md:py-0 bg-emerald-600 text-white rounded md:bg-transparent md:text-emerald-600 hover:bg-emerald-700 md:hover:text-emerald-900 text-[10px] md:text-xs font-medium"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(promocao.id)}
+                          className="px-3 py-2 md:px-0 md:py-0 bg-red-600 text-white rounded md:bg-transparent md:text-red-600 hover:bg-red-700 md:hover:text-red-900 text-[10px] md:text-xs font-medium"
+                        >
+                          Deletar
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

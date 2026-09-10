@@ -378,25 +378,25 @@ export default function AdminClientes() {
                         {cliente.criado_em ? new Date(cliente.criado_em).toLocaleDateString('pt-BR') : 'N/A'}
                       </div>
                     </td>
-                    <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap text-[8px] md:text-sm font-medium">
-                      <div className="flex flex-col gap-1 md:flex-row md:gap-3">
+                    <td className="px-2 md:px-6 py-2 md:py-4 whitespace-nowrap text-[8px] md:text-sm font-medium">
+                      <div className="flex flex-col gap-2 md:flex-row md:gap-3">
                         <button
                           onClick={() => handleVerDetalhes(cliente)}
-                          className="px-1.5 py-0.5 md:px-3 md:py-2 bg-blue-600 text-white rounded text-[6px] md:text-xs hover:bg-blue-700"
+                          className="px-3 py-2 md:px-3 md:py-2 bg-blue-600 text-white rounded md:bg-transparent md:text-blue-600 hover:bg-blue-700 md:hover:text-blue-900 text-[10px] md:text-xs font-medium"
                           title="Ver Detalhes"
                         >
                           Detalhes
                         </button>
                         <button
                           onClick={() => handleEditar(cliente)}
-                          className="px-1.5 py-0.5 md:px-3 md:py-2 bg-emerald-600 text-white rounded text-[6px] md:text-xs hover:bg-emerald-700"
+                          className="px-3 py-2 md:px-3 md:py-2 bg-emerald-600 text-white rounded md:bg-transparent md:text-emerald-600 hover:bg-emerald-700 md:hover:text-emerald-900 text-[10px] md:text-xs font-medium"
                           title="Editar"
                         >
                           Editar
                         </button>
                         <button
                           onClick={() => handleExcluir(cliente)}
-                          className="px-1.5 py-0.5 md:px-3 md:py-2 bg-red-600 text-white rounded text-[6px] md:text-xs hover:bg-red-700"
+                          className="px-3 py-2 md:px-3 md:py-2 bg-red-600 text-white rounded md:bg-transparent md:text-red-600 hover:bg-red-700 md:hover:text-red-900 text-[10px] md:text-xs font-medium"
                           title="Excluir"
                         >
                           Excluir

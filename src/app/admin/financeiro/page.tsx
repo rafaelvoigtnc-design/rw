@@ -528,17 +528,17 @@ export default function AdminFinanceiro() {
                       {transacao.tipo === 'gasto' || transacao.tipo === 'perda' ? '-' : '+'} R$ {transacao.valor.toFixed(2)}
                     </div>
                   </td>
-                  <td className="px-1 md:px-3 py-1 md:py-2 whitespace-nowrap text-[8px] md:text-xs font-medium">
-                    <div className="flex flex-col gap-1 md:flex-row md:gap-2 items-center">
+                  <td className="px-1 md:px-3 py-2 md:py-2 whitespace-nowrap text-[8px] md:text-xs font-medium">
+                    <div className="flex flex-col gap-2 md:flex-row md:gap-2 items-start md:items-center">
                       <button
                         onClick={() => handleEdit(transacao)}
-                        className="text-blue-600 hover:text-blue-900 font-semibold text-[6px] md:text-xs"
+                        className="px-3 py-2 md:px-0 md:py-0 bg-blue-600 text-white rounded md:bg-transparent md:text-blue-600 hover:bg-blue-700 md:hover:text-blue-900 text-[10px] md:text-xs font-medium"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDelete(transacao.id)}
-                        className="text-red-600 hover:text-red-900 font-semibold text-[6px] md:text-xs"
+                        className="px-3 py-2 md:px-0 md:py-0 bg-red-600 text-white rounded md:bg-transparent md:text-red-600 hover:bg-red-700 md:hover:text-red-900 text-[10px] md:text-xs font-medium"
                       >
                         Excluir
                       </button>
