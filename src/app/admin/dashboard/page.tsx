@@ -239,35 +239,38 @@ export default function AdminDashboard() {
         </div>
 
         {/* Métricas Adicionais */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Total Cuidadores</h3>
-            <p className="text-2xl font-bold text-gray-800">
-              R$ {data.totalCuidadores.toFixed(2)}
-            </p>
-          </div>
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">Total Cuidadores</h3>
+              <p className="text-2xl font-bold text-gray-800">
+                R$ {data.totalCuidadores.toFixed(2)}
+              </p>
+            </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Nº de Locações</h3>
-            <p className="text-2xl font-bold text-gray-800">
-              {data.numeroLocacoes}
-            </p>
-          </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">Nº de Locações</h3>
+              <p className="text-2xl font-bold text-gray-800">
+                {data.numeroLocacoes}
+              </p>
+            </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Nº de Brinquedos</h3>
-            <p className="text-2xl font-bold text-gray-800">
-              {data.numeroBrinquedos}
-            </p>
-            <div className="text-xs text-gray-500 mt-1 space-y-1">
-              <p>{data.brinquedosAtivos} disponíveis</p>
-              <p>{data.brinquedosIndisponiveis} indisponíveis</p>
-              <p>{data.brinquedosManutencao} em manutenção</p>
-              <p>{data.brinquedosAposentados} aposentados</p>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">Nº de Brinquedos</h3>
+              <p className="text-2xl font-bold text-gray-800">
+                {data.numeroBrinquedos}
+              </p>
+              <div className="text-xs text-gray-500 mt-1 space-y-1">
+                <p>{data.brinquedosAtivos} disponíveis</p>
+                <p>{data.brinquedosIndisponiveis} indisponíveis</p>
+                <p>{data.brinquedosManutencao} em manutenção</p>
+                <p>{data.brinquedosAposentados} aposentados</p>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
             <h3 className="text-sm font-medium text-gray-500 mb-2">Ticket Médio</h3>
             <p className="text-2xl font-bold text-gray-800">
               R$ {data.ticketMedio.toFixed(2)}
