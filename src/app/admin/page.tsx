@@ -198,66 +198,86 @@ export default function AdminDashboard() {
 
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-4 md:py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4 lg:gap-6 mb-4 md:mb-8">
-          {[
-            { label: 'Brinquedos', value: loading ? '...' : stats.brinquedos, icon: Package, color: 'bg-primary-blue-500' },
-            { label: 'Locações', value: loading ? '...' : stats.locacoes, icon: ShoppingCart, color: 'bg-primary-green-500' },
-            { label: 'Clientes', value: loading ? '...' : stats.clientes, icon: Users, color: 'bg-primary-orange-500' },
-            { label: 'Faturamento', value: loading ? '...' : stats.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), prefix: 'R$', icon: TrendingUp, color: 'bg-primary-yellow-500' },
-            { label: 'Em Caixa', value: loading ? '...' : saldoEmCaixa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), prefix: 'R$', icon: DollarSign, color: 'bg-emerald-500' },
-          ].map((stat, index) => {
-            // No mobile, juntar locações e clientes no mesmo card
-            if (index === 2) return null; // Esconder clientes no mobile, vai ser filho de locações
-
-            const displayValue = loading ? '...' : (stat.prefix ? `${stat.prefix} ${stat.value}` : stat.value);
-            return (
-              <div
-                key={index}
-                className="bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6"
-              >
-                <div className="flex items-center justify-between mb-2 md:mb-4">
-                  <div className={`w-8 h-8 md:w-12 md:h-12 ${stat.color} rounded-lg md:rounded-xl flex items-center justify-center`}>
-                    <stat.icon className="w-4 h-4 md:w-6 md:h-6 text-white" />
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs md:text-2xl font-bold text-secondary-gray-900 block">
-                      {displayValue}
-                    </span>
-                  </div>
+        <div className="grid grid-cols-2 gap-2 md:gap-4 lg:gap-6 mb-4 md:mb-8">
+          {/* Coluna Esquerda: Faturamento e Em Caixa */}
+          <div className="space-y-2 md:space-y-4">
+            {/* Faturamento */}
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6">
+              <div className="flex items-center justify-between mb-2 md:mb-4">
+                <div className="w-8 h-8 md:w-12 md:h-12 bg-primary-yellow-500 rounded-lg md:rounded-xl flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-white" />
                 </div>
-                <p className="text-[10px] md:text-base text-secondary-gray-600 font-medium">{stat.label}</p>
-                {/* No mobile, mostrar clientes embaixo de locações */}
-                {index === 1 && (
-                  <div className="md:hidden mt-2 pt-2 border-t border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <div className="w-6 h-6 bg-pink-500 rounded-lg flex items-center justify-center">
-                        <Users className="w-3 h-3 text-white" />
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-bold text-secondary-gray-900 block">
-                          {loading ? '...' : stats.clientes}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-[8px] text-secondary-gray-600 font-medium mt-1">Clientes</p>
-                  </div>
-                )}
+                <div className="text-right">
+                  <span className="text-xs md:text-2xl font-bold text-secondary-gray-900 block">
+                    {loading ? '...' : `R$ ${stats.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  </span>
+                </div>
               </div>
-            );
-          })}
-          {/* Clientes no desktop (mostrar apenas em desktop) */}
-          <div className="hidden md:block bg-white rounded-2xl shadow-soft p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-primary-orange-500 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-right">
-                <span className="text-2xl font-bold text-secondary-gray-900 block">
-                  {loading ? '...' : stats.clientes}
-                </span>
-              </div>
+              <p className="text-[10px] md:text-base text-secondary-gray-600 font-medium">Faturamento</p>
             </div>
-            <p className="text-base text-secondary-gray-600 font-medium">Clientes</p>
+
+            {/* Em Caixa */}
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6">
+              <div className="flex items-center justify-between mb-2 md:mb-4">
+                <div className="w-8 h-8 md:w-12 md:h-12 bg-emerald-500 rounded-lg md:rounded-xl flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 md:w-6 md:h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <span className="text-xs md:text-2xl font-bold text-secondary-gray-900 block">
+                    {loading ? '...' : `R$ ${saldoEmCaixa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  </span>
+                </div>
+              </div>
+              <p className="text-[10px] md:text-base text-secondary-gray-600 font-medium">Em Caixa</p>
+            </div>
+          </div>
+
+          {/* Coluna Direita: Brinquedos, Locações e Clientes */}
+          <div className="space-y-2 md:space-y-4">
+            {/* Brinquedos */}
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6">
+              <div className="flex items-center justify-between mb-2 md:mb-4">
+                <div className="w-8 h-8 md:w-12 md:h-12 bg-primary-blue-500 rounded-lg md:rounded-xl flex items-center justify-center">
+                  <Package className="w-4 h-4 md:w-6 md:h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <span className="text-xs md:text-2xl font-bold text-secondary-gray-900 block">
+                    {loading ? '...' : stats.brinquedos}
+                  </span>
+                </div>
+              </div>
+              <p className="text-[10px] md:text-base text-secondary-gray-600 font-medium">Brinquedos</p>
+            </div>
+
+            {/* Locações */}
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6">
+              <div className="flex items-center justify-between mb-2 md:mb-4">
+                <div className="w-8 h-8 md:w-12 md:h-12 bg-primary-green-500 rounded-lg md:rounded-xl flex items-center justify-center">
+                  <ShoppingCart className="w-4 h-4 md:w-6 md:h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <span className="text-xs md:text-2xl font-bold text-secondary-gray-900 block">
+                    {loading ? '...' : stats.locacoes}
+                  </span>
+                </div>
+              </div>
+              <p className="text-[10px] md:text-base text-secondary-gray-600 font-medium">Locações</p>
+            </div>
+
+            {/* Clientes */}
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6">
+              <div className="flex items-center justify-between mb-2 md:mb-4">
+                <div className="w-8 h-8 md:w-12 md:h-12 bg-primary-orange-500 rounded-lg md:rounded-xl flex items-center justify-center">
+                  <Users className="w-4 h-4 md:w-6 md:h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <span className="text-xs md:text-2xl font-bold text-secondary-gray-900 block">
+                    {loading ? '...' : stats.clientes}
+                  </span>
+                </div>
+              </div>
+              <p className="text-[10px] md:text-base text-secondary-gray-600 font-medium">Clientes</p>
+            </div>
           </div>
         </div>
 
