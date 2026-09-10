@@ -33,6 +33,7 @@ export default function AdminClientes() {
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('todos');
+  const [filtroOrigem, setFiltroOrigem] = useState('todos');
   const [ordenacao, setOrdenacao] = useState('nome_asc');
   
   // Modal de criação/edição
@@ -79,7 +80,8 @@ export default function AdminClientes() {
     const termoBusca = busca.toLowerCase();
     const matchBusca = cliente.nome.toLowerCase().includes(termoBusca) ||
                       cliente.telefone.includes(termoBusca);
-    return matchBusca;
+    const matchOrigem = filtroOrigem === 'todos' || cliente.origem_cadastro === filtroOrigem;
+    return matchBusca && matchOrigem;
   }).sort((a, b) => {
     switch (ordenacao) {
       case 'nome_asc':
@@ -287,6 +289,15 @@ export default function AdminClientes() {
             </div>
             <div className="flex gap-2">
               <select
+                value={filtroOrigem}
+                onChange={(e) => setFiltroOrigem(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+              >
+                <option value="todos">Todas Origens</option>
+                <option value="admin">Admin</option>
+                <option value="site">Site</option>
+              </select>
+              <select
                 value={ordenacao}
                 onChange={(e) => setOrdenacao(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md text-gray-900"
@@ -320,6 +331,9 @@ export default function AdminClientes() {
                   Cidade
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  Origem
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                   Data Cadastro
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
@@ -346,6 +360,17 @@ export default function AdminClientes() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">{cliente.cidade || 'Sem cidade'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-block px-2 py-1 text-xs rounded ${
+                        cliente.origem_cadastro === 'site' 
+                          ? 'bg-purple-100 text-purple-800' 
+                          : cliente.origem_cadastro === 'admin'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {cliente.origem_cadastro === 'site' ? '🌐 Site' : cliente.origem_cadastro === 'admin' ? '🔧 Admin' : 'Desconhecido'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">

@@ -196,14 +196,6 @@ export default function AdminFinanceiro() {
     });
   };
 
-  const getTotalFiltrado = () => {
-    return getTransacoesFiltradas().reduce((sum, t) => {
-      if (t.tipo === 'gasto' || t.tipo === 'perda' || t.tipo === 'devolucao_capital') return sum - t.valor;
-      if (t.tipo === 'investimento') return sum; // Investimentos não são somados no total
-      return sum + t.valor;
-    }, 0);
-  };
-
   if (loading) {
     return <div className="p-8">Carregando...</div>;
   }
@@ -554,17 +546,6 @@ export default function AdminFinanceiro() {
                 </tr>
               ))}
             </tbody>
-            <tfoot className="bg-gray-100 font-bold">
-              <tr>
-                <td colSpan={4} className="px-3 py-3 text-right text-xs">
-                  Total:
-                </td>
-                <td className={`px-3 py-3 text-xs ${getTotalFiltrado() >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  R$ {getTotalFiltrado().toFixed(2)}
-                </td>
-                <td></td>
-              </tr>
-            </tfoot>
           </table>
         </div>
       </div>
