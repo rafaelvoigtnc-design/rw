@@ -20,11 +20,18 @@ export default function Contato() {
     setEnviando(true);
 
     // Montar mensagem para WhatsApp
-    const mensagemWhatsApp = `*Nova mensagem do site RW Brinquedos*%0A%0A` +
-      `*Nome:* ${formData.nome}%0A` +
-      (formData.email ? `*Email:* ${formData.email}%0A` : '') +
-      (formData.telefone ? `*Telefone:* ${formData.telefone}%0A` : '') +
-      `%0A*Mensagem:*%0A${formData.mensagem}`;
+    let mensagemWhatsApp = `*Nova mensagem do site RW Brinquedos*\n\n`;
+    mensagemWhatsApp += `*Nome:* ${formData.nome}\n`;
+    
+    if (formData.email) {
+      mensagemWhatsApp += `*Email:* ${formData.email}\n`;
+    }
+    
+    if (formData.telefone) {
+      mensagemWhatsApp += `*Telefone:* ${formData.telefone}\n`;
+    }
+    
+    mensagemWhatsApp += `\n*Mensagem:*\n${formData.mensagem}`;
 
     // Telefone do WhatsApp (já está no site)
     const telefoneWhatsApp = '5555997302463';
