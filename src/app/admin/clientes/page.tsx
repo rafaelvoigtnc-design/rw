@@ -411,6 +411,7 @@ export default function AdminClientes() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
