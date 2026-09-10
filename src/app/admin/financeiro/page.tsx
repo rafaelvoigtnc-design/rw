@@ -476,22 +476,22 @@ export default function AdminFinanceiro() {
             <table className="w-full divide-y divide-gray-200 text-xs">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-2 md:px-4 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-1 md:px-4 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Data
                   </th>
-                  <th className="px-2 md:px-4 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-1 md:px-4 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Tipo
                   </th>
-                  <th className="px-2 md:px-4 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-1 md:px-4 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Descrição
                   </th>
-                  <th className="px-2 md:px-4 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-1 md:px-4 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Categoria
                   </th>
-                  <th className="px-2 md:px-4 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-1 md:px-4 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Valor
                   </th>
-                  <th className="px-2 md:px-4 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  <th className="px-1 md:px-4 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Ações
                   </th>
                 </tr>
@@ -499,46 +499,46 @@ export default function AdminFinanceiro() {
             <tbody className="bg-white divide-y divide-gray-200">
               {getTransacoesFiltradas().map((transacao) => (
                 <tr key={transacao.id}>
-                  <td className="px-3 py-2 whitespace-nowrap text-xs">
-                    <div className="text-sm text-gray-900">
+                  <td className="px-1 md:px-3 py-1 md:py-2 whitespace-nowrap text-[8px] md:text-xs">
+                    <div className="text-[8px] md:text-sm text-gray-900">
                       {(() => {
                         const [year, month, day] = transacao.data.split('-');
                         return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString('pt-BR');
                       })()}
                     </div>
                   </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-xs">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTipoColor(transacao.tipo)}`}>
+                  <td className="px-1 md:px-3 py-1 md:py-2 whitespace-nowrap text-[8px] md:text-xs">
+                    <span className={`px-1 md:px-2 inline-flex text-[6px] md:text-xs leading-5 font-semibold rounded-full ${getTipoColor(transacao.tipo)}`}>
                       {getTipoLabel(transacao.tipo)}
                     </span>
                   </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-xs max-w-xs truncate">
-                    <div className="text-sm text-gray-900">{transacao.descricao}</div>
+                  <td className="px-1 md:px-3 py-1 md:py-2 whitespace-nowrap text-[8px] md:text-xs max-w-xs truncate">
+                    <div className="text-[8px] md:text-sm text-gray-900">{transacao.descricao}</div>
                     {transacao.locacao_id && (
-                      <div className="text-xs text-gray-500">Locação #{transacao.locacao_id}</div>
+                      <div className="text-[6px] md:text-xs text-gray-500 hidden md:block">Locação #{transacao.locacao_id}</div>
                     )}
                   </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-xs">
-                    <div className="text-sm text-gray-500">{transacao.categoria || '-'}</div>
+                  <td className="px-1 md:px-3 py-1 md:py-2 whitespace-nowrap text-[8px] md:text-xs">
+                    <div className="text-[8px] md:text-sm text-gray-500">{transacao.categoria || '-'}</div>
                   </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-xs">
-                    <div className={`text-sm font-medium ${
+                  <td className="px-1 md:px-3 py-1 md:py-2 whitespace-nowrap text-[8px] md:text-xs">
+                    <div className={`text-[8px] md:text-sm font-medium ${
                       transacao.tipo === 'gasto' || transacao.tipo === 'perda' ? 'text-red-600' : 'text-green-600'
                     }`}>
                       {transacao.tipo === 'gasto' || transacao.tipo === 'perda' ? '-' : '+'} R$ {transacao.valor.toFixed(2)}
                     </div>
                   </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
-                    <div className="flex gap-2 items-center">
+                  <td className="px-1 md:px-3 py-1 md:py-2 whitespace-nowrap text-[8px] md:text-xs font-medium">
+                    <div className="flex flex-col gap-1 md:flex-row md:gap-2 items-center">
                       <button
                         onClick={() => handleEdit(transacao)}
-                        className="text-blue-600 hover:text-blue-900 font-semibold text-xs"
+                        className="text-blue-600 hover:text-blue-900 font-semibold text-[6px] md:text-xs"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDelete(transacao.id)}
-                        className="text-red-600 hover:text-red-900 font-semibold text-xs"
+                        className="text-red-600 hover:text-red-900 font-semibold text-[6px] md:text-xs"
                       >
                         Excluir
                       </button>

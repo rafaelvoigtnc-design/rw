@@ -322,22 +322,22 @@ export default function AdminClientes() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Nome
                   </th>
-                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Telefone
                   </th>
-                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Cidade
                   </th>
-                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Origem
                   </th>
-                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Data Cadastro
                   </th>
-                  <th className="px-3 md:px-6 py-2 md:py-3 text-left text-[10px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-700 uppercase tracking-wider">
                     Ações
                   </th>
                 </tr>
@@ -352,56 +352,53 @@ export default function AdminClientes() {
               ) : (
                 clientesFiltrados.map((cliente) => (
                   <tr key={cliente.id} className="hover:bg-gray-50">
-                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
-                      <div className="text-[10px] md:text-sm font-medium text-gray-900">{cliente.nome || 'Sem nome'}</div>
-                      <div className="text-[10px] md:text-sm text-gray-500 hidden md:block">{cliente.endereco || 'Sem endereço'}</div>
+                    <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap">
+                      <div className="text-[8px] md:text-sm font-medium text-gray-900">{cliente.nome || 'Sem nome'}</div>
+                      <div className="text-[8px] md:text-sm text-gray-500 hidden md:block">{cliente.endereco || 'Sem endereço'}</div>
                     </td>
-                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
-                      <div className="text-[10px] md:text-sm text-gray-500">{cliente.telefone || 'Sem telefone'}</div>
+                    <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap">
+                      <div className="text-[8px] md:text-sm text-gray-500">{cliente.telefone || 'Sem telefone'}</div>
                     </td>
-                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
-                      <div className="text-[10px] md:text-sm text-gray-500">{cliente.cidade || 'Sem cidade'}</div>
+                    <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap">
+                      <div className="text-[8px] md:text-sm text-gray-500">{cliente.cidade || 'Sem cidade'}</div>
                     </td>
-                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
-                      <span className={`inline-block px-1 md:px-2 py-0.5 md:py-1 text-[8px] md:text-xs rounded ${
+                    <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap">
+                      <span className={`inline-block px-0.5 md:px-2 py-0.25 md:py-1 text-[6px] md:text-xs rounded ${
                         cliente.origem_cadastro === 'site' 
                           ? 'bg-purple-100 text-purple-800' 
                           : cliente.origem_cadastro === 'admin'
                           ? 'bg-blue-100 text-blue-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {cliente.origem_cadastro === 'site' ? '🌐 Site' : cliente.origem_cadastro === 'admin' ? '🔧 Admin' : 'Desconhecido'}
+                        {cliente.origem_cadastro === 'site' ? '🌐' : cliente.origem_cadastro === 'admin' ? '🔧' : '?'}
                       </span>
                     </td>
-                    <td className="px-3 md:px-6 py-2 md:py-4 whitespace-nowrap">
-                      <div className="text-[10px] md:text-sm text-gray-500">
+                    <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap">
+                      <div className="text-[8px] md:text-sm text-gray-500">
                         {cliente.criado_em ? new Date(cliente.criado_em).toLocaleDateString('pt-BR') : 'N/A'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex gap-3">
+                    <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap text-[8px] md:text-sm font-medium">
+                      <div className="flex flex-col gap-1 md:flex-row md:gap-3">
                         <button
                           onClick={() => handleVerDetalhes(cliente)}
-                          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                          className="px-1.5 py-0.5 md:px-3 md:py-2 bg-blue-600 text-white rounded text-[6px] md:text-xs hover:bg-blue-700"
                           title="Ver Detalhes"
                         >
-                          <User className="w-4 h-4" />
                           Detalhes
                         </button>
                         <button
                           onClick={() => handleEditar(cliente)}
-                          className="flex items-center gap-2 px-3 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+                          className="px-1.5 py-0.5 md:px-3 md:py-2 bg-emerald-600 text-white rounded text-[6px] md:text-xs hover:bg-emerald-700"
                           title="Editar"
                         >
-                          <Edit className="w-4 h-4" />
                           Editar
                         </button>
                         <button
                           onClick={() => handleExcluir(cliente)}
-                          className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                          className="px-1.5 py-0.5 md:px-3 md:py-2 bg-red-600 text-white rounded text-[6px] md:text-xs hover:bg-red-700"
                           title="Excluir"
                         >
-                          <Trash2 className="w-4 h-4" />
                           Excluir
                         </button>
                       </div>
