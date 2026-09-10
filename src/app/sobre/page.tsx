@@ -74,11 +74,11 @@ export default function Sobre() {
               </div>
             </div>
             {fotoEquipe ? (
-              <div className="bg-gradient-to-br from-primary-blue-100 to-primary-green-100 rounded-2xl h-96 overflow-hidden">
+              <div className="bg-gradient-to-br from-primary-blue-100 to-primary-green-100 rounded-2xl h-96 overflow-hidden flex items-center justify-center">
                 <img
                   src={fotoEquipe}
                   alt="Nossa Equipe"
-                  className="w-full h-full object-cover"
+                  className="max-w-full max-h-full object-contain"
                 />
               </div>
             ) : (
