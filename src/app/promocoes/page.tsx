@@ -213,7 +213,7 @@ export default function Promocoes() {
                       </div>
 
                       <a
-                        href="https://wa.me/5555997302463"
+                        href={`https://wa.me/5555997302463?text=${encodeURIComponent(`Olá! Gostaria de aproveitar a oferta: ${promocao.titulo}\n\n${promocao.descricao}`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center gap-3 w-full bg-primary-green-500 text-white py-4 rounded-xl font-semibold hover:bg-primary-green-600 transition-colors hover:scale-102 transition-transform"
