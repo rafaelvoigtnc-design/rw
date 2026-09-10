@@ -110,6 +110,10 @@ export default function AdminCalendario() {
     setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth() + 1, 1));
   };
 
+  const selecionarMesAno = (mes: number, ano: number) => {
+    setMesAtual(new Date(ano, mes, 1));
+  };
+
   const formatarData = (data: Date) => {
     return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
   };
@@ -198,22 +202,39 @@ export default function AdminCalendario() {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-2 md:py-6 sm:px-6 lg:px-8">
         {/* Controles do Calendário */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex justify-between items-center">
+        <div className="bg-white rounded-lg shadow p-2 md:p-4 mb-4 md:mb-6">
+          <div className="flex justify-between items-center gap-2">
             <button
               onClick={mesAnterior}
-              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-gray-900"
+              className="px-2 py-1 md:px-4 md:py-2 bg-gray-300 rounded hover:bg-gray-400 text-gray-900 text-xs md:text-sm"
             >
               ← Anterior
             </button>
-            <h2 className="text-xl font-semibold text-gray-900">
-              {mesAtual.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-            </h2>
+            <div className="flex items-center gap-2">
+              <select
+                value={mesAtual.getMonth()}
+                onChange={(e) => selecionarMesAno(parseInt(e.target.value), mesAtual.getFullYear())}
+                className="px-2 py-1 md:px-3 md:py-2 border border-gray-300 rounded text-xs md:text-sm text-gray-900"
+              >
+                {['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'].map((mes, index) => (
+                  <option key={index} value={index}>{mes}</option>
+                ))}
+              </select>
+              <select
+                value={mesAtual.getFullYear()}
+                onChange={(e) => selecionarMesAno(mesAtual.getMonth(), parseInt(e.target.value))}
+                className="px-2 py-1 md:px-3 md:py-2 border border-gray-300 rounded text-xs md:text-sm text-gray-900"
+              >
+                {[2024, 2025, 2026, 2027, 2028].map((ano) => (
+                  <option key={ano} value={ano}>{ano}</option>
+                ))}
+              </select>
+            </div>
             <button
               onClick={proximoMes}
-              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 text-gray-900"
+              className="px-2 py-1 md:px-4 md:py-2 bg-gray-300 rounded hover:bg-gray-400 text-gray-900 text-xs md:text-sm"
             >
               Próximo →
             </button>
@@ -222,10 +243,10 @@ export default function AdminCalendario() {
 
         {/* Visualização Mensal */}
         {view === 'mes' && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="grid grid-cols-7 gap-2 mb-4">
+          <div className="bg-white rounded-lg shadow p-2 md:p-6">
+            <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2 md:mb-4">
               {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dia) => (
-                <div key={dia} className="text-center font-semibold text-gray-900">
+                <div key={dia} className="text-center font-semibold text-[10px] md:text-sm text-gray-900">
                   {dia}
                 </div>
               ))}

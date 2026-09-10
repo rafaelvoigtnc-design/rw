@@ -206,6 +206,9 @@ export default function AdminDashboard() {
             { label: 'Faturamento', value: loading ? '...' : stats.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), prefix: 'R$', icon: TrendingUp, color: 'bg-primary-yellow-500' },
             { label: 'Em Caixa', value: loading ? '...' : saldoEmCaixa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), prefix: 'R$', icon: DollarSign, color: 'bg-emerald-500' },
           ].map((stat, index) => {
+            // No mobile, juntar locações e clientes no mesmo card
+            if (index === 2) return null; // Esconder clientes no mobile, vai ser filho de locações
+
             const displayValue = loading ? '...' : (stat.prefix ? `${stat.prefix} ${stat.value}` : stat.value);
             return (
               <div
@@ -223,78 +226,68 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <p className="text-[10px] md:text-base text-secondary-gray-600 font-medium">{stat.label}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Menu Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6">
-          {menuItems.map((item, index) => {
-            // No mobile, esconder clientes (index 4) pois vai ser filho de locações
-            if (index === 4) return null;
-
-            return (
-              <div
-                key={index}
-                className="hover:-translate-y-1 transition-all duration-300"
-              >
-                <button
-                  onClick={() => router.push(item.path)}
-                  className="w-full bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6 text-left hover:shadow-medium transition-all duration-300 group"
-                >
-                  <div className="flex items-start gap-2 md:gap-4">
-                    <div className={`w-10 h-10 md:w-14 md:h-14 ${item.color} rounded-xl md:rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
-                      <item.icon className="w-5 h-5 md:w-7 md:h-7 text-white" />
+                {/* No mobile, mostrar clientes embaixo de locações */}
+                {index === 1 && (
+                  <div className="md:hidden mt-2 pt-2 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div className="w-6 h-6 bg-pink-500 rounded-lg flex items-center justify-center">
+                        <Users className="w-3 h-3 text-white" />
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-bold text-secondary-gray-900 block">
+                          {loading ? '...' : stats.clientes}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-xs md:text-lg font-bold text-secondary-gray-900 mb-0.5 md:mb-1 group-hover:text-primary-blue-600 transition-colors">
-                        {item.title}
-                      </h3>
-                      <p className="text-[10px] md:text-sm text-gray-800 hidden md:block">
-                        {item.description}
-                      </p>
-                      {/* No mobile, mostrar botão de clientes embaixo de locações */}
-                      {index === 2 && (
-                        <div className="md:hidden mt-2 pt-2 border-t border-gray-200">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push('/admin/clientes');
-                            }}
-                            className="w-full py-1.5 bg-pink-500 text-white rounded-lg text-xs font-medium hover:bg-pink-600 transition-colors"
-                          >
-                            Clientes
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <p className="text-[8px] text-secondary-gray-600 font-medium mt-1">Clientes</p>
                   </div>
-                </button>
+                )}
               </div>
             );
           })}
           {/* Clientes no desktop (mostrar apenas em desktop) */}
-          <div className="hidden md:block hover:-translate-y-1 transition-all duration-300">
-            <button
-              onClick={() => router.push('/admin/clientes')}
-              className="w-full bg-white rounded-2xl shadow-soft p-6 text-left hover:shadow-medium transition-all duration-300 group"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-14 h-14 bg-pink-500 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                  <Users className="w-7 h-7 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-secondary-gray-900 mb-1 group-hover:text-primary-blue-600 transition-colors">
-                    Clientes
-                  </h3>
-                  <p className="text-sm text-gray-800">
-                    Listagem de clientes
-                  </p>
-                </div>
+          <div className="hidden md:block bg-white rounded-2xl shadow-soft p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-primary-orange-500 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-white" />
               </div>
-            </button>
+              <div className="text-right">
+                <span className="text-2xl font-bold text-secondary-gray-900 block">
+                  {loading ? '...' : stats.clientes}
+                </span>
+              </div>
+            </div>
+            <p className="text-base text-secondary-gray-600 font-medium">Clientes</p>
           </div>
+        </div>
+
+        {/* Menu Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6">
+          {menuItems.map((item, index) => (
+            <div
+              key={index}
+              className="hover:-translate-y-1 transition-all duration-300"
+            >
+              <button
+                onClick={() => router.push(item.path)}
+                className="w-full bg-white rounded-xl md:rounded-2xl shadow-soft p-3 md:p-6 text-left hover:shadow-medium transition-all duration-300 group"
+              >
+                <div className="flex items-start gap-2 md:gap-4">
+                  <div className={`w-10 h-10 md:w-14 md:h-14 ${item.color} rounded-xl md:rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
+                    <item.icon className="w-5 h-5 md:w-7 md:h-7 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xs md:text-lg font-bold text-secondary-gray-900 mb-0.5 md:mb-1 group-hover:text-primary-blue-600 transition-colors">
+                      {item.title}
+                    </h3>
+                    <p className="text-[10px] md:text-sm text-gray-800 hidden md:block">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          ))}
         </div>
 
         {/* Quick Actions */}
