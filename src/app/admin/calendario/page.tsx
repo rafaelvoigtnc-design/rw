@@ -334,6 +334,12 @@ export default function AdminCalendario() {
                             {locacao.status_pagamento}
                           </span>
                         </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-gray-600">Valor:</span>
+                          <span className="text-xs font-semibold text-gray-900">
+                            R$ {locacao.valor_total?.toFixed(2) || '0.00'}
+                          </span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`px-2 py-1 rounded text-xs text-white ${getStatusColor(locacao.status_locacao)}`}>
