@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Star, Gift, Sparkles } from 'lucide-react';
 import Image from 'next/image';
-import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 interface Banner {
   id: string;
@@ -27,45 +25,39 @@ export default function HeroCarousel() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    console.log('🔍 Iniciando listener em tempo real de banners...');
-    
-    // Usar onSnapshot para atualização em tempo real
-    const q = query(
-      collection(db, 'banners'),
-      where('ativo', '==', true)
-    );
+  const fetchBanners = useCallback(async () => {
+    try {
+      const response = await fetch('/api/banners');
+      const data = await response.json();
+      console.log('Banners da API:', data);
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      console.log('� Snapshot recebido:', snapshot.docs.length, 'banners');
-      
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      // Ordenar por ordem
-      data.sort((a: any, b: any) => (a.ordem || 0) - (b.ordem || 0));
-      
-      console.log('✅ Banners atualizados em tempo real:', data.length);
-      console.log('📋 Lista:', data.map((b: any) => b.titulo));
-      
-      setBanners(data as Banner[]);
-      setLoading(false);
-    }, (error) => {
-      console.error('❌ Erro no listener de banners:', error);
-      setLoading(false);
-    });
+      const activeBanners = Array.isArray(data) ? data.filter((b: Banner) => b.ativo) : [];
 
-    return () => {
-      console.log('🔌 Desconectando listener de banners');
-      unsubscribe();
-    };
+      if (activeBanners.length > 0) {
+        setBanners(activeBanners);
+      } else {
+        console.log('Nenhum banner ativo encontrado, usando fallback');
+        setBanners(getFallbackBanners());
+      }
+    } catch (error) {
+      console.error('Erro ao buscar banners:', error);
+      console.log('Usando banners fallback');
+      setBanners(getFallbackBanners());
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchBanners();
+  }, [fetchBanners]);
 
   useEffect(() => {
     if (!isAutoPlaying || banners.length === 0) return;
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % banners.length);
-    }, 15000);
+    }, 10000); // Reduzido de 15s para 10s para mais dinâmico
 
     return () => clearInterval(interval);
   }, [isAutoPlaying, banners.length]);

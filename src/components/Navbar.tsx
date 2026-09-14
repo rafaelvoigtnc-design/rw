@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ShoppingCart, Menu, X, Phone } from 'lucide-react';
@@ -18,18 +18,25 @@ export default function Navbar() {
   const [cartItems, setCartItems] = useState(0);
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 20);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = useCallback(() => {
     setIsAuthModalOpen(false);
-  };
+  }, []);
 
-  const refreshCart = async () => {
+  const refreshCart = useCallback(async () => {
     if (user) {
       try {
         const token = await getToken();
@@ -37,7 +44,7 @@ export default function Navbar() {
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
         }
-        
+
         const carrinhoResponse = await fetch('/api/carrinho', { headers });
         const carrinhoData = await carrinhoResponse.json();
         setCartItems(carrinhoData.length || 0);
@@ -48,12 +55,20 @@ export default function Navbar() {
     } else {
       setCartItems(0);
     }
-  };
+  }, [user, getToken]);
 
   useEffect(() => {
-    // Buscar carrinho quando usuário estiver logado
     refreshCart();
-  }, [user, getToken]);
+  }, [refreshCart]);
+
+  const menuItems = useMemo(() => [
+    { href: '/', label: 'Home' },
+    { href: '/catalogo', label: 'Catálogo' },
+    { href: '/promocoes', label: 'Promoções' },
+    { href: '/depoimentos', label: 'Depoimentos' },
+    { href: '/sobre', label: 'Sobre' },
+    { href: '/contato', label: 'Contato' },
+  ], []);
 
   const handleLogout = async () => {
     try {
@@ -96,14 +111,7 @@ export default function Navbar() {
             </Link>
 
             <div className="hidden lg:flex items-center gap-8">
-              {[
-                { href: '/', label: 'Home' },
-                { href: '/catalogo', label: 'Catálogo' },
-                { href: '/promocoes', label: 'Promoções' },
-                { href: '/depoimentos', label: 'Depoimentos' },
-                { href: '/sobre', label: 'Sobre' },
-                { href: '/contato', label: 'Contato' },
-              ].map((item) => (
+              {menuItems.map((item) => (
                 <div key={item.href} className="hover:scale-105 transition-transform duration-200">
                   <Link 
                     href={item.href} 
@@ -196,14 +204,7 @@ export default function Navbar() {
             <div className="lg:hidden bg-white border-t border-gray-200 animate-in slide-in-from-top duration-300"
             >
               <div className="px-6 py-6 space-y-2">
-                {[
-                  { href: '/', label: 'Home' },
-                  { href: '/catalogo', label: 'Catálogo' },
-                  { href: '/promocoes', label: 'Promoções' },
-                  { href: '/depoimentos', label: 'Depoimentos' },
-                  { href: '/sobre', label: 'Sobre' },
-                  { href: '/contato', label: 'Contato' },
-                ].map((item) => (
+                {menuItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
