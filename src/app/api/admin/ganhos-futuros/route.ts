@@ -65,27 +65,54 @@ export async function GET(request: Request) {
       });
     }
 
-    // Calcular ganhos
-    const ganhosTotais = locacoesFiltradas.reduce((sum: number, l: any) => {
-      const valorTotal = l.valor_total || 0;
-      const sinalPago = l.sinal_pago || 0;
-      const status = l.status_pagamento || 'pendente';
+      // Calcular ganhos totais e valor bruto conforme o período
+    let ganhosTotais = 0;
+    let valorBruto = 0;
 
-      // Valor pendente (o que ainda vai entrar)
-      let valorPendente = valorTotal - sinalPago;
-      
-      if (status === 'pago') {
-        valorPendente = 0; // Já pago tudo
-      } else if (status === 'parcial' || status === 'parcialmente_pago') {
-        valorPendente = valorTotal - sinalPago; // Faltando o restante
-      }
-      // Se pendente, considera o valor total como ganho futuro
+    if (periodo === 'mes_passado') {
+      // Mês passado: ganhos totais = o que realmente entrou (pagos + parciais com sinal)
+      // Valor bruto = o mesmo (o que já entrou)
+      locacoesFiltradas.forEach((l: any) => {
+        const valorTotal = l.valor_total || 0;
+        const sinalPago = l.sinal_pago || 0;
+        const status = l.status_pagamento || 'pendente';
 
-      return sum + valorPendente;
-    }, 0);
+        let valorEntrou = 0;
+        
+        if (status === 'pago') {
+          valorEntrou = valorTotal;
+        } else if (status === 'parcial' || status === 'parcialmente_pago') {
+          valorEntrou = sinalPago; // Apenas o sinal
+        }
+        // Pendentes não entram
 
-    // Total bruto das locações (valor total das locações selecionadas)
-    const valorBruto = locacoesFiltradas.reduce((sum: number, l: any) => sum + (l.valor_total || 0), 0);
+        ganhosTotais += valorEntrou;
+        valorBruto += valorEntrou;
+      });
+    } else {
+      // Total, mês que vem, personalizado: ganhos totais = faturamento total (o que vai entrar)
+      // Valor bruto = o que já entrou (pagos + parciais com sinal)
+      locacoesFiltradas.forEach((l: any) => {
+        const valorTotal = l.valor_total || 0;
+        const sinalPago = l.sinal_pago || 0;
+        const status = l.status_pagamento || 'pendente';
+
+        // Ganhos totais: valor total (o que vai entrar)
+        ganhosTotais += valorTotal;
+
+        // Valor bruto: o que já entrou
+        let valorJaEntrou = 0;
+        
+        if (status === 'pago') {
+          valorJaEntrou = valorTotal;
+        } else if (status === 'parcial' || status === 'parcialmente_pago') {
+          valorJaEntrou = sinalPago;
+        }
+        // Pendentes: 0
+
+        valorBruto += valorJaEntrou;
+      });
+    }
 
     // Total já recebido (sinais)
     const valorRecebido = locacoesFiltradas.reduce((sum: number, l: any) => sum + (l.sinal_pago || 0), 0);
