@@ -33,14 +33,17 @@ export async function GET(request: Request) {
         return dataEvento >= new Date(dataInicio) && dataEvento <= new Date(dataFim);
       });
     } else if (tipoPeriodo === 'passado') {
-      // Mês passado: tudo que entrou no mês passado (pagos, parciais, pendentes)
+      // Mês passado: apenas o que já entrou (pagos e parciais)
       // Filtra por data do evento no mês passado
       const hoje = new Date();
       const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
       const fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
       locacoesFiltradas = locacoesValidas.filter((l: any) => {
         const dataEvento = new Date(l.data_evento);
-        return dataEvento >= inicio && dataEvento <= fim;
+        const status = l.status_pagamento || 'pendente';
+        // Apenas pagos e parciais, exclui pendentes
+        return dataEvento >= inicio && dataEvento <= fim && 
+               (status === 'pago' || status === 'parcial' || status === 'parcialmente_pago');
       });
     } else if (tipoPeriodo === 'futuro') {
       // Mês que vem: tudo que vai entrar no mês que vem (pagos, parciais, pendentes)
