@@ -252,33 +252,36 @@ export async function getAdminByEmail(email: string) {
 }
 
 // Locações
-export async function getLocacoes() {
+export async function getLocacoes(buscarItens: boolean = false) {
   const snapshot = await getDocs(collection(db, 'locacoes'));
   const locacoes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
 
-  // Buscar itens de cada locação
-  for (const locacao of locacoes) {
-    const itensSnapshot = await getDocs(
-      query(collection(db, 'locacao_itens'), where('locacao_id', '==', locacao.id))
-    );
-    const itens = itensSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+  // Só buscar itens se solicitado (para melhorar performance)
+  if (buscarItens) {
+    // Buscar itens de cada locação
+    for (const locacao of locacoes) {
+      const itensSnapshot = await getDocs(
+        query(collection(db, 'locacao_itens'), where('locacao_id', '==', locacao.id))
+      );
+      const itens = itensSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
 
-    // Buscar nome do brinquedo para cada item se não tiver salvo
-    for (const item of itens) {
-      if (!item.brinquedo_nome && item.brinquedo_id) {
-        const brinquedoDoc = await getDoc(doc(db, 'brinquedos', item.brinquedo_id));
-        if (brinquedoDoc.exists()) {
-          item.brinquedo_nome = brinquedoDoc.data().nome;
+      // Buscar nome do brinquedo para cada item se não tiver salvo
+      for (const item of itens) {
+        if (!item.brinquedo_nome && item.brinquedo_id) {
+          const brinquedoDoc = await getDoc(doc(db, 'brinquedos', item.brinquedo_id));
+          if (brinquedoDoc.exists()) {
+            item.brinquedo_nome = brinquedoDoc.data().nome;
+          }
+        }
+        
+        // Se ainda não tiver nome, usar 'Brinquedo não informado'
+        if (!item.brinquedo_nome) {
+          item.brinquedo_nome = 'Brinquedo não informado';
         }
       }
-      
-      // Se ainda não tiver nome, usar 'Brinquedo não informado'
-      if (!item.brinquedo_nome) {
-        item.brinquedo_nome = 'Brinquedo não informado';
-      }
-    }
 
-    locacao.locacao_item = itens;
+      locacao.locacao_item = itens;
+    }
   }
 
   return locacoes;

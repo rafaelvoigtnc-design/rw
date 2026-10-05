@@ -14,7 +14,7 @@ function verificarConflito(horaInicio1: string, horaFim1: string, horaInicio2: s
 
 export async function GET() {
   try {
-    const locacoes = await getLocacoes();
+    const locacoes = await getLocacoes(true); // Buscar itens para página de locações
     return NextResponse.json(locacoes);
   } catch (error) {
     console.error('Erro ao buscar locações:', error);

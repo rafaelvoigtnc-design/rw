@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -106,9 +106,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataInicio, dataFim]);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/admin/dashboard?dataInicio=${dataInicio}&dataFim=${dataFim}`);
@@ -119,54 +120,55 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [dataInicio, dataFim]);
+  };
 
   // Buscar ganhos quando abrir a gaveta ou mudar filtros
+  const fetchGanhos = async () => {
+    setLoadingGanhos(true);
+    try {
+      let url = '/api/admin/ganhos-futuros';
+      
+      if (filtroGanhos === 'customizado' && dataInicioGanhos && dataFimGanhos) {
+        url += `?dataInicio=${dataInicioGanhos}&dataFim=${dataFimGanhos}`;
+      } else if (filtroGanhos === 'mes_passado') {
+        const hoje = new Date();
+        const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+        const fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
+        const formatDate = (date: Date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+        url += `?dataInicio=${formatDate(inicio)}&dataFim=${formatDate(fim)}`;
+      } else if (filtroGanhos === 'mes_que_vem') {
+        const hoje = new Date();
+        const inicio = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+        const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0);
+        const formatDate = (date: Date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+        url += `?dataInicio=${formatDate(inicio)}&dataFim=${formatDate(fim)}`;
+      }
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      setGanhosData(data);
+    } catch (error) {
+      console.error('Erro ao buscar ganhos futuros:', error);
+    } finally {
+      setLoadingGanhos(false);
+    }
+  };
+
   useEffect(() => {
     if (mostrarGanhos) {
-      const fetchGanhos = async () => {
-        setLoadingGanhos(true);
-        try {
-          let url = '/api/admin/ganhos-futuros';
-          
-          if (filtroGanhos === 'customizado' && dataInicioGanhos && dataFimGanhos) {
-            url += `?dataInicio=${dataInicioGanhos}&dataFim=${dataFimGanhos}`;
-          } else if (filtroGanhos === 'mes_passado') {
-            const hoje = new Date();
-            const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
-            const fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
-            const formatDate = (date: Date) => {
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, '0');
-              const day = String(date.getDate()).padStart(2, '0');
-              return `${year}-${month}-${day}`;
-            };
-            url += `?dataInicio=${formatDate(inicio)}&dataFim=${formatDate(fim)}`;
-          } else if (filtroGanhos === 'mes_que_vem') {
-            const hoje = new Date();
-            const inicio = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
-            const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0);
-            const formatDate = (date: Date) => {
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, '0');
-              const day = String(date.getDate()).padStart(2, '0');
-              return `${year}-${month}-${day}`;
-            };
-            url += `?dataInicio=${formatDate(inicio)}&dataFim=${formatDate(fim)}`;
-          }
-          
-          const response = await fetch(url);
-          const data = await response.json();
-          setGanhosData(data);
-        } catch (error) {
-          console.error('Erro ao buscar ganhos futuros:', error);
-        } finally {
-          setLoadingGanhos(false);
-        }
-      };
-      
       fetchGanhos();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mostrarGanhos, filtroGanhos, dataInicioGanhos, dataFimGanhos]);
 
   if (loading) {

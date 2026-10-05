@@ -50,7 +50,7 @@ export default function AdminCalendario() {
 
   const fetchData = async () => {
     try {
-      const response = await fetch('/api/admin/locacoes');
+      const response = await fetch('/api/admin/locacoes-calendario');
       const data = await response.json();
       setLocacoes(data);
     } catch (error) {
