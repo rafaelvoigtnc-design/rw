@@ -26,7 +26,7 @@ export async function GET(request: Request) {
       // Período total: tudo que já foi pago + o que ainda vai entrar (pagos, parciais, pendentes)
       // Exclui apenas canceladas
       locacoesFiltradas = locacoesValidas; // Já filtrou canceladas acima
-    } else if (dataInicio && dataFim) {
+    } else if (tipoPeriodo === 'customizado' && dataInicio && dataFim) {
       // Personalizado: filtrar por data do evento no período selecionado
       locacoesFiltradas = locacoesValidas.filter((l: any) => {
         const dataEvento = new Date(l.data_evento);
@@ -81,7 +81,7 @@ export async function GET(request: Request) {
 
     if (tipoPeriodo === 'passado') {
       // Mês passado: ganhos totais = o que realmente entrou (pagos + parciais com sinal)
-      // Valor bruto = o mesmo (o que já entrou)
+      // Valor bruto = apenas pagos (parciais não entram no bruto)
       locacoesFiltradas.forEach((l: any) => {
         const valorTotal = l.valor_total || 0;
         const sinalPago = l.sinal_pago || 0;
@@ -97,7 +97,11 @@ export async function GET(request: Request) {
         // Pendentes não entram
 
         ganhosTotais += valorEntrou;
-        valorBruto += valorEntrou;
+
+        // Valor bruto: apenas pagos
+        if (status === 'pago') {
+          valorBruto += valorTotal;
+        }
       });
     } else {
       // Total, mês que vem, mês que vem +1, personalizado: ganhos totais = faturamento total (o que vai entrar)

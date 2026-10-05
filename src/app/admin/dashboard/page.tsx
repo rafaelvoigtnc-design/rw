@@ -129,7 +129,7 @@ export default function AdminDashboard() {
       let url = '/api/admin/ganhos-futuros';
       
       if (filtroGanhos === 'customizado' && dataInicioGanhos && dataFimGanhos) {
-        url += `?dataInicio=${dataInicioGanhos}&dataFim=${dataFimGanhos}`;
+        url += `?tipo=customizado&dataInicio=${dataInicioGanhos}&dataFim=${dataFimGanhos}`;
       } else if (filtroGanhos === 'mes_passado') {
         url += `?tipo=passado`;
       } else if (filtroGanhos === 'mes_que_vem') {
