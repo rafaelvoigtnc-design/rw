@@ -36,6 +36,10 @@ export default function AdminClientes() {
   const [filtroOrigem, setFiltroOrigem] = useState('todos');
   const [ordenacao, setOrdenacao] = useState('nome_asc');
   
+  // Cache para evitar recarregar
+  const [ultimaBusca, setUltimaBusca] = useState<number>(0);
+  const CACHE_TTL = 30000; // 30 segundos
+  
   // Modal de criação/edição
   const [mostrarModal, setMostrarModal] = useState(false);
   const [editando, setEditando] = useState(false);
@@ -60,6 +64,13 @@ export default function AdminClientes() {
   }, []);
 
   const fetchData = async () => {
+    // Verificar cache
+    const agora = Date.now();
+    if (agora - ultimaBusca < CACHE_TTL && clientes.length > 0) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/admin/clientes');
       const data = await response.json();
@@ -69,6 +80,7 @@ export default function AdminClientes() {
         console.log(`Cliente: ${cliente.nome} (${cliente.email})`);
       });
       setClientes(data);
+      setUltimaBusca(agora);
     } catch (error) {
       console.error('Erro ao buscar clientes:', error);
     } finally {

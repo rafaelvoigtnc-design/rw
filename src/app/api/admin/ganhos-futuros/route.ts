@@ -9,40 +9,66 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const dataInicio = searchParams.get('dataInicio');
     const dataFim = searchParams.get('dataFim');
+    const tipoPeriodo = searchParams.get('tipo') || 'futuro'; // futuro, passado, futuro_geral
 
     // Buscar todas as locações
     const locacoesSnapshot = await getDocs(collection(db, 'locacoes'));
     const locacoes = locacoesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    // Filtrar locações não concluídas (status diferente de 'concluida' e 'cancelada')
-    const locacoesNaoConcluidas = locacoes.filter((l: any) => 
-      l.status_locacao !== 'concluida' && l.status_locacao !== 'cancelada'
+    // Filtrar canceladas (não entram no cálculo nunca)
+    const locacoesValidas = locacoes.filter((l: any) => 
+      l.status_locacao !== 'cancelada'
     );
 
-    // Filtrar por período se fornecido
-    let locacoesFiltradas = locacoesNaoConcluidas;
-    if (dataInicio && dataFim) {
-      locacoesFiltradas = locacoesNaoConcluidas.filter((l: any) => {
+    let locacoesFiltradas = locacoesValidas;
+
+    if (tipoPeriodo === 'futuro_geral') {
+      // Período total: tudo que já entrou + o que ainda vai entrar (não canceladas, não concluídas)
+      // Não filtra por data, apenas exclui canceladas e concluídas
+      locacoesFiltradas = locacoesValidas.filter((l: any) => 
+        l.status_locacao !== 'concluida'
+      );
+    } else if (dataInicio && dataFim) {
+      // Personalizado: filtrar por data do evento
+      locacoesFiltradas = locacoesValidas.filter((l: any) => {
         const dataEvento = new Date(l.data_evento);
         return dataEvento >= new Date(dataInicio) && dataEvento <= new Date(dataFim);
       });
+    } else if (tipoPeriodo === 'passado') {
+      // Mês passado: filtrar por data do evento no mês passado
+      const hoje = new Date();
+      const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+      const fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
+      locacoesFiltradas = locacoesValidas.filter((l: any) => {
+        const dataEvento = new Date(l.data_evento);
+        return dataEvento >= inicio && dataEvento <= fim;
+      });
+    } else if (tipoPeriodo === 'futuro') {
+      // Mês que vem: filtrar por data do evento no próximo mês
+      const hoje = new Date();
+      const inicio = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+      const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0);
+      locacoesFiltradas = locacoesValidas.filter((l: any) => {
+        const dataEvento = new Date(l.data_evento);
+        return dataEvento >= inicio && dataEvento <= fim;
+      });
     } else {
-      // Se não fornecido período, buscar apenas locações futuras (a partir de hoje)
+      // Default: locações futuras a partir de hoje
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
-      locacoesFiltradas = locacoesNaoConcluidas.filter((l: any) => {
+      locacoesFiltradas = locacoesValidas.filter((l: any) => {
         const dataEvento = new Date(l.data_evento);
         return dataEvento >= hoje;
       });
     }
 
-    // Calcular ganhos futuros
+    // Calcular ganhos
     const ganhosTotais = locacoesFiltradas.reduce((sum: number, l: any) => {
       const valorTotal = l.valor_total || 0;
       const sinalPago = l.sinal_pago || 0;
       const status = l.status_pagamento || 'pendente';
 
-      // Considerar o valor pendente (valor total - sinal já pago)
+      // Calcular valor pendente (o que ainda vai entrar)
       let valorPendente = valorTotal - sinalPago;
       
       if (status === 'pago') {

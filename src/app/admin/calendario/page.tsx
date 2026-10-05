@@ -44,15 +44,27 @@ export default function AdminCalendario() {
     status_locacao: '',
   });
 
+  // Cache para evitar recarregar
+  const [ultimaBusca, setUltimaBusca] = useState<number>(0);
+  const CACHE_TTL = 30000; // 30 segundos
+
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
+    // Verificar cache
+    const agora = Date.now();
+    if (agora - ultimaBusca < CACHE_TTL && locacoes.length > 0) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/admin/locacoes-calendario');
       const data = await response.json();
       setLocacoes(data);
+      setUltimaBusca(agora);
     } catch (error) {
       console.error('Erro ao buscar locações:', error);
     } finally {

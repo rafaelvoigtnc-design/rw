@@ -63,6 +63,10 @@ export default function AdminLocacoes() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [conflitos, setConflitos] = useState<any[]>([]);
   
+  // Cache para evitar recarregar
+  const [ultimaBuscaLocacoes, setUltimaBuscaLocacoes] = useState<number>(0);
+  const CACHE_TTL = 30000; // 30 segundos
+  
   // Filtros e busca
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState('todos');
@@ -157,6 +161,13 @@ export default function AdminLocacoes() {
   }, []);
 
   const fetchData = async () => {
+    // Verificar cache de locações
+    const agora = Date.now();
+    if (agora - ultimaBuscaLocacoes < CACHE_TTL && locacoes.length > 0) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const timestamp = new Date().getTime();
       const [clientesRes, brinqRes, locacoesRes] = await Promise.all([
@@ -170,6 +181,7 @@ export default function AdminLocacoes() {
       setClientes(clientesData);
       setBrinquedos(brinqData);
       setLocacoes(locacoesData);
+      setUltimaBuscaLocacoes(agora);
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
     } finally {

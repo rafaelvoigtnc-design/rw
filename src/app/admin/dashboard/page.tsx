@@ -53,7 +53,7 @@ export default function AdminDashboard() {
   
   // Estado para gaveta de ganhos futuros
   const [mostrarGanhos, setMostrarGanhos] = useState(false);
-  const [filtroGanhos, setFiltroGanhos] = useState<'futuro' | 'mes_passado' | 'mes_que_vem' | 'customizado'>('futuro');
+  const [filtroGanhos, setFiltroGanhos] = useState<'futuro_geral' | 'mes_passado' | 'mes_que_vem' | 'customizado'>('futuro_geral');
   const [dataInicioGanhos, setDataInicioGanhos] = useState('');
   const [dataFimGanhos, setDataFimGanhos] = useState('');
   const [loadingGanhos, setLoadingGanhos] = useState(false);
@@ -131,27 +131,11 @@ export default function AdminDashboard() {
       if (filtroGanhos === 'customizado' && dataInicioGanhos && dataFimGanhos) {
         url += `?dataInicio=${dataInicioGanhos}&dataFim=${dataFimGanhos}`;
       } else if (filtroGanhos === 'mes_passado') {
-        const hoje = new Date();
-        const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
-        const fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
-        const formatDate = (date: Date) => {
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          return `${year}-${month}-${day}`;
-        };
-        url += `?dataInicio=${formatDate(inicio)}&dataFim=${formatDate(fim)}`;
+        url += `?tipo=passado`;
       } else if (filtroGanhos === 'mes_que_vem') {
-        const hoje = new Date();
-        const inicio = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
-        const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0);
-        const formatDate = (date: Date) => {
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          return `${year}-${month}-${day}`;
-        };
-        url += `?dataInicio=${formatDate(inicio)}&dataFim=${formatDate(fim)}`;
+        url += `?tipo=futuro`;
+      } else if (filtroGanhos === 'futuro_geral') {
+        url += `?tipo=futuro_geral`;
       }
       
       const response = await fetch(url);
@@ -425,7 +409,7 @@ export default function AdminDashboard() {
                       onChange={(e) => setFiltroGanhos(e.target.value as any)}
                       className="px-3 py-2 border border-gray-300 rounded-md"
                     >
-                      <option value="futuro">Todo Período Futuro</option>
+                      <option value="futuro_geral">Todo Período (Total)</option>
                       <option value="mes_passado">Mês Passado</option>
                       <option value="mes_que_vem">Mês que Vem</option>
                       <option value="customizado">Personalizado</option>
