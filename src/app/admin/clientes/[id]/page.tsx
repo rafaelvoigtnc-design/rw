@@ -190,7 +190,9 @@ export default function AdminClienteDetalhes() {
                         {new Date(locacao.data_evento).toLocaleDateString('pt-BR')} - {locacao.horario_inicio} às {locacao.horario_fim}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {locacao.locacao_item.map(item => item.brinquedo.nome).join(', ')}
+                        {locacao.locacao_item && locacao.locacao_item.length > 0
+                          ? locacao.locacao_item.map(item => item.brinquedo?.nome || item.brinquedo_nome || 'Brinquedo não informado').join(', ')
+                          : 'Nenhum brinquedo'}
                       </p>
                     </div>
                     <div className="text-right">

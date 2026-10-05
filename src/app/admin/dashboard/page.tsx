@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { TrendingUp, X, Calendar, DollarSign, User, Clock } from 'lucide-react';
 
 interface DashboardData {
   entradaLocacao: number;
@@ -29,6 +30,19 @@ interface DashboardData {
   }>;
 }
 
+interface LocacaoFutura {
+  id: string;
+  cliente_nome?: string;
+  data_evento: string;
+  horario_inicio: string;
+  horario_fim: string;
+  valor_total: number;
+  sinal_pago: number;
+  status_pagamento: string;
+  status_locacao: string;
+  endereco: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
@@ -36,6 +50,20 @@ export default function AdminDashboard() {
   const [filtro, setFiltro] = useState<'todos' | 'mes' | 'mes_passado' | 'mes_que_vem' | 'customizado'>('todos');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
+  
+  // Estado para gaveta de ganhos futuros
+  const [mostrarGanhos, setMostrarGanhos] = useState(false);
+  const [filtroGanhos, setFiltroGanhos] = useState<'futuro' | 'mes_passado' | 'mes_que_vem' | 'customizado'>('futuro');
+  const [dataInicioGanhos, setDataInicioGanhos] = useState('');
+  const [dataFimGanhos, setDataFimGanhos] = useState('');
+  const [loadingGanhos, setLoadingGanhos] = useState(false);
+  const [ganhosData, setGanhosData] = useState<{
+    locacoes: LocacaoFutura[];
+    ganhosTotais: number;
+    valorBruto: number;
+    valorRecebido: number;
+    quantidade: number;
+  } | null>(null);
 
   useEffect(() => {
     const hoje = new Date();
@@ -93,6 +121,54 @@ export default function AdminDashboard() {
     }
   }, [dataInicio, dataFim]);
 
+  // Buscar ganhos quando abrir a gaveta ou mudar filtros
+  useEffect(() => {
+    if (mostrarGanhos) {
+      const fetchGanhos = async () => {
+        setLoadingGanhos(true);
+        try {
+          let url = '/api/admin/ganhos-futuros';
+          
+          if (filtroGanhos === 'customizado' && dataInicioGanhos && dataFimGanhos) {
+            url += `?dataInicio=${dataInicioGanhos}&dataFim=${dataFimGanhos}`;
+          } else if (filtroGanhos === 'mes_passado') {
+            const hoje = new Date();
+            const inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+            const fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
+            const formatDate = (date: Date) => {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            };
+            url += `?dataInicio=${formatDate(inicio)}&dataFim=${formatDate(fim)}`;
+          } else if (filtroGanhos === 'mes_que_vem') {
+            const hoje = new Date();
+            const inicio = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+            const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0);
+            const formatDate = (date: Date) => {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            };
+            url += `?dataInicio=${formatDate(inicio)}&dataFim=${formatDate(fim)}`;
+          }
+          
+          const response = await fetch(url);
+          const data = await response.json();
+          setGanhosData(data);
+        } catch (error) {
+          console.error('Erro ao buscar ganhos futuros:', error);
+        } finally {
+          setLoadingGanhos(false);
+        }
+      };
+      
+      fetchGanhos();
+    }
+  }, [mostrarGanhos, filtroGanhos, dataInicioGanhos, dataFimGanhos]);
+
   if (loading) {
     return <div className="p-8">Carregando...</div>;
   }
@@ -101,9 +177,9 @@ export default function AdminDashboard() {
     return <div className="p-8">Erro ao carregar dados.</div>;
   }
 
-  const maxValue = Math.max(
-    ...data.dadosGrafico.map(d => Math.max(d.entradas, d.gastos))
-  );
+  const maxValue = data.dadosGrafico && data.dadosGrafico.length > 0
+    ? Math.max(...data.dadosGrafico.map(d => Math.max(d.entradas, d.gastos)))
+    : 100;
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -125,18 +201,19 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {/* Filtros */}
         <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex flex-wrap gap-4 items-center">
-            <select
-              value={filtro}
-              onChange={(e) => setFiltro(e.target.value as any)}
-              className="px-3 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="todos">Todo o Período</option>
-              <option value="mes">Este Mês</option>
-              <option value="mes_passado">Mês Passado</option>
-              <option value="mes_que_vem">Mês que Vem</option>
-              <option value="customizado">Personalizado</option>
-            </select>
+          <div className="flex flex-wrap gap-4 items-center justify-between">
+            <div className="flex flex-wrap gap-4 items-center">
+              <select
+                value={filtro}
+                onChange={(e) => setFiltro(e.target.value as any)}
+                className="px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="todos">Todo o Período</option>
+                <option value="mes">Este Mês</option>
+                <option value="mes_passado">Mês Passado</option>
+                <option value="mes_que_vem">Mês que Vem</option>
+                <option value="customizado">Personalizado</option>
+              </select>
 
             {filtro === 'customizado' && (
               <>
@@ -180,6 +257,14 @@ export default function AdminDashboard() {
                 />
               </>
             )}
+            </div>
+            <button
+              onClick={() => setMostrarGanhos(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+            >
+              <TrendingUp className="w-4 h-4" />
+              <span>Ganhos</span>
+            </button>
           </div>
         </div>
 
@@ -314,6 +399,194 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Gaveta de Ganhos Futuros */}
+        {mostrarGanhos && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="p-6 border-b flex justify-between items-center">
+                <h2 className="text-xl font-bold text-gray-900">Visão Futura de Ganhos</h2>
+                <button
+                  onClick={() => setMostrarGanhos(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto flex-1">
+                {/* Filtros de ganhos */}
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <div className="flex flex-wrap gap-4 items-center">
+                    <select
+                      value={filtroGanhos}
+                      onChange={(e) => setFiltroGanhos(e.target.value as any)}
+                      className="px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="futuro">Todo Período Futuro</option>
+                      <option value="mes_passado">Mês Passado</option>
+                      <option value="mes_que_vem">Mês que Vem</option>
+                      <option value="customizado">Personalizado</option>
+                    </select>
+
+                    {filtroGanhos === 'customizado' && (
+                      <>
+                        <DatePicker
+                          selected={dataInicioGanhos ? new Date(dataInicioGanhos + 'T00:00:00') : null}
+                          onChange={(date: Date | null) => {
+                            if (date) {
+                              const year = date.getFullYear();
+                              const month = String(date.getMonth() + 1).padStart(2, '0');
+                              const day = String(date.getDate()).padStart(2, '0');
+                              setDataInicioGanhos(`${year}-${month}-${day}`);
+                            } else {
+                              setDataInicioGanhos('');
+                            }
+                          }}
+                          dateFormat="dd/MM/yyyy"
+                          showMonthDropdown
+                          showYearDropdown
+                          dropdownMode="select"
+                          className="px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                          placeholderText="Data início"
+                        />
+                        <DatePicker
+                          selected={dataFimGanhos ? new Date(dataFimGanhos + 'T00:00:00') : null}
+                          onChange={(date: Date | null) => {
+                            if (date) {
+                              const year = date.getFullYear();
+                              const month = String(date.getMonth() + 1).padStart(2, '0');
+                              const day = String(date.getDate()).padStart(2, '0');
+                              setDataFimGanhos(`${year}-${month}-${day}`);
+                            } else {
+                              setDataFimGanhos('');
+                            }
+                          }}
+                          dateFormat="dd/MM/yyyy"
+                          showMonthDropdown
+                          showYearDropdown
+                          dropdownMode="select"
+                          className="px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                          placeholderText="Data fim"
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {loadingGanhos ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600">Carregando...</p>
+                  </div>
+                ) : ganhosData ? (
+                  <>
+                    {/* Cards de Resumo */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <DollarSign className="w-5 h-5 text-emerald-600" />
+                          <h3 className="text-sm font-medium text-gray-700">Ganhos Totais</h3>
+                        </div>
+                        <p className="text-2xl font-bold text-emerald-600">
+                          R$ {ganhosData.ganhosTotais.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">Valor pendente a receber</p>
+                      </div>
+
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <DollarSign className="w-5 h-5 text-blue-600" />
+                          <h3 className="text-sm font-medium text-gray-700">Valor Bruto</h3>
+                        </div>
+                        <p className="text-2xl font-bold text-blue-600">
+                          R$ {ganhosData.valorBruto.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">Total das locações</p>
+                      </div>
+
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Calendar className="w-5 h-5 text-purple-600" />
+                          <h3 className="text-sm font-medium text-gray-700">Locações</h3>
+                        </div>
+                        <p className="text-2xl font-bold text-purple-600">
+                          {ganhosData.quantidade}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">Locações pendentes</p>
+                      </div>
+                    </div>
+
+                    {/* Lista de Locações */}
+                    <div className="bg-white border rounded-lg overflow-hidden">
+                      <div className="px-6 py-4 border-b bg-gray-50">
+                        <h3 className="font-semibold text-gray-900">Locações Pendentes</h3>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Horário</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valor Total</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Já Recebido</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">A Receber</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200">
+                            {ganhosData.locacoes.length === 0 ? (
+                              <tr>
+                                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                                  Nenhuma locação pendente encontrada neste período.
+                                </td>
+                              </tr>
+                            ) : (
+                              ganhosData.locacoes.map((locacao) => {
+                                const aReceber = locacao.valor_total - locacao.sinal_pago;
+                                return (
+                                  <tr key={locacao.id} className="hover:bg-gray-50">
+                                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                      {locacao.cliente_nome || 'Não informado'}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-gray-500">
+                                      {new Date(locacao.data_evento).toLocaleDateString('pt-BR')}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-gray-500">
+                                      {locacao.horario_inicio} - {locacao.horario_fim}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                      R$ {locacao.valor_total.toFixed(2)}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-green-600">
+                                      R$ {locacao.sinal_pago.toFixed(2)}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm font-bold text-emerald-600">
+                                      R$ {aReceber.toFixed(2)}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className={`inline-block px-2 py-1 text-xs rounded ${
+                                        locacao.status_pagamento === 'pago' ? 'bg-green-100 text-green-800' :
+                                        locacao.status_pagamento === 'parcial' ? 'bg-yellow-100 text-yellow-800' :
+                                        'bg-red-100 text-red-800'
+                                      }`}>
+                                        {locacao.status_pagamento}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

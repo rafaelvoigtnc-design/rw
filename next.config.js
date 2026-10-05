@@ -29,7 +29,6 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
-    optimizeCss: true,
     optimizePackageImports: ['lucide-react', 'firebase/firestore', 'firebase/auth'],
   },
   compress: true,
