@@ -53,7 +53,7 @@ export default function AdminDashboard() {
   
   // Estado para gaveta de ganhos futuros
   const [mostrarGanhos, setMostrarGanhos] = useState(false);
-  const [filtroGanhos, setFiltroGanhos] = useState<'futuro_geral' | 'mes_passado' | 'mes_que_vem' | 'customizado'>('futuro_geral');
+  const [filtroGanhos, setFiltroGanhos] = useState<'futuro_geral' | 'mes_passado' | 'mes_que_vem' | 'mes_que_vem_mais_1' | 'customizado'>('futuro_geral');
   const [dataInicioGanhos, setDataInicioGanhos] = useState('');
   const [dataFimGanhos, setDataFimGanhos] = useState('');
   const [loadingGanhos, setLoadingGanhos] = useState(false);
@@ -134,6 +134,8 @@ export default function AdminDashboard() {
         url += `?tipo=passado`;
       } else if (filtroGanhos === 'mes_que_vem') {
         url += `?tipo=futuro`;
+      } else if (filtroGanhos === 'mes_que_vem_mais_1') {
+        url += `?tipo=futuro_mais_1`;
       } else if (filtroGanhos === 'futuro_geral') {
         url += `?tipo=futuro_geral`;
       }
@@ -412,6 +414,7 @@ export default function AdminDashboard() {
                       <option value="futuro_geral">Todo Período (Total)</option>
                       <option value="mes_passado">Mês Passado</option>
                       <option value="mes_que_vem">Mês que Vem</option>
+                      <option value="mes_que_vem_mais_1">Mês que Vem +1</option>
                       <option value="customizado">Personalizado</option>
                     </select>
 

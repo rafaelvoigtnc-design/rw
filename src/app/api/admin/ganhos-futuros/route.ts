@@ -55,6 +55,16 @@ export async function GET(request: Request) {
         const dataEvento = new Date(l.data_evento);
         return dataEvento >= inicio && dataEvento <= fim;
       });
+    } else if (tipoPeriodo === 'futuro_mais_1') {
+      // Mês que vem +1: tudo que vai entrar no mês que vem +1 (pagos, parciais, pendentes)
+      // Filtra por data do evento no mês que vem +1
+      const hoje = new Date();
+      const inicio = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 1);
+      const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 3, 0);
+      locacoesFiltradas = locacoesValidas.filter((l: any) => {
+        const dataEvento = new Date(l.data_evento);
+        return dataEvento >= inicio && dataEvento <= fim;
+      });
     } else {
       // Default: locações futuras a partir de hoje
       const hoje = new Date();
@@ -69,7 +79,7 @@ export async function GET(request: Request) {
     let ganhosTotais = 0;
     let valorBruto = 0;
 
-    if (periodo === 'mes_passado') {
+    if (tipoPeriodo === 'passado') {
       // Mês passado: ganhos totais = o que realmente entrou (pagos + parciais com sinal)
       // Valor bruto = o mesmo (o que já entrou)
       locacoesFiltradas.forEach((l: any) => {
@@ -78,7 +88,7 @@ export async function GET(request: Request) {
         const status = l.status_pagamento || 'pendente';
 
         let valorEntrou = 0;
-        
+
         if (status === 'pago') {
           valorEntrou = valorTotal;
         } else if (status === 'parcial' || status === 'parcialmente_pago') {
@@ -90,7 +100,7 @@ export async function GET(request: Request) {
         valorBruto += valorEntrou;
       });
     } else {
-      // Total, mês que vem, personalizado: ganhos totais = faturamento total (o que vai entrar)
+      // Total, mês que vem, mês que vem +1, personalizado: ganhos totais = faturamento total (o que vai entrar)
       // Valor bruto = o que já entrou (pagos + parciais com sinal)
       locacoesFiltradas.forEach((l: any) => {
         const valorTotal = l.valor_total || 0;
@@ -102,7 +112,7 @@ export async function GET(request: Request) {
 
         // Valor bruto: o que já entrou
         let valorJaEntrou = 0;
-        
+
         if (status === 'pago') {
           valorJaEntrou = valorTotal;
         } else if (status === 'parcial' || status === 'parcialmente_pago') {
