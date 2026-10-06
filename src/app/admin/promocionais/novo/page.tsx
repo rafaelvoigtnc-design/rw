@@ -260,11 +260,11 @@ export default function NovoPromocional() {
             {formData.fotos.length > 0 && (
               <div className="grid grid-cols-4 gap-2">
                 {formData.fotos.map((foto, index) => (
-                  <div key={index} className="relative">
+                  <div key={index} className="relative aspect-square">
                     <img
                       src={foto}
                       alt={`Foto ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-md"
+                      className="w-full h-full object-cover rounded-md"
                     />
                     <button
                       type="button"
