@@ -151,7 +151,7 @@ export default function Promocoes() {
                       </div>
 
                       {/* Imagem */}
-                      <div className="h-48 bg-white/20 flex items-center justify-center">
+                      <div className="aspect-square bg-white/20 flex items-center justify-center">
                         {promocional.fotos && promocional.fotos.length > 0 ? (
                           <img
                             src={promocional.fotos[0]}

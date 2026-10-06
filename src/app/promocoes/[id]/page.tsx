@@ -152,7 +152,7 @@ export default function DetalhesPromocional() {
         {/* Carrossel de Imagens */}
         {promocional.fotos && promocional.fotos.length > 0 && (
           <div className="mb-8 relative">
-            <div className="relative h-96 bg-gray-200 rounded-2xl overflow-hidden">
+            <div className="relative aspect-square bg-gray-200 rounded-2xl overflow-hidden max-w-2xl mx-auto">
               <img
                 src={promocional.fotos[imagemAtual]}
                 alt={promocional.titulo}
