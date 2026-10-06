@@ -17,7 +17,7 @@ export async function GET() {
     const locacoes = await getLocacoes(true); // Buscar itens para página de locações
     return NextResponse.json(locacoes, {
       headers: {
-        'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=15',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     });
   } catch (error) {

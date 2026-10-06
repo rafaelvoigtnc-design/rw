@@ -5,11 +5,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Buscar locações sem itens para calendário (mais rápido)
-    const locacoes = await getLocacoes(false);
+    // Buscar locações com itens para calendário (mostrar nomes dos brinquedos)
+    const locacoes = await getLocacoes(true);
     return NextResponse.json(locacoes, {
       headers: {
-        'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=15',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     });
   } catch (error) {
