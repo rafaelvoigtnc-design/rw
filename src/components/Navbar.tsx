@@ -202,9 +202,19 @@ export default function Navbar() {
               </button>
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 rounded-lg hover:bg-secondary-gray-100 transition-colors active:scale-95"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-purple-600 text-white font-semibold hover:bg-purple-700 transition-colors active:scale-95 shadow-md"
               >
-                {isMobileMenuOpen ? <X className="w-6 h-6 text-gray-900" /> : <Menu className="w-6 h-6 text-gray-900" />}
+                {isMobileMenuOpen ? (
+                  <>
+                    <X className="w-5 h-5" />
+                    <span className="text-sm">Fechar</span>
+                  </>
+                ) : (
+                  <>
+                    <Menu className="w-5 h-5" />
+                    <span className="text-sm">Menu</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
