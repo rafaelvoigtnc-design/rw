@@ -86,7 +86,9 @@ export default function AdminFinanceiro() {
 
   const fetchData = async () => {
     try {
-      const response = await fetch('/api/admin/financeiro');
+      const response = await fetch('/api/admin/financeiro', {
+        cache: 'no-store',
+      });
       const data = await response.json();
       setTransacoes(data);
     } catch (error) {

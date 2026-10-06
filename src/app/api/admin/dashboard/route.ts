@@ -233,6 +233,10 @@ export async function GET(request: Request) {
       ticketMedio,
       saldoEmCaixa,
       dadosGrafico,
+    }, {
+      headers: {
+        'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=15',
+      },
     });
   } catch (error) {
     console.error('Erro ao buscar dados do dashboard:', error);

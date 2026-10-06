@@ -131,6 +131,10 @@ export async function GET(request: Request) {
       valorBruto,
       valorRecebido,
       quantidade: locacoesFiltradas.length,
+    }, {
+      headers: {
+        'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=15',
+      },
     });
   } catch (error) {
     console.error('Erro ao buscar ganhos futuros:', error);

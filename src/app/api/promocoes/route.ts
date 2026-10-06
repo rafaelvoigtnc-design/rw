@@ -6,24 +6,14 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const promocoes = await getAllPromocoes();
-    
-    console.log('Todas as promoções recebidas:', promocoes);
-    
-    // Filtrar apenas promoções ativas (sem filtrar por período por enquanto para debug)
-    const promocoesAtivas = promocoes.filter((p: any) => {
-      const isAtiva = p.ativa;
-      console.log(`Promoção ${p.titulo}: ativa=${isAtiva}`);
-      return isAtiva;
-    });
 
-    console.log('Promoções ativas filtradas:', promocoesAtivas);
+    // Filtrar apenas promoções ativas
+    const promocoesAtivas = promocoes.filter((p: any) => p.ativa);
 
-    // Adicionar headers para evitar cache
+    // Adicionar cache para melhorar performance
     return NextResponse.json(promocoesAtivas, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=60',
       },
     });
   } catch (error) {

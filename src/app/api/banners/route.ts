@@ -18,9 +18,7 @@ export async function GET(request: Request) {
     console.log(`Retornando ${data.length} banners`);
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=60',
       },
     });
   } catch (error) {

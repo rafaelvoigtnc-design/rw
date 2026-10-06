@@ -22,7 +22,11 @@ export async function GET(request: Request) {
     // Filtrar apenas brinquedos disponíveis (não manutenção, não aposentados)
     const brinquedosDisponiveis = brinquedosFiltrados.filter((b: any) => b.status === 'DISPONIVEL');
 
-    return NextResponse.json(brinquedosDisponiveis);
+    return NextResponse.json(brinquedosDisponiveis, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+      },
+    });
   } catch (error) {
     console.error('Erro ao buscar brinquedos:', error);
     return NextResponse.json(
