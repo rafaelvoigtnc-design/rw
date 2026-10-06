@@ -57,6 +57,9 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
       if (redirectAfterLogin) {
         sessionStorage.removeItem('redirectAfterLogin');
         window.location.href = redirectAfterLogin;
+      } else {
+        // Se não houver redirect, recarregar a página para restaurar dados do localStorage
+        window.location.reload();
       }
     } catch (error: any) {
       console.error('Erro no login:', error);
@@ -136,6 +139,9 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
         if (redirectAfterLogin) {
           sessionStorage.removeItem('redirectAfterLogin');
           window.location.href = redirectAfterLogin;
+        } else {
+          // Se não houver redirect, recarregar a página para restaurar dados do localStorage
+          window.location.reload();
         }
       } else {
         const data = await response.json();

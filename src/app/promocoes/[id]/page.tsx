@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Trophy, CheckCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trophy, CheckCircle, X } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,15 +28,19 @@ export default function DetalhesPromocional() {
   const [jaParticipou, setJaParticipou] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
     fetchPromocional();
 
-    // Verificar se há dados do formulário salvos após login
-    const savedFormData = sessionStorage.getItem('promocionalFormData');
-    if (savedFormData) {
+    // Verificar se há dados do formulário salvos no localStorage
+    const savedFormData = localStorage.getItem('promocionalFormData');
+    const savedPromocionalId = localStorage.getItem('promocionalId');
+    if (savedFormData && savedPromocionalId === params.id) {
       setFormData(JSON.parse(savedFormData));
-      sessionStorage.removeItem('promocionalFormData');
+      localStorage.removeItem('promocionalFormData');
+      localStorage.removeItem('promocionalId');
     }
   }, []);
 
@@ -99,13 +103,11 @@ export default function DetalhesPromocional() {
 
     // Verificar se está logado
     if (!userData) {
-      console.log('Usuário não logado, salvando dados e abrindo login');
-      alert('Você precisa fazer login ou criar uma conta para participar!');
-      // Salvar URL de redirect e dados do formulário
-      sessionStorage.setItem('redirectAfterLogin', window.location.href);
-      sessionStorage.setItem('promocionalFormData', JSON.stringify(formData));
-      // Abrir modal de login
-      document.querySelector('button[data-auth-modal-open]')?.dispatchEvent(new MouseEvent('click'));
+      console.log('Usuário não logado, salvando dados e abrindo modal');
+      // Salvar dados do formulário no localStorage (persiste mais tempo)
+      localStorage.setItem('promocionalFormData', JSON.stringify(formData));
+      localStorage.setItem('promocionalId', params.id as string);
+      setShowLoginModal(true);
       setEnviando(false);
       return;
     }
@@ -131,7 +133,7 @@ export default function DetalhesPromocional() {
 
       if (response.ok) {
         setJaParticipou(true);
-        alert('Participação registrada com sucesso! Você está participando deste promocional.');
+        setShowSuccessModal(true);
       } else {
         const data = await response.json();
         console.error('Erro ao participar:', data);
@@ -290,6 +292,70 @@ export default function DetalhesPromocional() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Login */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-2xl font-bold text-gray-900">Faça Login para Participar</h3>
+              <button
+                onClick={() => setShowLoginModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Você precisa estar logado para participar deste promocional. Seus dados do formulário serão salvos.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowLoginModal(false);
+                  document.querySelector('button[data-auth-modal-open]')?.dispatchEvent(new MouseEvent('click'));
+                }}
+                className="flex-1 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition-colors"
+              >
+                Fazer Login
+              </button>
+              <button
+                onClick={() => setShowLoginModal(false)}
+                className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Sucesso */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 text-center">
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Participação Registrada!</h3>
+            <p className="text-gray-600 mb-6">
+              Você está participando deste promocional. Agradecemos por sua participação!
+            </p>
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
