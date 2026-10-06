@@ -80,24 +80,22 @@ export async function GET(request: Request) {
     let valorBruto = 0;
 
     if (tipoPeriodo === 'passado') {
-      // Mês passado: ganhos totais = o que realmente entrou (pagos + parciais com sinal)
-      // Valor bruto = o mesmo (pagos valor total, parciais apenas o sinal pago)
+      // Mês passado: ganhos totais = pagos (valor total) + parciais (valor total)
+      // Valor recebido = pagos (valor total) + parciais (apenas o sinal pago)
       locacoesFiltradas.forEach((l: any) => {
         const valorTotal = l.valor_total || 0;
         const sinalPago = l.sinal_pago || 0;
         const status = l.status_pagamento || 'pendente';
 
-        let valorEntrou = 0;
-
+        // Ganhos totais: pagos valor total, parciais valor total
         if (status === 'pago') {
-          valorEntrou = valorTotal;
+          ganhosTotais += valorTotal;
+          valorBruto += valorTotal;
         } else if (status === 'parcial' || status === 'parcialmente_pago') {
-          valorEntrou = sinalPago; // Apenas o sinal
+          ganhosTotais += valorTotal; // Valor total nos ganhos
+          valorBruto += sinalPago; // Apenas o que foi pago no valor recebido
         }
         // Pendentes não entram
-
-        ganhosTotais += valorEntrou;
-        valorBruto += valorEntrou; // Mesma lógica
       });
     } else {
       // Total, mês que vem, mês que vem +1, personalizado: ganhos totais = faturamento total (o que vai entrar)

@@ -485,12 +485,12 @@ export default function AdminDashboard() {
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <div className="flex items-center gap-2 mb-2">
                           <DollarSign className="w-5 h-5 text-blue-600" />
-                          <h3 className="text-sm font-medium text-gray-700">Valor Bruto</h3>
+                          <h3 className="text-sm font-medium text-gray-700">Valor Recebido</h3>
                         </div>
                         <p className="text-2xl font-bold text-blue-600">
                           R$ {ganhosData.valorBruto.toFixed(2)}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">Total das locações</p>
+                        <p className="text-xs text-gray-500 mt-1">Total já recebido</p>
                       </div>
 
                       <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
