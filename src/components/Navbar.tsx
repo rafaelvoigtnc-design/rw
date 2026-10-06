@@ -254,7 +254,7 @@ export default function Navbar() {
                     WhatsApp
                   </a>
                   
-                  {!loading && user ? (
+                  {user ? (
                     <div className="space-y-3">
                       <Link
                         href="/cliente/perfil"
@@ -268,7 +268,7 @@ export default function Navbar() {
                           handleLogout();
                           setIsMobileMenuOpen(false);
                         }}
-                        className="w-full px-4 py-4 rounded-full bg-secondary-gray-100 text-secondary-gray-700 font-semibold text-lg"
+                        className="w-full px-4 py-4 rounded-full bg-red-500 text-white font-semibold text-lg"
                       >
                         Sair
                       </button>
