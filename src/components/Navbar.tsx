@@ -221,14 +221,14 @@ export default function Navbar() {
         </div>
 
         {isMobileMenuOpen && (
-            <div className="lg:hidden bg-white border-t border-gray-200 animate-in slide-in-from-top duration-300"
+            <div className="lg:hidden bg-white border-t border-gray-200 animate-in slide-in-from-top duration-300 max-h-[80vh] overflow-y-auto"
             >
               <div className="px-6 py-6 space-y-2">
                 {/* Nome do usuário logado */}
                 {user && userData && (
                   <div className="mb-4 p-4 bg-purple-50 rounded-xl">
-                    <p className="text-sm text-purple-600 font-medium">Bem-vindo,</p>
-                    <p className="text-lg font-bold text-purple-900">{userData.nome}</p>
+                    <p className="text-xs text-purple-600 font-medium">Bem-vindo,</p>
+                    <p className="text-base font-bold text-purple-900">{userData.nome}</p>
                   </div>
                 )}
 
@@ -236,7 +236,7 @@ export default function Navbar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="block text-lg font-medium text-gray-900 hover:text-primary-blue-600 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="block text-base font-medium text-gray-900 hover:text-primary-blue-600 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {item.label}
@@ -248,7 +248,7 @@ export default function Navbar() {
                     href="https://wa.me/5555997302463"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 px-4 py-4 rounded-full bg-primary-green-50 text-primary-green-600 font-semibold text-lg"
+                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-full bg-primary-green-50 text-primary-green-600 font-semibold text-base"
                   >
                     <Phone className="w-5 h-5" />
                     WhatsApp
@@ -259,7 +259,7 @@ export default function Navbar() {
                       <Link
                         href="/cliente/perfil"
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="block w-full px-4 py-4 rounded-full bg-primary-blue-500 text-white font-semibold text-center text-lg"
+                        className="block w-full px-4 py-3 rounded-full bg-primary-blue-500 text-white font-semibold text-center text-base"
                       >
                         Perfil
                       </Link>
@@ -268,7 +268,7 @@ export default function Navbar() {
                           handleLogout();
                           setIsMobileMenuOpen(false);
                         }}
-                        className="w-full px-4 py-4 rounded-full bg-red-500 text-white font-semibold text-lg"
+                        className="w-full px-4 py-3 rounded-full bg-red-500 text-white font-semibold text-base"
                       >
                         Sair
                       </button>
@@ -280,7 +280,7 @@ export default function Navbar() {
                           setIsCarrinhoOpen(true);
                           setIsMobileMenuOpen(false);
                         }}
-                        className="w-full px-4 py-4 rounded-full bg-blue-600 text-white font-semibold text-lg mb-3"
+                        className="w-full px-4 py-3 rounded-full bg-blue-600 text-white font-semibold text-base mb-3"
                       >
                         Carrinho ({cartItems})
                       </button>
@@ -289,7 +289,7 @@ export default function Navbar() {
                           setIsAuthModalOpen(true);
                           setIsMobileMenuOpen(false);
                         }}
-                        className="w-full px-4 py-4 rounded-full bg-primary-green-500 text-white font-semibold text-lg"
+                        className="w-full px-4 py-3 rounded-full bg-primary-green-500 text-white font-semibold text-base"
                         data-auth-modal-open="true"
                       >
                         Entrar / Cadastrar
