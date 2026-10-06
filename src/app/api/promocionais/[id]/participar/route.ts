@@ -32,7 +32,11 @@ export async function POST(
     const agora = new Date();
     const dataFim = new Date(promocional.data_fim);
 
-    if (!promocional.ativo || dataFim < agora) {
+    // Comparar datas em UTC para evitar problemas de fuso horário
+    const agoraUTC = new Date(agora.toISOString());
+    const dataFimUTC = new Date(dataFim.toISOString());
+
+    if (!promocional.ativo || dataFimUTC < agoraUTC) {
       return NextResponse.json(
         { error: 'Promocional não está mais ativo' },
         { status: 400 }

@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Trophy, CheckCircle } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Promocional {
   id: string;
@@ -20,17 +21,16 @@ interface Promocional {
 export default function DetalhesPromocional() {
   const router = useRouter();
   const params = useParams();
+  const { user, userData } = useAuth();
   const [promocional, setPromocional] = useState<Promocional | null>(null);
   const [loading, setLoading] = useState(true);
   const [imagemAtual, setImagemAtual] = useState(0);
   const [jaParticipou, setJaParticipou] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [clienteLogado, setClienteLogado] = useState<any>(null);
 
   useEffect(() => {
     fetchPromocional();
-    checkLogin();
 
     // Verificar se há dados do formulário salvos após login
     const savedFormData = sessionStorage.getItem('promocionalFormData');
@@ -59,25 +59,13 @@ export default function DetalhesPromocional() {
     }
   };
 
-  const checkLogin = async () => {
-    try {
-      const response = await fetch('/api/cliente/perfil');
-      if (response.ok) {
-        const data = await response.json();
-        setClienteLogado(data);
-      }
-    } catch (error) {
-      // Não logado
-    }
-  };
-
   const checkParticipacao = async () => {
-    if (!clienteLogado) return;
+    if (!userData) return;
 
     try {
       const response = await fetch(`/api/admin/promocionais/${params.id}/participantes`);
       const participantes = await response.json();
-      const participante = participantes.find((p: any) => p.cliente_id === clienteLogado.id);
+      const participante = participantes.find((p: any) => p.cliente_id === userData.id);
       setJaParticipou(!!participante);
     } catch (error) {
       console.error('Erro ao verificar participação:', error);
@@ -85,10 +73,10 @@ export default function DetalhesPromocional() {
   };
 
   useEffect(() => {
-    if (clienteLogado) {
+    if (userData) {
       checkParticipacao();
     }
-  }, [clienteLogado]);
+  }, [userData]);
 
   const proximaImagem = () => {
     if (promocional && promocional.fotos.length > 0) {
@@ -106,12 +94,13 @@ export default function DetalhesPromocional() {
     e.preventDefault();
     setEnviando(true);
 
-    console.log('handleSubmit - clienteLogado:', clienteLogado);
+    console.log('handleSubmit - userData:', userData);
     console.log('handleSubmit - formData:', formData);
 
     // Verificar se está logado
-    if (!clienteLogado) {
+    if (!userData) {
       console.log('Usuário não logado, salvando dados e abrindo login');
+      alert('Você precisa fazer login ou criar uma conta para participar!');
       // Salvar URL de redirect e dados do formulário
       sessionStorage.setItem('redirectAfterLogin', window.location.href);
       sessionStorage.setItem('promocionalFormData', JSON.stringify(formData));
@@ -123,8 +112,8 @@ export default function DetalhesPromocional() {
 
     try {
       console.log('Enviando participação:', {
-        cliente_id: clienteLogado.id,
-        cliente_nome: clienteLogado.nome,
+        cliente_id: userData.id,
+        cliente_nome: userData.nome,
         dados_participacao: formData,
       });
 
@@ -132,8 +121,8 @@ export default function DetalhesPromocional() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          cliente_id: clienteLogado.id,
-          cliente_nome: clienteLogado.nome,
+          cliente_id: userData.id,
+          cliente_nome: userData.nome,
           dados_participacao: formData,
         }),
       });
@@ -142,6 +131,7 @@ export default function DetalhesPromocional() {
 
       if (response.ok) {
         setJaParticipou(true);
+        alert('Participação registrada com sucesso! Você está participando deste promocional.');
       } else {
         const data = await response.json();
         console.error('Erro ao participar:', data);
@@ -149,7 +139,7 @@ export default function DetalhesPromocional() {
       }
     } catch (error) {
       console.error('Erro ao participar:', error);
-      alert('Erro ao participar');
+      alert('Erro ao participar. Tente novamente.');
     } finally {
       setEnviando(false);
     }
