@@ -479,7 +479,7 @@ export default function AdminDashboard() {
                         <p className="text-2xl font-bold text-emerald-600">
                           R$ {ganhosData.ganhosTotais.toFixed(2)}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">Valor pendente a receber</p>
+                        <p className="text-xs text-gray-500 mt-1">Valor pendente a receber e já recebidos</p>
                       </div>
 
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
