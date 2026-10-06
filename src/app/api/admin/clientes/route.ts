@@ -4,14 +4,12 @@ import { db } from '@/lib/firebase';
 
 export async function GET() {
   try {
-    console.log('Buscando clientes no Firebase...');
     const snapshot = await getDocs(collection(db, 'clientes'));
     const clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    console.log(`Encontrados ${clientes.length} clientes no Firebase`);
 
     return NextResponse.json(clientes, {
       headers: {
-        'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=15',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     });
   } catch (error) {

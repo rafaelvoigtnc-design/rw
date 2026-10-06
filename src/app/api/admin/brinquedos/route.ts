@@ -4,7 +4,11 @@ import { getAllBrinquedos, createBrinquedo } from '@/lib/firebase-db';
 export async function GET() {
   try {
     const brinquedos = await getAllBrinquedos();
-    return NextResponse.json(brinquedos);
+    return NextResponse.json(brinquedos, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
   } catch (error) {
     console.error('Erro ao buscar brinquedos:', error);
     return NextResponse.json(

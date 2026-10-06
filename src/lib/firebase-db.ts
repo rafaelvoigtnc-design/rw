@@ -258,30 +258,39 @@ export async function getLocacoes(buscarItens: boolean = false) {
 
   // Só buscar itens se solicitado (para melhorar performance)
   if (buscarItens) {
-    // Buscar itens de cada locação
-    for (const locacao of locacoes) {
-      const itensSnapshot = await getDocs(
-        query(collection(db, 'locacao_itens'), where('locacao_id', '==', locacao.id))
-      );
-      const itens = itensSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+    // Buscar todos os itens de uma vez (mais eficiente)
+    const itensSnapshot = await getDocs(collection(db, 'locacao_itens'));
+    const todosItens = itensSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
 
-      // Buscar nome do brinquedo para cada item se não tiver salvo
-      for (const item of itens) {
+    // Buscar todos os brinquedos de uma vez (mais eficiente)
+    const brinquedosSnapshot = await getDocs(collection(db, 'brinquedos'));
+    const brinquedosMap = new Map();
+    brinquedosSnapshot.docs.forEach(doc => {
+      brinquedosMap.set(doc.id, doc.data().nome);
+    });
+
+    // Agrupar itens por locação
+    const itensPorLocacao = new Map<string, any[]>();
+    todosItens.forEach(item => {
+      if (!itensPorLocacao.has(item.locacao_id)) {
+        itensPorLocacao.set(item.locacao_id, []);
+      }
+      itensPorLocacao.get(item.locacao_id)!.push(item);
+    });
+
+    // Atribuir itens às locações e preencher nomes dos brinquedos
+    locacoes.forEach(locacao => {
+      const itens = itensPorLocacao.get(locacao.id) || [];
+      itens.forEach(item => {
         if (!item.brinquedo_nome && item.brinquedo_id) {
-          const brinquedoDoc = await getDoc(doc(db, 'brinquedos', item.brinquedo_id));
-          if (brinquedoDoc.exists()) {
-            item.brinquedo_nome = brinquedoDoc.data().nome;
-          }
+          item.brinquedo_nome = brinquedosMap.get(item.brinquedo_id) || 'Brinquedo não informado';
         }
-        
-        // Se ainda não tiver nome, usar 'Brinquedo não informado'
         if (!item.brinquedo_nome) {
           item.brinquedo_nome = 'Brinquedo não informado';
         }
-      }
-
+      });
       locacao.locacao_item = itens;
-    }
+    });
   }
 
   return locacoes;

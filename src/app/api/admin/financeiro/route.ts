@@ -11,7 +11,11 @@ export async function GET() {
     // Ordenar por data no cliente
     data.sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
 
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
   } catch (error) {
     console.error('Erro ao buscar transações financeiras:', error);
     return NextResponse.json(
