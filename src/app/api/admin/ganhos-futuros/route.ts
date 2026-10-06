@@ -42,8 +42,18 @@ export async function GET(request: Request) {
         const dataEvento = new Date(l.data_evento);
         const status = l.status_pagamento || 'pendente';
         // Apenas pagos e parciais, exclui pendentes
-        return dataEvento >= inicio && dataEvento <= fim && 
+        return dataEvento >= inicio && dataEvento <= fim &&
                (status === 'pago' || status === 'parcial' || status === 'parcialmente_pago');
+      });
+    } else if (tipoPeriodo === 'este_mes') {
+      // Este mês: tudo que entra neste mês (pagos, parciais, pendentes)
+      // Filtra por data do evento no mês atual
+      const hoje = new Date();
+      const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+      locacoesFiltradas = locacoesValidas.filter((l: any) => {
+        const dataEvento = new Date(l.data_evento);
+        return dataEvento >= inicio && dataEvento <= fim;
       });
     } else if (tipoPeriodo === 'futuro') {
       // Mês que vem: tudo que vai entrar no mês que vem (pagos, parciais, pendentes)
@@ -96,6 +106,30 @@ export async function GET(request: Request) {
           valorBruto += sinalPago; // Apenas o que foi pago no valor recebido
         }
         // Pendentes não entram
+      });
+    } else if (tipoPeriodo === 'este_mes') {
+      // Este mês: mesma lógica do mês que vem
+      // Ganhos totais = faturamento total (o que vai entrar)
+      // Valor recebido = o que já entrou (pagos + parciais com sinal)
+      locacoesFiltradas.forEach((l: any) => {
+        const valorTotal = l.valor_total || 0;
+        const sinalPago = l.sinal_pago || 0;
+        const status = l.status_pagamento || 'pendente';
+
+        // Ganhos totais: valor total (o que vai entrar)
+        ganhosTotais += valorTotal;
+
+        // Valor recebido: o que já entrou
+        let valorJaEntrou = 0;
+
+        if (status === 'pago') {
+          valorJaEntrou = valorTotal;
+        } else if (status === 'parcial' || status === 'parcialmente_pago') {
+          valorJaEntrou = sinalPago;
+        }
+        // Pendentes: 0
+
+        valorBruto += valorJaEntrou;
       });
     } else {
       // Total, mês que vem, mês que vem +1, personalizado: ganhos totais = faturamento total (o que vai entrar)
