@@ -224,6 +224,14 @@ export default function Navbar() {
             <div className="lg:hidden bg-white border-t border-gray-200 animate-in slide-in-from-top duration-300"
             >
               <div className="px-6 py-6 space-y-2">
+                {/* Nome do usuário logado */}
+                {!loading && user && userData && (
+                  <div className="mb-4 p-4 bg-purple-50 rounded-xl">
+                    <p className="text-sm text-purple-600 font-medium">Bem-vindo,</p>
+                    <p className="text-lg font-bold text-purple-900">{userData.nome}</p>
+                  </div>
+                )}
+
                 {menuItems.map((item) => (
                   <Link
                     key={item.href}
