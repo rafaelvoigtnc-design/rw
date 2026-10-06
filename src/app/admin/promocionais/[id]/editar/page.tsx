@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Plus, Trash2, X } from 'lucide-react';
 
 interface CampoFormulario {
@@ -12,6 +12,7 @@ interface CampoFormulario {
 
 export default function EditarPromocional() {
   const router = useRouter();
+  const params = useParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -41,9 +42,17 @@ export default function EditarPromocional() {
 
   const fetchPromocional = async () => {
     try {
-      const id = router.query.id as string;
+      const id = params.id as string;
+      if (!id) {
+        console.error('ID não encontrado');
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch(`/api/admin/promocionais/${id}`);
       const data = await response.json();
+
+      console.log('Dados do promocional:', data);
 
       setFormData({
         titulo: data.titulo || '',
@@ -140,7 +149,7 @@ export default function EditarPromocional() {
     setSaving(true);
 
     try {
-      const id = router.query.id as string;
+      const id = params.id as string;
       const response = await fetch(`/api/admin/promocionais/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

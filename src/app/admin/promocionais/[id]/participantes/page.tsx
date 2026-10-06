@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Download, ArrowLeft } from 'lucide-react';
 
 interface Participante {
@@ -17,6 +17,7 @@ interface Promocional {
 
 export default function ParticipantesPromocional() {
   const router = useRouter();
+  const params = useParams();
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [promocional, setPromocional] = useState<Promocional | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,7 +28,7 @@ export default function ParticipantesPromocional() {
 
   const fetchData = async () => {
     try {
-      const id = router.query.id as string;
+      const id = params.id as string;
 
       // Buscar promocional para obter campos
       const promResponse = await fetch(`/api/admin/promocionais/${id}`);
@@ -47,7 +48,7 @@ export default function ParticipantesPromocional() {
 
   const exportarPlanilha = async () => {
     try {
-      const id = router.query.id as string;
+      const id = params.id as string;
       const response = await fetch(`/api/admin/promocionais/${id}/participantes/export`);
 
       if (response.ok) {
