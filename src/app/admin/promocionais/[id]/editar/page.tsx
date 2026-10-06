@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, X } from 'lucide-react';
 
 interface CampoFormulario {
   nome_campo: string;
@@ -14,6 +14,7 @@ export default function EditarPromocional() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     titulo: '',
     descricao: '',
@@ -23,6 +24,16 @@ export default function EditarPromocional() {
     data_fim: '',
   });
   const [camposFormulario, setCamposFormulario] = useState<CampoFormulario[]>([]);
+
+  // Calcular tamanho total das fotos em base64
+  const calcularTamanhoTotalFotos = () => {
+    return formData.fotos.reduce((total, foto) => total + foto.length, 0);
+  };
+
+  const tamanhoTotalFotos = calcularTamanhoTotalFotos();
+  const limiteFirestore = 1000000; // 1MB em caracteres
+  const tamanhoRestante = limiteFirestore - tamanhoTotalFotos;
+  const porcentagemUsada = (tamanhoTotalFotos / limiteFirestore) * 100;
 
   useEffect(() => {
     fetchPromocional();
@@ -38,17 +49,66 @@ export default function EditarPromocional() {
         titulo: data.titulo || '',
         descricao: data.descricao || '',
         regras: data.regras || '',
-        fotos: data.fotos || [],
+        fotos: Array.isArray(data.fotos) ? data.fotos : [],
         data_inicio: data.data_inicio ? data.data_inicio.split('T')[0] : '',
         data_fim: data.data_fim ? data.data_fim.split('T')[0] : '',
       });
 
-      setCamposFormulario(data.campos_formulario || []);
+      setCamposFormulario(Array.isArray(data.campos_formulario) ? data.campos_formulario : []);
     } catch (error) {
       console.error('Erro ao buscar promocional:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // Limite de 10 imagens
+    const MAX_FOTOS = 10;
+    if (formData.fotos.length + files.length > MAX_FOTOS) {
+      alert(`Você pode ter no máximo ${MAX_FOTOS} fotos. Atualmente tem ${formData.fotos.length} fotos.`);
+      return;
+    }
+
+    setUploading(true);
+    const novasFotos = [...formData.fotos];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', file);
+
+        const response = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: formDataUpload,
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || error.details || 'Erro ao fazer upload');
+        }
+
+        const data = await response.json();
+        novasFotos.push(data.url);
+      }
+
+      setFormData({ ...formData, fotos: novasFotos });
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      alert(`Erro ao fazer upload das imagens: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const novasFotos = formData.fotos.filter((_, i) => i !== index);
+    setFormData({ ...formData, fotos: novasFotos });
   };
 
   const addCampo = () => {
@@ -70,6 +130,13 @@ export default function EditarPromocional() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Verificar se o tamanho total das fotos excede o limite do Firestore (1MB)
+    if (tamanhoTotalFotos > limiteFirestore) {
+      alert(`O tamanho total das imagens (${(tamanhoTotalFotos / 1024).toFixed(2)} KB) excede o limite do Firestore (1024 KB). Remova algumas imagens ou reduza a qualidade.`);
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -85,9 +152,13 @@ export default function EditarPromocional() {
 
       if (response.ok) {
         router.push('/admin/promocoes');
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || error.details || 'Erro ao atualizar promocional');
       }
     } catch (error) {
       console.error('Erro ao atualizar promocional:', error);
+      alert(`Erro ao atualizar promocional: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setSaving(false);
     }
@@ -177,6 +248,64 @@ export default function EditarPromocional() {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Imagens</h2>
+
+            {/* Barra de progresso */}
+            <div className="mb-4">
+              <div className="flex justify-between text-sm text-gray-600 mb-1">
+                <span>Tamanho usado: {(tamanhoTotalFotos / 1024).toFixed(2)} KB</span>
+                <span>Limite: 1024 KB</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full transition-colors ${
+                    porcentagemUsada > 90 ? 'bg-red-500' : porcentagemUsada > 70 ? 'bg-yellow-500' : 'bg-green-500'
+                  }`}
+                  style={{ width: `${Math.min(porcentagemUsada, 100)}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {tamanhoRestante > 0 ? `${(tamanhoRestante / 1024).toFixed(2)} KB restantes` : 'Limite atingido'}
+              </p>
+            </div>
+
+            {/* Upload */}
+            <div className="mb-4">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageUpload}
+                disabled={uploading || tamanhoRestante <= 0}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 disabled:opacity-50"
+              />
+              {uploading && <p className="text-sm text-gray-500 mt-1">Enviando imagens...</p>}
+            </div>
+
+            {/* Preview das imagens */}
+            {formData.fotos.length > 0 && (
+              <div className="grid grid-cols-4 gap-2">
+                {formData.fotos.map((foto, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={foto}
+                      alt={`Foto ${index + 1}`}
+                      className="w-full h-24 object-cover rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-lg shadow p-6">

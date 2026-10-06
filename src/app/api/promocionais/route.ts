@@ -9,8 +9,10 @@ export async function GET() {
 
     // Filtrar apenas ativos e não expirados
     const agora = new Date();
+    agora.setHours(0, 0, 0, 0); // Zerar hora para comparação correta
     const promocionaisAtivos = promocionais.filter((p: any) => {
       const dataFim = new Date(p.data_fim);
+      dataFim.setHours(23, 59, 59, 999); // Final do dia
       return p.ativo && dataFim >= agora;
     });
 
