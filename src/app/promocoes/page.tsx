@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Clock, Gift, Sparkles, Phone } from 'lucide-react';
+import { Clock, Gift, Sparkles, Phone, Trophy } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,71 +17,82 @@ interface Promocao {
   ativa: boolean;
 }
 
+interface Promocional {
+  id: string;
+  titulo: string;
+  descricao: string;
+  fotos: string[];
+  data_inicio: string;
+  data_fim: string;
+}
+
 export default function Promocoes() {
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
+  const [promocionais, setPromocionais] = useState<Promocional[]>([]);
   const [loading, setLoading] = useState(true);
   const [countdowns, setCountdowns] = useState<Record<string, { days: number; hours: number; minutes: number; seconds: number }>>({});
 
   useEffect(() => {
-    const fetchPromocoes = () => {
-      const timestamp = new Date().getTime();
-      fetch(`/api/promocoes?_t=${timestamp}`)
-        .then(res => res.json())
-        .then(data => {
-          setPromocoes(data);
-          setLoading(false);
-        })
-        .catch(error => {
-          console.error('Erro ao buscar promoções:', error);
-          setLoading(false);
-        });
-    };
-
-    // Buscar imediatamente
-    fetchPromocoes();
-
-    // Buscar a cada 5 segundos para atualizações ao vivo
-    const interval = setInterval(fetchPromocoes, 5000);
-
-    // Atualizar quando a aba ganha foco
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        fetchPromocoes();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    fetchData();
   }, []);
+
+  const fetchData = () => {
+    Promise.all([
+      fetch(`/api/promocoes?_t=${Date.now()}`).then(res => res.json()),
+      fetch(`/api/promocionais?_t=${Date.now()}`).then(res => res.json()),
+    ])
+      .then(([promocoesData, promocionaisData]) => {
+        setPromocoes(promocoesData);
+        setPromocionais(promocionaisData);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Erro ao buscar dados:', error);
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
       const newCountdowns: Record<string, { days: number; hours: number; minutes: number; seconds: number }> = {};
-      
+
+      // Countdown para promoções
       promocoes.forEach(promocao => {
         const fim = new Date(promocao.data_fim);
         const agora = new Date();
         const diff = fim.getTime() - agora.getTime();
-        
+
         if (diff > 0) {
           const days = Math.floor(diff / (1000 * 60 * 60 * 24));
           const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
           const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
           const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-          
+
           newCountdowns[promocao.id] = { days, hours, minutes, seconds };
         }
       });
-      
+
+      // Countdown para promocionais
+      promocionais.forEach(promocional => {
+        const fim = new Date(promocional.data_fim);
+        const agora = new Date();
+        const diff = fim.getTime() - agora.getTime();
+
+        if (diff > 0) {
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+          newCountdowns[`promocional-${promocional.id}`] = { days, hours, minutes, seconds };
+        }
+      });
+
       setCountdowns(newCountdowns);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [promocoes]);
+  }, [promocoes, promocionais]);
 
   const formatarData = (data: string) => {
     return new Date(data).toLocaleDateString('pt-BR', {
@@ -115,6 +127,87 @@ export default function Promocoes() {
       </section>
 
       <div className="max-w-[1440px] mx-auto px-6 py-12">
+        {/* Seção de Promocionais (fixo no topo) */}
+        {promocionais.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <Trophy className="w-8 h-8 text-primary-yellow-500" />
+              <h2 className="text-3xl font-bold text-secondary-gray-900">Promocionais Ativos</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {promocionais.map((promocional) => {
+                const countdown = countdowns[`promocional-${promocional.id}`];
+                return (
+                  <Link
+                    key={promocional.id}
+                    href={`/promocoes/${promocional.id}`}
+                    className="group"
+                  >
+                    <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-4 border-yellow-400 relative">
+                      {/* Badge */}
+                      <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold animate-pulse">
+                        SORTEIO
+                      </div>
+
+                      {/* Imagem */}
+                      <div className="h-48 bg-white/20 flex items-center justify-center">
+                        {promocional.fotos && promocional.fotos.length > 0 ? (
+                          <img
+                            src={promocional.fotos[0]}
+                            alt={promocional.titulo}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Trophy className="w-16 h-16 text-white/50" />
+                        )}
+                      </div>
+
+                      {/* Conteúdo */}
+                      <div className="p-6">
+                        <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
+                          {promocional.titulo}
+                        </h3>
+
+                        {/* Countdown */}
+                        {countdown && (
+                          <div className="flex gap-2 mb-4">
+                            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 text-center flex-1">
+                              <div className="text-lg font-bold text-white">{countdown.days}</div>
+                              <div className="text-xs text-white/80">Dias</div>
+                            </div>
+                            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 text-center flex-1">
+                              <div className="text-lg font-bold text-white">{countdown.hours}</div>
+                              <div className="text-xs text-white/80">Horas</div>
+                            </div>
+                            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 text-center flex-1">
+                              <div className="text-lg font-bold text-white">{countdown.minutes}</div>
+                              <div className="text-xs text-white/80">Min</div>
+                            </div>
+                          </div>
+                        )}
+
+                        <button className="w-full bg-white text-purple-600 py-3 rounded-xl font-bold hover:bg-yellow-400 hover:text-purple-900 transition-colors">
+                          Participar Agora
+                        </button>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Seção de Promoções de Desconto */}
+        {promocoes.length > 0 && (
+          <section>
+            <div className="flex items-center gap-3 mb-6">
+              <Gift className="w-8 h-8 text-primary-orange-500" />
+              <h2 className="text-3xl font-bold text-secondary-gray-900">Promoções de Desconto</h2>
+            </div>
+          </section>
+        )}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {[...Array(2)].map((_, i) => (
