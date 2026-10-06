@@ -58,6 +58,13 @@ export default function DetalhesPromocional() {
       if (response.ok) {
         const data = await response.json();
         setClienteLogado(data);
+
+        // Verificar se há dados do formulário salvos após login
+        const savedFormData = sessionStorage.getItem('promocionalFormData');
+        if (savedFormData) {
+          setFormData(JSON.parse(savedFormData));
+          sessionStorage.removeItem('promocionalFormData');
+        }
       }
     } catch (error) {
       // Não logado
@@ -98,6 +105,17 @@ export default function DetalhesPromocional() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setEnviando(true);
+
+    // Verificar se está logado
+    if (!clienteLogado) {
+      // Salvar URL de redirect e dados do formulário
+      sessionStorage.setItem('redirectAfterLogin', window.location.href);
+      sessionStorage.setItem('promocionalFormData', JSON.stringify(formData));
+      // Abrir modal de login
+      document.querySelector('button[data-auth-modal-open]')?.dispatchEvent(new MouseEvent('click'));
+      setEnviando(false);
+      return;
+    }
 
     try {
       const response = await fetch(`/api/promocionais/${params.id}/participar`, {
@@ -212,24 +230,7 @@ export default function DetalhesPromocional() {
 
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-soft p-6 sticky top-24">
-              {!clienteLogado ? (
-                <div className="text-center">
-                  <Trophy className="w-16 h-16 text-purple-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Faça Login para Participar</h3>
-                  <p className="text-gray-600 mb-6">Você precisa estar logado para participar deste promocional.</p>
-                  <button
-                    onClick={() => {
-                      // Salvar URL de redirect no sessionStorage
-                      sessionStorage.setItem('redirectAfterLogin', window.location.href);
-                      // Abrir modal de login do navbar
-                      document.querySelector('button[data-auth-modal-open]')?.dispatchEvent(new MouseEvent('click'));
-                    }}
-                    className="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition-colors"
-                  >
-                    Fazer Login
-                  </button>
-                </div>
-              ) : jaParticipou ? (
+              {jaParticipou ? (
                 <div className="text-center">
                   <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Você Já Está Participando!</h3>
