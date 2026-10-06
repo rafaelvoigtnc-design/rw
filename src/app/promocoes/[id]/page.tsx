@@ -313,7 +313,8 @@ export default function DetalhesPromocional() {
               <button
                 onClick={() => {
                   setShowLoginModal(false);
-                  document.querySelector('button[data-auth-modal-open]')?.dispatchEvent(new MouseEvent('click'));
+                  // Disparar evento customizado para abrir modal de login
+                  window.dispatchEvent(new CustomEvent('openAuthModal'));
                 }}
                 className="flex-1 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition-colors"
               >

@@ -32,6 +32,15 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Ouvir evento customizado para abrir modal de login
+  useEffect(() => {
+    const handleOpenAuthModal = () => {
+      setIsAuthModalOpen(true);
+    };
+    window.addEventListener('openAuthModal', handleOpenAuthModal);
+    return () => window.removeEventListener('openAuthModal', handleOpenAuthModal);
+  }, []);
+
   const handleLoginSuccess = useCallback(() => {
     setIsAuthModalOpen(false);
   }, []);
