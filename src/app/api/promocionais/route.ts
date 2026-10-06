@@ -18,7 +18,7 @@ export async function GET() {
 
     return NextResponse.json(promocionaisAtivos, {
       headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     });
   } catch (error) {

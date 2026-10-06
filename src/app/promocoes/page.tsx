@@ -145,11 +145,6 @@ export default function Promocoes() {
                     className="group"
                   >
                     <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-4 border-yellow-400 relative">
-                      {/* Badge */}
-                      <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold animate-pulse">
-                        SORTEIO
-                      </div>
-
                       {/* Imagem */}
                       <div className="aspect-square bg-white/20 flex items-center justify-center">
                         {promocional.fotos && promocional.fotos.length > 0 ? (
