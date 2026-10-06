@@ -225,7 +225,7 @@ export default function Navbar() {
             >
               <div className="px-6 py-6 space-y-2">
                 {/* Nome do usuário logado */}
-                {!loading && user && userData && (
+                {user && userData && (
                   <div className="mb-4 p-4 bg-purple-50 rounded-xl">
                     <p className="text-sm text-purple-600 font-medium">Bem-vindo,</p>
                     <p className="text-lg font-bold text-purple-900">{userData.nome}</p>
