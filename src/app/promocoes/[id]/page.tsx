@@ -31,6 +31,13 @@ export default function DetalhesPromocional() {
   useEffect(() => {
     fetchPromocional();
     checkLogin();
+
+    // Verificar se há dados do formulário salvos após login
+    const savedFormData = sessionStorage.getItem('promocionalFormData');
+    if (savedFormData) {
+      setFormData(JSON.parse(savedFormData));
+      sessionStorage.removeItem('promocionalFormData');
+    }
   }, []);
 
   const fetchPromocional = async () => {
@@ -58,13 +65,6 @@ export default function DetalhesPromocional() {
       if (response.ok) {
         const data = await response.json();
         setClienteLogado(data);
-
-        // Verificar se há dados do formulário salvos após login
-        const savedFormData = sessionStorage.getItem('promocionalFormData');
-        if (savedFormData) {
-          setFormData(JSON.parse(savedFormData));
-          sessionStorage.removeItem('promocionalFormData');
-        }
       }
     } catch (error) {
       // Não logado
@@ -106,8 +106,12 @@ export default function DetalhesPromocional() {
     e.preventDefault();
     setEnviando(true);
 
+    console.log('handleSubmit - clienteLogado:', clienteLogado);
+    console.log('handleSubmit - formData:', formData);
+
     // Verificar se está logado
     if (!clienteLogado) {
+      console.log('Usuário não logado, salvando dados e abrindo login');
       // Salvar URL de redirect e dados do formulário
       sessionStorage.setItem('redirectAfterLogin', window.location.href);
       sessionStorage.setItem('promocionalFormData', JSON.stringify(formData));
@@ -118,6 +122,12 @@ export default function DetalhesPromocional() {
     }
 
     try {
+      console.log('Enviando participação:', {
+        cliente_id: clienteLogado.id,
+        cliente_nome: clienteLogado.nome,
+        dados_participacao: formData,
+      });
+
       const response = await fetch(`/api/promocionais/${params.id}/participar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -128,10 +138,13 @@ export default function DetalhesPromocional() {
         }),
       });
 
+      console.log('Resposta da API:', response.status);
+
       if (response.ok) {
         setJaParticipou(true);
       } else {
         const data = await response.json();
+        console.error('Erro ao participar:', data);
         alert(data.error || 'Erro ao participar');
       }
     } catch (error) {
