@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { collection, getDocs, addDoc, doc, getDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const snapshot = await getDocs(collection(db, 'promocionais'));
@@ -9,7 +11,7 @@ export async function GET() {
 
     return NextResponse.json(promocionais, {
       headers: {
-        'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=15',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     });
   } catch (error) {

@@ -10,10 +10,10 @@ export async function GET() {
     // Filtrar apenas promoções ativas
     const promocoesAtivas = promocoes.filter((p: any) => p.ativa);
 
-    // Adicionar cache para melhorar performance
+    // Sem cache para atualização imediata
     return NextResponse.json(promocoesAtivas, {
       headers: {
-        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=60',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     });
   } catch (error) {
