@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(brinquedosDisponiveis, {
       headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=120',
       },
     });
   } catch (error) {

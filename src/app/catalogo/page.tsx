@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, SlidersHorizontal, X, Star } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -20,15 +20,22 @@ export default function Catalogo() {
   const [busca, setBusca] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
+  // Debounce para evitar muitas requisições durante digitação
   useEffect(() => {
-    fetchBrinquedos();
+    const timeoutId = setTimeout(() => {
+      fetchBrinquedos();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
   }, [busca]);
 
-  const fetchBrinquedos = () => {
+  const fetchBrinquedos = useCallback(() => {
     const params = new URLSearchParams();
     if (busca) params.append('busca', busca);
 
-    fetch(`/api/brinquedos?${params}`)
+    fetch(`/api/brinquedos?${params}`, {
+      cache: 'force-cache',
+    })
       .then(res => res.json())
       .then(data => {
         setBrinquedos(data);
@@ -38,7 +45,7 @@ export default function Catalogo() {
         console.error('Erro ao buscar brinquedos:', error);
         setLoading(false);
       });
-  };
+  }, [busca]);
 
   const clearFilters = () => {
     setBusca('');
