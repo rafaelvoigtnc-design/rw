@@ -51,6 +51,13 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
       console.log('Login bem-sucedido:', userCredential.user.email);
       onClose();
       onLoginSuccess?.();
+
+      // Verificar se há redirect após login
+      const redirectAfterLogin = sessionStorage.getItem('redirectAfterLogin');
+      if (redirectAfterLogin) {
+        sessionStorage.removeItem('redirectAfterLogin');
+        window.location.href = redirectAfterLogin;
+      }
     } catch (error: any) {
       console.error('Erro no login:', error);
       // Traduzir mensagens de erro comuns do Firebase
@@ -123,6 +130,13 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
         console.log('Registro bem-sucedido:', formData.email);
         onClose();
         onLoginSuccess?.();
+
+        // Verificar se há redirect após login
+        const redirectAfterLogin = sessionStorage.getItem('redirectAfterLogin');
+        if (redirectAfterLogin) {
+          sessionStorage.removeItem('redirectAfterLogin');
+          window.location.href = redirectAfterLogin;
+        }
       } else {
         const data = await response.json();
         console.error('Erro na API de registro:', data);

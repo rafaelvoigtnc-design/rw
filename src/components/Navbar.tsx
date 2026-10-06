@@ -173,6 +173,7 @@ export default function Navbar() {
               ) : (
                 <button
                   onClick={() => setIsAuthModalOpen(true)}
+                  data-auth-modal-open="true"
                   className="px-6 py-2.5 rounded-full bg-primary-green-500 text-white font-semibold hover:bg-primary-green-600 transition-colors shadow-soft hover:scale-105"
                 >
                   Entrar / Cadastrar
@@ -262,6 +263,7 @@ export default function Navbar() {
                           setIsMobileMenuOpen(false);
                         }}
                         className="w-full px-4 py-4 rounded-full bg-primary-green-500 text-white font-semibold text-lg"
+                        data-auth-modal-open="true"
                       >
                         Entrar / Cadastrar
                       </button>

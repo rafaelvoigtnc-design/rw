@@ -218,7 +218,12 @@ export default function DetalhesPromocional() {
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Faça Login para Participar</h3>
                   <p className="text-gray-600 mb-6">Você precisa estar logado para participar deste promocional.</p>
                   <button
-                    onClick={() => router.push('/cliente/login')}
+                    onClick={() => {
+                      // Salvar URL de redirect no sessionStorage
+                      sessionStorage.setItem('redirectAfterLogin', window.location.href);
+                      // Abrir modal de login do navbar
+                      document.querySelector('button[data-auth-modal-open]')?.dispatchEvent(new MouseEvent('click'));
+                    }}
                     className="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition-colors"
                   >
                     Fazer Login
