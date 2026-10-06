@@ -8,13 +8,10 @@ export async function GET() {
     const snapshot = await getDocs(collection(db, 'clientes'));
     const clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     console.log(`Encontrados ${clientes.length} clientes no Firebase`);
-    console.log('Clientes:', clientes.map(c => ({ id: c.id, nome: c.nome, email: c.email })));
-    
+
     return NextResponse.json(clientes, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=15',
       },
     });
   } catch (error) {
