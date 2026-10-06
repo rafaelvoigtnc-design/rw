@@ -12,9 +12,23 @@ interface Promocao {
   ativa: boolean;
 }
 
+interface Promocional {
+  id: string;
+  titulo: string;
+  descricao: string;
+  regras: string;
+  fotos: string[];
+  campos_formulario: any[];
+  data_inicio: string;
+  data_fim: string;
+  ativo: boolean;
+}
+
 export default function AdminPromocoes() {
   const router = useRouter();
+  const [tab, setTab] = useState<'desconto' | 'promocional'>('desconto');
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
+  const [promocionais, setPromocionais] = useState<Promocional[]>([]);
   const [loading, setLoading] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [editando, setEditando] = useState<Promocao | null>(null);
@@ -28,16 +42,32 @@ export default function AdminPromocoes() {
   });
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (tab === 'desconto') {
+      fetchPromocoes();
+    } else {
+      fetchPromocionais();
+    }
+  }, [tab]);
 
-  const fetchData = async () => {
+  const fetchPromocoes = async () => {
     try {
       const response = await fetch('/api/admin/promocoes');
       const data = await response.json();
       setPromocoes(data);
     } catch (error) {
       console.error('Erro ao buscar promoções:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPromocionais = async () => {
+    try {
+      const response = await fetch('/api/admin/promocionais');
+      const data = await response.json();
+      setPromocionais(data);
+    } catch (error) {
+      console.error('Erro ao buscar promocionais:', error);
     } finally {
       setLoading(false);
     }
@@ -50,10 +80,10 @@ export default function AdminPromocoes() {
         ...formData,
         data_fim: formData.tempo_indeterminado ? null : formData.data_fim,
       };
-      
+
       const url = editando ? `/api/admin/promocoes/${editando.id}` : '/api/admin/promocoes';
       const method = editando ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -71,7 +101,7 @@ export default function AdminPromocoes() {
           ativa: false,
           tempo_indeterminado: false,
         });
-        fetchData();
+        fetchPromocoes();
       }
     } catch (error) {
       console.error('Erro ao salvar promoção:', error);
@@ -93,16 +123,31 @@ export default function AdminPromocoes() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja deletar esta promoção?')) return;
-    
+
     try {
       const response = await fetch(`/api/admin/promocoes/${id}`, {
         method: 'DELETE',
       });
       if (response.ok) {
-        fetchData();
+        fetchPromocoes();
       }
     } catch (error) {
       console.error('Erro ao deletar promoção:', error);
+    }
+  };
+
+  const handleDeletePromocional = async (id: string) => {
+    if (!confirm('Tem certeza que deseja deletar este promocional?')) return;
+
+    try {
+      const response = await fetch(`/api/admin/promocionais/${id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        fetchPromocionais();
+      }
+    } catch (error) {
+      console.error('Erro ao deletar promocional:', error);
     }
   };
 
@@ -114,7 +159,7 @@ export default function AdminPromocoes() {
         body: JSON.stringify({ ...promocao, ativa: !promocao.ativa }),
       });
       if (response.ok) {
-        fetchData();
+        fetchPromocoes();
       }
     } catch (error) {
       console.error('Erro ao atualizar promoção:', error);
@@ -143,25 +188,55 @@ export default function AdminPromocoes() {
       </nav>
 
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {/* Tabs */}
         <div className="mb-6">
-          <button
-            onClick={() => {
-              setEditando(null);
-              setFormData({
-                titulo: '',
-                descricao: '',
-                data_inicio: '',
-                data_fim: '',
-                ativa: false,
-                tempo_indeterminado: false,
-              });
-              setMostrarFormulario(true);
-            }}
-            className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700"
-          >
-            + Nova Promoção
-          </button>
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setTab('desconto')}
+                className={`${
+                  tab === 'desconto'
+                    ? 'border-emerald-500 text-emerald-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              >
+                Promoções de Desconto
+              </button>
+              <button
+                onClick={() => setTab('promocional')}
+                className={`${
+                  tab === 'promocional'
+                    ? 'border-emerald-500 text-emerald-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              >
+                Promocionais
+              </button>
+            </nav>
+          </div>
         </div>
+
+        {tab === 'desconto' && (
+          <>
+            <div className="mb-6">
+              <button
+                onClick={() => {
+                  setEditando(null);
+                  setFormData({
+                    titulo: '',
+                    descricao: '',
+                    data_inicio: '',
+                    data_fim: '',
+                    ativa: false,
+                    tempo_indeterminado: false,
+                  });
+                  setMostrarFormulario(true);
+                }}
+                className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700"
+              >
+                + Nova Promoção de Desconto
+              </button>
+            </div>
 
         {mostrarFormulario && (
           <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -324,6 +399,93 @@ export default function AdminPromocoes() {
             </table>
           </div>
         </div>
+          </>
+        )}
+
+        {tab === 'promocional' && (
+          <>
+            <div className="mb-6">
+              <button
+                onClick={() => router.push('/admin/promocionais/novo')}
+                className="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700"
+              >
+                + Novo Promocional
+              </button>
+            </div>
+
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Título
+                      </th>
+                      <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Período
+                      </th>
+                      <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-2 md:px-6 py-1 md:py-3 text-left text-[8px] md:text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Ações
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {promocionais.map((promocional) => {
+                      const agora = new Date();
+                      const dataFim = new Date(promocional.data_fim);
+                      const expirado = dataFim < agora;
+
+                      return (
+                        <tr key={promocional.id}>
+                          <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap">
+                            <div className="text-[8px] md:text-sm font-medium text-gray-900">{promocional.titulo}</div>
+                          </td>
+                          <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap">
+                            <div className="text-[8px] md:text-sm text-gray-500">
+                              {new Date(promocional.data_inicio).toLocaleDateString('pt-BR')} - {new Date(promocional.data_fim).toLocaleDateString('pt-BR')}
+                            </div>
+                          </td>
+                          <td className="px-2 md:px-6 py-1 md:py-4 whitespace-nowrap">
+                            <span className={`px-1 md:px-2 inline-flex text-[6px] md:text-xs leading-5 font-semibold rounded-full ${
+                              expirado ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800'
+                            }`}>
+                              {expirado ? 'Encerrado' : 'Ativo'}
+                            </span>
+                          </td>
+                          <td className="px-2 md:px-6 py-2 md:py-4 whitespace-nowrap text-[8px] md:text-sm font-medium">
+                            <div className="flex flex-col gap-2 md:flex-row md:gap-4 items-start md:items-center">
+                              <button
+                                onClick={() => router.push(`/admin/promocionais/${promocional.id}/participantes`)}
+                                className="px-3 py-2 md:px-0 md:py-0 bg-blue-600 text-white rounded md:bg-transparent md:text-blue-600 hover:bg-blue-700 md:hover:text-blue-900 text-[10px] md:text-xs font-medium"
+                              >
+                                Ver Participantes
+                              </button>
+                              <button
+                                onClick={() => router.push(`/admin/promocionais/${promocional.id}/editar`)}
+                                className="px-3 py-2 md:px-0 md:py-0 bg-emerald-600 text-white rounded md:bg-transparent md:text-emerald-600 hover:bg-emerald-700 md:hover:text-emerald-900 text-[10px] md:text-xs font-medium"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                onClick={() => handleDeletePromocional(promocional.id)}
+                                className="px-3 py-2 md:px-0 md:py-0 bg-red-600 text-white rounded md:bg-transparent md:text-red-600 hover:bg-red-700 md:hover:text-red-900 text-[10px] md:text-xs font-medium"
+                              >
+                                Deletar
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
