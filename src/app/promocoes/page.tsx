@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { Clock, Gift, Sparkles, Phone, Trophy } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import ScrollAnimation from '@/components/ScrollAnimation';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -130,23 +129,22 @@ export default function Promocoes() {
       <div className="max-w-[1440px] mx-auto px-6 py-12">
         {/* Seção de Promocionais (fixo no topo) */}
         {promocionais.length > 0 && (
-          <ScrollAnimation direction="up" delay={0.1}>
-            <section className="mb-12">
-              <div className="flex items-center gap-3 mb-6">
-                <Trophy className="w-8 h-8 text-primary-yellow-500" />
-                <h2 className="text-3xl font-bold text-secondary-gray-900">Promocionais Ativos</h2>
-              </div>
+          <section className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <Trophy className="w-8 h-8 text-primary-yellow-500" />
+              <h2 className="text-3xl font-bold text-secondary-gray-900">Promocionais Ativos</h2>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {promocionais.map((promocional, index) => {
-                  const countdown = countdowns[`promocional-${promocional.id}`];
-                  return (
-                    <ScrollAnimation key={promocional.id} direction="up" delay={index * 0.05}>
-                      <Link
-                        href={`/promocoes/${promocional.id}`}
-                        className="group"
-                      >
-                        <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-4 border-yellow-400 relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {promocionais.map((promocional, index) => {
+                const countdown = countdowns[`promocional-${promocional.id}`];
+                return (
+                  <Link
+                    key={promocional.id}
+                    href={`/promocoes/${promocional.id}`}
+                    className="group"
+                  >
+                    <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-4 border-yellow-400 relative">
                       {/* Imagem */}
                       <div className="aspect-square bg-white/20 flex items-center justify-center">
                         {promocional.fotos && promocional.fotos.length > 0 ? (
@@ -195,18 +193,6 @@ export default function Promocoes() {
             </div>
           </section>
         )}
-
-        {/* Seção de Promoções de Desconto */}
-        {promocoes.length > 0 && (
-          <ScrollAnimation direction="up" delay={0.2}>
-            <section>
-              <div className="flex items-center gap-3 mb-6">
-                <Gift className="w-8 h-8 text-primary-orange-500" />
-                <h2 className="text-3xl font-bold text-secondary-gray-900">Promoções de Desconto</h2>
-              </div>
-            </section>
-          </ScrollAnimation>
-        )}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {[...Array(2)].map((_, i) => (
@@ -230,14 +216,12 @@ export default function Promocoes() {
             </a>
           </div>
         ) : (
-          <ScrollAnimation direction="up" delay={0.3}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {promocoes.map((promocao, index) => {
-                const countdown = countdowns[promocao.id];
-                const isIndeterminada = !promocao.data_fim;
-                return (
-                  <ScrollAnimation key={promocao.id} direction="up" delay={index * 0.05}>
-                    <div className="hover:-translate-y-2 transition-all duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {promocoes.map((promocao, index) => {
+              const countdown = countdowns[promocao.id];
+              const isIndeterminada = !promocao.data_fim;
+              return (
+                <div key={promocao.id} className="hover:-translate-y-2 transition-all duration-300">
                   <div className="bg-white rounded-2xl shadow-soft overflow-hidden hover:shadow-medium transition-all duration-300">
                     {/* Header */}
                     <div className="bg-gradient-to-br from-primary-orange-500 to-primary-yellow-500 p-8 relative overflow-hidden">
@@ -314,12 +298,10 @@ export default function Promocoes() {
                       </a>
                     </div>
                   </div>
-                  </div>
-                </ScrollAnimation>
+                </div>
               );
             })}
           </div>
-        </ScrollAnimation>
         )}
       </div>
 
