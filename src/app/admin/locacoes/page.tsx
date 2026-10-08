@@ -98,6 +98,7 @@ export default function AdminLocacoes() {
     cuidador_valor: 0,
     observacoes: '',
   });
+  const [editLocacaoItens, setEditLocacaoItens] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     cliente_id: '',
@@ -318,6 +319,7 @@ export default function AdminLocacoes() {
         cuidador_valor: locacaoSelecionada.cuidador_valor || 0,
         observacoes: locacaoSelecionada.observacoes || '',
       });
+      setEditLocacaoItens(locacaoSelecionada.locacao_item || []);
       setMostrarDrawer(false);
       setMostrarModalEdicao(true);
     }
@@ -327,51 +329,71 @@ export default function AdminLocacoes() {
     if (!locacaoSelecionada) return;
 
     try {
+      // Salvar dados da locação
       const response = await fetch(`/api/admin/locacoes/${locacaoSelecionada.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editFormData),
       });
 
-      if (response.ok) {
-        alert('Locação atualizada com sucesso!');
-        setMostrarModalEdicao(false);
-        fetchData();
-        setLocacaoSelecionada(null);
-      } else {
+      if (!response.ok) {
         const responseData = await response.json();
         alert('Erro ao atualizar: ' + responseData.error);
+        return;
       }
+
+      // Remover itens que foram deletados
+      const itensOriginais = locacaoSelecionada.locacao_item || [];
+      const itensAtuais = editLocacaoItens;
+
+      for (const itemOriginal of itensOriginais) {
+        const aindaExiste = itensAtuais.find((item: any) => item.id === itemOriginal.id);
+        if (!aindaExiste && itemOriginal.id) {
+          await fetch(`/api/admin/locacao-itens/${itemOriginal.id}`, {
+            method: 'DELETE',
+          });
+        }
+      }
+
+      // Adicionar novos itens
+      for (const item of itensAtuais) {
+        if (!item.id) {
+          // É um item novo (sem ID)
+          await fetch('/api/admin/locacao-itens', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              locacao_id: locacaoSelecionada.id,
+              brinquedo_id: item.brinquedo_id,
+              brinquedo_nome: item.brinquedo_nome,
+            }),
+          });
+        }
+      }
+
+      alert('Locação atualizada com sucesso!');
+      setMostrarModalEdicao(false);
+      fetchData();
+      setLocacaoSelecionada(null);
     } catch (error) {
       console.error('Erro ao atualizar locação:', error);
       alert('Erro ao atualizar locação');
     }
   };
 
-  const handleRemoverBrinquedo = async (itemId: string) => {
-    if (!locacaoSelecionada) return;
+  const handleRemoverBrinquedo = (itemId: string) => {
+    setEditLocacaoItens(editLocacaoItens.filter((item: any) => item.id !== itemId));
+  };
 
-    try {
-      const response = await fetch(`/api/admin/locacao-itens/${itemId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        alert('Brinquedo removido com sucesso!');
-        fetchData();
-        // Atualizar locação selecionada com dados atualizados
-        const updatedLocacoes = await fetch('/api/admin/locacoes').then(r => r.json());
-        const updated = updatedLocacoes.find((l: any) => l.id === locacaoSelecionada.id);
-        if (updated) {
-          setLocacaoSelecionada(updated);
-        }
-      } else {
-        alert('Erro ao remover brinquedo');
+  const handleAdicionarBrinquedo = (brinquedoId: string, brinquedoNome: string) => {
+    setEditLocacaoItens([
+      ...editLocacaoItens,
+      {
+        id: null, // Sem ID = item novo
+        brinquedo_id: brinquedoId,
+        brinquedo_nome: brinquedoNome,
       }
-    } catch (error) {
-      console.error('Erro ao remover brinquedo:', error);
-      alert('Erro ao remover brinquedo');
-    }
+    ]);
   };
 
   const handleExcluir = async () => {
@@ -1281,7 +1303,7 @@ export default function AdminLocacoes() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Brinquedos da Locação</label>
                   <div className="space-y-2 mb-4">
-                    {locacaoSelecionada.locacao_item?.map((item: any, index: number) => (
+                    {editLocacaoItens.map((item: any, index: number) => (
                       <div key={item.id || index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
                         <span className="text-sm font-medium">{item.brinquedo_nome || 'Brinquedo não informado'}</span>
                         <button
@@ -1378,39 +1400,15 @@ export default function AdminLocacoes() {
 
                 <div className="flex gap-2 pt-4">
                   <button
-                    onClick={async () => {
+                    onClick={() => {
                       const select = document.getElementById('brinquedoSelect') as HTMLSelectElement;
                       const brinquedoId = select.value;
-                      if (!brinquedoId || !locacaoSelecionada) return;
+                      if (!brinquedoId) return;
 
-                      try {
-                        const brinquedo = brinquedos.find((b: any) => b.id === brinquedoId);
-                        const response = await fetch('/api/admin/locacao-itens', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            locacao_id: locacaoSelecionada.id,
-                            brinquedo_id: brinquedoId,
-                            brinquedo_nome: brinquedo?.nome,
-                          }),
-                        });
-
-                        if (response.ok) {
-                          alert('Brinquedo adicionado com sucesso!');
-                          setMostrarAdicionarBrinquedo(false);
-                          fetchData();
-                          // Atualizar locação selecionada
-                          const updatedLocacoes = await fetch('/api/admin/locacoes').then(r => r.json());
-                          const updated = updatedLocacoes.find((l: any) => l.id === locacaoSelecionada.id);
-                          if (updated) {
-                            setLocacaoSelecionada(updated);
-                          }
-                        } else {
-                          alert('Erro ao adicionar brinquedo');
-                        }
-                      } catch (error) {
-                        console.error('Erro ao adicionar brinquedo:', error);
-                        alert('Erro ao adicionar brinquedo');
+                      const brinquedo = brinquedos.find((b: any) => b.id === brinquedoId);
+                      if (brinquedo) {
+                        handleAdicionarBrinquedo(brinquedoId, brinquedo.nome);
+                        setMostrarAdicionarBrinquedo(false);
                       }
                     }}
                     className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
