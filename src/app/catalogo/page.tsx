@@ -148,13 +148,14 @@ export default function Catalogo() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center justify-between mb-4 md:mb-6">
-                <p className="text-sm md:text-base text-secondary-gray-600">
-                  {brinquedos.length} brinquedo{brinquedos.length !== 1 ? 's' : ''} encontrado{brinquedos.length !== 1 ? 's' : ''}
-                </p>
-              </div>
+              <>
+                <div className="flex items-center justify-between mb-4 md:mb-6">
+                  <p className="text-sm md:text-base text-secondary-gray-600">
+                    {brinquedos.length} brinquedo{brinquedos.length !== 1 ? 's' : ''} encontrado{brinquedos.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {brinquedos.map((brinquedo) => (
                   <div key={brinquedo.id} className="group hover:-translate-y-2 transition-all duration-300">
                         <Link href={`/brinquedos/${brinquedo.id}`}>
@@ -203,6 +204,7 @@ export default function Catalogo() {
                       </div>
                   ))}
                 </div>
+              </>
             )}
           </div>
         </div>
