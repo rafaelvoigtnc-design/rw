@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Clock, Gift, Sparkles, Phone, Trophy } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ScrollAnimation from '@/components/ScrollAnimation';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -139,12 +140,12 @@ export default function Promocoes() {
               {promocionais.map((promocional, index) => {
                 const countdown = countdowns[`promocional-${promocional.id}`];
                 return (
-                  <Link
-                    key={promocional.id}
-                    href={`/promocoes/${promocional.id}`}
-                    className="group"
-                  >
-                    <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-4 border-yellow-400 relative">
+                  <ScrollAnimation key={promocional.id} direction="up" delay={index * 0.05}>
+                    <Link
+                      href={`/promocoes/${promocional.id}`}
+                      className="group"
+                    >
+                      <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-4 border-yellow-400 relative">
                       {/* Imagem */}
                       <div className="aspect-square bg-white/20 flex items-center justify-center">
                         {promocional.fotos && promocional.fotos.length > 0 ? (
@@ -188,6 +189,7 @@ export default function Promocoes() {
                       </div>
                     </div>
                   </Link>
+                </ScrollAnimation>
                 );
               })}
             </div>
@@ -221,7 +223,8 @@ export default function Promocoes() {
               const countdown = countdowns[promocao.id];
               const isIndeterminada = !promocao.data_fim;
               return (
-                <div key={promocao.id} className="hover:-translate-y-2 transition-all duration-300">
+                <ScrollAnimation key={promocao.id} direction="up" delay={index * 0.05}>
+                  <div className="hover:-translate-y-2 transition-all duration-300">
                   <div className="bg-white rounded-2xl shadow-soft overflow-hidden hover:shadow-medium transition-all duration-300">
                     {/* Header */}
                     <div className="bg-gradient-to-br from-primary-orange-500 to-primary-yellow-500 p-8 relative overflow-hidden">
@@ -299,6 +302,7 @@ export default function Promocoes() {
                     </div>
                   </div>
                 </div>
+              </ScrollAnimation>
               );
             })}
           </div>

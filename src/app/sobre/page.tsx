@@ -2,6 +2,7 @@
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ScrollAnimation from '@/components/ScrollAnimation';
 import { Heart, Shield, Clock, Users, Target, Eye } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -150,16 +151,17 @@ export default function Sobre() {
                 iconColor: 'text-green-600',
               },
             ].map((item, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-2xl shadow-soft p-6 text-center hover:-translate-y-2 transition-all duration-300"
-              >
+              <ScrollAnimation key={index} direction="up" delay={index * 0.05}>
+                <div
+                  className="bg-white rounded-2xl shadow-soft p-6 text-center hover:-translate-y-2 transition-all duration-300"
+                >
                   <div className={`w-16 h-16 ${item.color} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
                     <item.icon className={`w-8 h-8 ${item.iconColor}`} />
                   </div>
                   <h3 className="text-xl font-bold text-secondary-gray-900 mb-3">{item.title}</h3>
                   <p className="text-secondary-gray-600 text-sm">{item.description}</p>
                 </div>
+              </ScrollAnimation>
             ))}
           </div>
         </section>
