@@ -230,8 +230,12 @@ export default function Depoimentos() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {avaliacoes.map((avaliacao) => (
-              <div key={avaliacao.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            {avaliacoes.map((avaliacao, index) => (
+              <div
+                key={avaliacao.id}
+                className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow animate-fade-in"
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
                   <div className="flex items-center mb-4">
                     <div className="flex text-yellow-400">
                       {[...Array(5)].map((_, i) => (
