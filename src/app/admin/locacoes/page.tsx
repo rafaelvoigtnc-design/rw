@@ -399,18 +399,11 @@ export default function AdminLocacoes() {
   const handleExcluir = async () => {
     if (!locacaoSelecionada) return;
 
-    console.log('ID da locação para excluir:', locacaoSelecionada.id);
-    console.log('URL da requisição:', `/api/admin/locacoes/${locacaoSelecionada.id}`);
-
     if (confirm('Tem certeza que deseja excluir esta locação? Esta ação não pode ser desfeita.')) {
       try {
         const response = await fetch(`/api/admin/locacoes/${locacaoSelecionada.id}`, {
           method: 'DELETE',
         });
-
-        console.log('Status da resposta DELETE:', response.status);
-        const responseData = await response.json();
-        console.log('Resposta da API DELETE:', responseData);
 
         if (response.ok) {
           alert('Locação excluída com sucesso!');
@@ -418,6 +411,7 @@ export default function AdminLocacoes() {
           fetchData();
           setLocacaoSelecionada(null);
         } else {
+          const responseData = await response.json();
           alert('Erro ao excluir: ' + responseData.error);
         }
       } catch (error) {
@@ -899,9 +893,17 @@ export default function AdminLocacoes() {
                             <Clock className="w-4 h-4" />
                             {locacao.horario_inicio} às {locacao.horario_fim}
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 hidden md:flex">
                             <MapPin className="w-4 h-4" />
-                            <span className="truncate max-w-xs">{locacao.endereco}</span>
+                            <span className="truncate max-w-xs">
+                              {locacao.local_evento || 'Não informado'} - {locacao.endereco}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 md:hidden">
+                            <MapPin className="w-4 h-4" />
+                            <span className="truncate max-w-xs">
+                              {locacao.local_evento || 'Não informado'}
+                            </span>
                           </div>
                         </div>
                       </div>
