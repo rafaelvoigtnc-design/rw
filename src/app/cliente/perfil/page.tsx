@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft } from 'lucide-react';
+import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function ClientePerfil() {
   const router = useRouter();
@@ -12,6 +14,7 @@ export default function ClientePerfil() {
     nome: '',
     telefone: '',
     email: '',
+    senhaAtual: '',
     senha: '',
     confirmarSenha: '',
     endereco: '',
@@ -53,6 +56,7 @@ export default function ClientePerfil() {
                 nome: data.nome || '',
                 telefone: data.telefone || '',
                 email: data.email || '',
+                senhaAtual: '',
                 senha: '',
                 confirmarSenha: '',
                 endereco: data.endereco || '',
@@ -126,16 +130,52 @@ export default function ClientePerfil() {
     }
 
     // Validar senha se fornecida
-    if (formData.senha && formData.senha.length < 6) {
-      setError('A senha deve ter pelo menos 6 caracteres');
-      setFormLoading(false);
-      return;
-    }
+    if (formData.senha) {
+      if (!formData.senhaAtual) {
+        setError('Digite a senha atual para alterar a senha');
+        setFormLoading(false);
+        return;
+      }
 
-    if (formData.senha && formData.senha !== formData.confirmarSenha) {
-      setError('As senhas não coincidem');
-      setFormLoading(false);
-      return;
+      if (formData.senha.length < 6) {
+        setError('A nova senha deve ter pelo menos 6 caracteres');
+        setFormLoading(false);
+        return;
+      }
+
+      if (formData.senha !== formData.confirmarSenha) {
+        setError('As senhas não coincidem');
+        setFormLoading(false);
+        return;
+      }
+
+      // Reautenticar com senha atual
+      try {
+        const credential = EmailAuthProvider.credential(
+          user!.email!,
+          formData.senhaAtual
+        );
+        await reauthenticateWithCredential(user!, credential);
+      } catch (error: any) {
+        console.error('Erro ao reautenticar:', error);
+        if (error.code === 'auth/wrong-password') {
+          setError('Senha atual incorreta');
+        } else {
+          setError('Erro ao verificar senha atual');
+        }
+        setFormLoading(false);
+        return;
+      }
+
+      // Atualizar senha no Firebase Auth
+      try {
+        await updatePassword(user!, formData.senha);
+      } catch (error: any) {
+        console.error('Erro ao atualizar senha:', error);
+        setError('Erro ao atualizar senha');
+        setFormLoading(false);
+        return;
+      }
     }
 
     try {
@@ -156,7 +196,6 @@ export default function ClientePerfil() {
           nome: formData.nome,
           telefone: telefoneLimpo,
           email: formData.email,
-          senha: formData.senha || undefined,
           endereco: formData.endereco,
           cidade: formData.cidade,
         }),
@@ -165,13 +204,14 @@ export default function ClientePerfil() {
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess('Dados atualizados com sucesso!');
+        setSuccess('Dados atualizados com sucesso!' + (formData.senha ? ' Senha alterada com sucesso!' : ''));
         // Limpar campos de senha após sucesso
-        setFormData({
-          ...formData,
+        setFormData(prev => ({
+          ...prev,
+          senhaAtual: '',
           senha: '',
           confirmarSenha: '',
-        });
+        }));
         // Recarregar dados do usuário
         const loadUserData = async () => {
           const newToken = await getToken();
@@ -183,14 +223,14 @@ export default function ClientePerfil() {
             });
             if (userResponse.ok) {
               const userData = await userResponse.json();
-              setFormData({
-                ...formData,
+              setFormData(prev => ({
+                ...prev,
                 nome: userData.nome || '',
                 telefone: userData.telefone || '',
                 email: userData.email || '',
                 endereco: userData.endereco || '',
                 cidade: userData.cidade || '',
-              });
+              }));
             }
           }
         };
@@ -316,8 +356,23 @@ export default function ClientePerfil() {
             <div className="border-t border-gray-200 pt-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Alterar Senha</h3>
               <p className="text-sm text-gray-600 mb-4">Deixe em branco para manter a senha atual</p>
-              
+
               <div className="space-y-4">
+                <div>
+                  <label htmlFor="senhaAtual" className="block text-sm font-medium text-gray-700 mb-2">
+                    Senha Atual
+                  </label>
+                  <input
+                    id="senhaAtual"
+                    name="senhaAtual"
+                    type="password"
+                    value={formData.senhaAtual}
+                    onChange={handleChange}
+                    placeholder="Digite a senha atual"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                  />
+                </div>
+
                 <div>
                   <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-2">
                     Nova Senha
