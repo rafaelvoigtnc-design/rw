@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { Search, SlidersHorizontal, X, Star } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import ScrollAnimation from '@/components/ScrollAnimation';
 import Link from 'next/link';
 
 interface Brinquedo {
@@ -149,17 +148,15 @@ export default function Catalogo() {
                 </button>
               </div>
             ) : (
-              <ScrollAnimation direction="up" delay={0.1}>
-                <div className="flex items-center justify-between mb-4 md:mb-6">
-                  <p className="text-sm md:text-base text-secondary-gray-600">
-                    {brinquedos.length} brinquedo{brinquedos.length !== 1 ? 's' : ''} encontrado{brinquedos.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
+              <div className="flex items-center justify-between mb-4 md:mb-6">
+                <p className="text-sm md:text-base text-secondary-gray-600">
+                  {brinquedos.length} brinquedo{brinquedos.length !== 1 ? 's' : ''} encontrado{brinquedos.length !== 1 ? 's' : ''}
+                </p>
+              </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                  {brinquedos.map((brinquedo, index) => (
-                    <ScrollAnimation key={brinquedo.id} direction="up" delay={index * 0.05}>
-                      <div className="group hover:-translate-y-2 transition-all duration-300">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {brinquedos.map((brinquedo) => (
+                  <div key={brinquedo.id} className="group hover:-translate-y-2 transition-all duration-300">
                         <Link href={`/brinquedos/${brinquedo.id}`}>
                           <div className="bg-white rounded-2xl shadow-soft overflow-hidden hover:shadow-medium transition-all duration-300">
                             <div className="relative h-40 md:h-56 overflow-hidden bg-gray-100">
@@ -204,10 +201,8 @@ export default function Catalogo() {
                           </div>
                         </Link>
                       </div>
-                    </ScrollAnimation>
                   ))}
                 </div>
-              </ScrollAnimation>
             )}
           </div>
         </div>
