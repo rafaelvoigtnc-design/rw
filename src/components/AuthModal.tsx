@@ -12,6 +12,7 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModalProps) {
   const [isLogin, setIsLogin] = useState(true);
+  const [loginType, setLoginType] = useState<'email' | 'telefone'>('email');
   const [formData, setFormData] = useState({
     nome: '',
     telefone: '',
@@ -47,7 +48,38 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
     setLoading(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.senha);
+      let emailToUse = formData.email;
+
+      // Se login por telefone, buscar email no banco
+      if (loginType === 'telefone') {
+        const telefoneLimpo = formData.telefone.replace(/\D/g, '');
+        if (telefoneLimpo.length !== 11) {
+          setError('O telefone deve ter exatamente 11 dígitos');
+          setLoading(false);
+          return;
+        }
+
+        // Buscar email pelo telefone
+        const response = await fetch('/api/cliente/login-telefone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ telefone: telefoneLimpo }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || 'Telefone não encontrado');
+          setLoading(false);
+          return;
+        }
+
+        emailToUse = data.email;
+        console.log('Email encontrado:', emailToUse);
+      }
+
+      // Fazer login com o email
+      const userCredential = await signInWithEmailAndPassword(auth, emailToUse, formData.senha);
       console.log('Login bem-sucedido:', userCredential.user.email);
       onClose();
       onLoginSuccess?.();
@@ -195,35 +227,105 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
 
           {isLogin ? (
             <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email (para login)
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
-                />
+              {/* Toggle Login Type */}
+              <div className="flex gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginType('email');
+                    setError('');
+                  }}
+                  className={`flex-1 py-2 px-4 rounded-md font-semibold transition-colors ${
+                    loginType === 'email'
+                      ? 'bg-primary-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Email
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginType('telefone');
+                    setError('');
+                  }}
+                  className={`flex-1 py-2 px-4 rounded-md font-semibold transition-colors ${
+                    loginType === 'telefone'
+                      ? 'bg-primary-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Telefone
+                </button>
               </div>
 
-              <div>
-                <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-2">
-                  Senha
-                </label>
-                <input
-                  id="senha"
-                  name="senha"
-                  type="password"
-                  value={formData.senha}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
-                />
-              </div>
+              {loginType === 'email' ? (
+                <>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                      Email (para login)
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-2">
+                      Senha
+                    </label>
+                    <input
+                      id="senha"
+                      name="senha"
+                      type="password"
+                      value={formData.senha}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-2">
+                      Telefone
+                    </label>
+                    <input
+                      id="telefone"
+                      name="telefone"
+                      type="tel"
+                      value={formData.telefone}
+                      onChange={handleTelefoneChange}
+                      placeholder="(00) 00000-0000"
+                      maxLength={15}
+                      required
+                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-2">
+                      Senha
+                    </label>
+                    <input
+                      id="senha"
+                      name="senha"
+                      type="password"
+                      value={formData.senha}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                    />
+                  </div>
+                </>
+              )}
 
               <button
                 type="submit"
