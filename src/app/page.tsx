@@ -5,6 +5,7 @@ import PromocaoBanner from '@/components/PromocaoBanner';
 import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 import HeroCarousel from '@/components/HeroCarousel';
 import ScrollAnimation from '@/components/ScrollAnimation';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -83,6 +84,14 @@ export default function Home() {
               </p>
             </div>
             <BrinquedosDestaque />
+            <div className="text-center mt-12">
+              <Link
+                href="/catalogo"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                Ver mais brinquedos
+              </Link>
+            </div>
           </div>
         </section>
       </ScrollAnimation>
@@ -149,6 +158,14 @@ export default function Home() {
                   )}
                 </div>
               ))}
+            </div>
+            <div className="text-center mt-12">
+              <Link
+                href="/catalogo"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                Ver mais
+              </Link>
             </div>
           </div>
         </section>

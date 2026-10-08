@@ -233,11 +233,11 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                 {loading ? 'Entrando...' : 'Entrar'}
               </button>
 
-              <div className="text-center text-sm">
+              <div className="text-center">
                 <button
                   type="button"
                   onClick={() => setIsLogin(false)}
-                  className="text-primary-blue-600 hover:underline"
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
                   Não tem conta? Criar conta
                 </button>
