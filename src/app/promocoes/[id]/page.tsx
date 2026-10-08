@@ -28,20 +28,10 @@ export default function DetalhesPromocional() {
   const [jaParticipou, setJaParticipou] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
     fetchPromocional();
-
-    // Verificar se há dados do formulário salvos no localStorage
-    const savedFormData = localStorage.getItem('promocionalFormData');
-    const savedPromocionalId = localStorage.getItem('promocionalId');
-    if (savedFormData && savedPromocionalId === params.id) {
-      setFormData(JSON.parse(savedFormData));
-      localStorage.removeItem('promocionalFormData');
-      localStorage.removeItem('promocionalId');
-    }
   }, []);
 
   const fetchPromocional = async () => {
@@ -98,27 +88,13 @@ export default function DetalhesPromocional() {
     e.preventDefault();
     setEnviando(true);
 
-    console.log('handleSubmit - userData:', userData);
-    console.log('handleSubmit - formData:', formData);
-
-    // Verificar se está logado
     if (!userData) {
-      console.log('Usuário não logado, salvando dados e abrindo modal');
-      // Salvar dados do formulário no localStorage (persiste mais tempo)
-      localStorage.setItem('promocionalFormData', JSON.stringify(formData));
-      localStorage.setItem('promocionalId', params.id as string);
       setShowLoginModal(true);
       setEnviando(false);
       return;
     }
 
     try {
-      console.log('Enviando participação:', {
-        cliente_id: userData.id,
-        cliente_nome: userData.nome,
-        dados_participacao: formData,
-      });
-
       const response = await fetch(`/api/promocionais/${params.id}/participar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -129,14 +105,11 @@ export default function DetalhesPromocional() {
         }),
       });
 
-      console.log('Resposta da API:', response.status);
-
       if (response.ok) {
         setJaParticipou(true);
         setShowSuccessModal(true);
       } else {
         const data = await response.json();
-        console.error('Erro ao participar:', data);
         alert(data.error || 'Erro ao participar');
       }
     } catch (error) {
@@ -241,6 +214,25 @@ export default function DetalhesPromocional() {
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Você Já Está Participando!</h3>
                   <p className="text-gray-600">Agradecemos por participar deste promocional.</p>
                 </div>
+              ) : !user ? (
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Trophy className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Faça Login para Participar</h3>
+                  <p className="text-gray-600 mb-6">
+                    Você precisa estar logado ou criar uma conta para participar deste promocional.
+                  </p>
+                  <button
+                    onClick={() => {
+                      const event = new CustomEvent('openAuthModal');
+                      window.dispatchEvent(event);
+                    }}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg"
+                  >
+                    Fazer Login / Criar Conta
+                  </button>
+                </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <h3 className="text-xl font-bold text-gray-900 mb-4">Formulário de Participação</h3>
@@ -292,44 +284,6 @@ export default function DetalhesPromocional() {
           </div>
         </div>
       </div>
-
-      {/* Modal de Login */}
-      {showLoginModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-2xl font-bold text-gray-900">Faça Login para Participar</h3>
-              <button
-                onClick={() => setShowLoginModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <p className="text-gray-600 mb-6">
-              Você precisa estar logado para participar deste promocional. Seus dados do formulário serão salvos.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowLoginModal(false);
-                  // Disparar evento customizado para abrir modal de login
-                  window.dispatchEvent(new CustomEvent('openAuthModal'));
-                }}
-                className="flex-1 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition-colors"
-              >
-                Fazer Login
-              </button>
-              <button
-                onClick={() => setShowLoginModal(false)}
-                className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal de Sucesso */}
       {showSuccessModal && (

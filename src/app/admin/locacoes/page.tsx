@@ -889,7 +889,7 @@ export default function AdminLocacoes() {
                               return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString('pt-BR');
                             })()}
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 hidden md:flex">
                             <Clock className="w-4 h-4" />
                             {locacao.horario_inicio} às {locacao.horario_fim}
                           </div>
