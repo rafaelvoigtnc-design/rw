@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingCart, Menu, X, Phone } from 'lucide-react';
+import { ShoppingCart, Menu, X, Phone, User } from 'lucide-react';
 import AuthModal from './AuthModal';
 import CarrinhoModal from './CarrinhoModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +16,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [cartItems, setCartItems] = useState(0);
+  const [showCarrinhoLoginModal, setShowCarrinhoLoginModal] = useState(false);
 
   useEffect(() => {
     let ticking = false;
@@ -151,7 +152,13 @@ export default function Navbar() {
               </a>
 
               <button
-                onClick={() => setIsCarrinhoOpen(true)}
+                onClick={() => {
+                  if (!user) {
+                    setShowCarrinhoLoginModal(true);
+                  } else {
+                    setIsCarrinhoOpen(true);
+                  }
+                }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors hover:scale-105"
               >
                 <ShoppingCart className="w-4 h-4" />
@@ -192,7 +199,13 @@ export default function Navbar() {
 
             <div className="lg:hidden flex items-center gap-3">
               <button
-                onClick={() => setIsCarrinhoOpen(true)}
+                onClick={() => {
+                  if (!user) {
+                    setShowCarrinhoLoginModal(true);
+                  } else {
+                    setIsCarrinhoOpen(true);
+                  }
+                }}
                 className="flex items-center gap-1 px-3 py-2 rounded-full bg-blue-600 text-white active:scale-95 transition-transform"
               >
                 <ShoppingCart className="w-5 h-5" />
@@ -200,6 +213,15 @@ export default function Navbar() {
                   {cartItems}
                 </span>
               </button>
+              {!user && (
+                <button
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="flex items-center gap-1 px-3 py-2 rounded-full bg-green-600 text-white font-semibold active:scale-95 transition-transform shadow-md"
+                >
+                  <User className="w-4 h-4" />
+                  <span className="text-xs">Entrar</span>
+                </button>
+              )}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-purple-600 text-white font-semibold hover:bg-purple-700 transition-colors active:scale-95 shadow-md"
@@ -314,6 +336,44 @@ export default function Navbar() {
         onUpdateCartCount={setCartItems}
         onCartUpdated={refreshCart}
       />
+
+      {/* Modal de aviso para carrinho sem login */}
+      {showCarrinhoLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 text-center">
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={() => setShowCarrinhoLoginModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <ShoppingCart className="w-20 h-20 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Faça Login para Continuar</h3>
+            <p className="text-gray-600 mb-6">
+              Você precisa estar logado para adicionar itens ao carrinho e fazer locações.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowCarrinhoLoginModal(false);
+                  setIsAuthModalOpen(true);
+                }}
+                className="flex-1 bg-purple-600 text-white py-3 rounded-xl font-semibold hover:bg-purple-700 transition-colors"
+              >
+                Fazer Login
+              </button>
+              <button
+                onClick={() => setShowCarrinhoLoginModal(false)}
+                className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
