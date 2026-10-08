@@ -295,7 +295,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                 <>
                   <div>
                     <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-2">
-                      Telefone
+                      Telefone (para login)
                     </label>
                     <input
                       id="telefone"
