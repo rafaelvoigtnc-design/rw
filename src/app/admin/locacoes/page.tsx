@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Filter, ArrowUpDown, X, Calendar, MapPin, Phone, DollarSign, Clock, User, Package, Edit, Trash2, Save } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, X, Calendar, MapPin, Phone, DollarSign, Clock, User, Package, Edit, Trash2, Save, Plus } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -83,6 +83,7 @@ export default function AdminLocacoes() {
   
   // Modal de edição
   const [mostrarModalEdicao, setMostrarModalEdicao] = useState(false);
+  const [mostrarAdicionarBrinquedo, setMostrarAdicionarBrinquedo] = useState(false);
   const [editFormData, setEditFormData] = useState({
     data_evento: '',
     horario_inicio: '',
@@ -325,10 +326,6 @@ export default function AdminLocacoes() {
   const handleSalvarEdicao = async () => {
     if (!locacaoSelecionada) return;
 
-    console.log('ID da locação selecionada:', locacaoSelecionada.id);
-    console.log('URL da requisição:', `/api/admin/locacoes/${locacaoSelecionada.id}`);
-    console.log('Dados sendo enviados:', editFormData);
-
     try {
       const response = await fetch(`/api/admin/locacoes/${locacaoSelecionada.id}`, {
         method: 'PUT',
@@ -336,21 +333,44 @@ export default function AdminLocacoes() {
         body: JSON.stringify(editFormData),
       });
 
-      console.log('Status da resposta:', response.status);
-      const responseData = await response.json();
-      console.log('Resposta da API:', responseData);
-
       if (response.ok) {
         alert('Locação atualizada com sucesso!');
         setMostrarModalEdicao(false);
         fetchData();
         setLocacaoSelecionada(null);
       } else {
+        const responseData = await response.json();
         alert('Erro ao atualizar: ' + responseData.error);
       }
     } catch (error) {
       console.error('Erro ao atualizar locação:', error);
       alert('Erro ao atualizar locação');
+    }
+  };
+
+  const handleRemoverBrinquedo = async (itemId: string) => {
+    if (!locacaoSelecionada) return;
+
+    try {
+      const response = await fetch(`/api/admin/locacao-itens/${itemId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        alert('Brinquedo removido com sucesso!');
+        fetchData();
+        // Atualizar locação selecionada com dados atualizados
+        const updatedLocacoes = await fetch('/api/admin/locacoes').then(r => r.json());
+        const updated = updatedLocacoes.find((l: any) => l.id === locacaoSelecionada.id);
+        if (updated) {
+          setLocacaoSelecionada(updated);
+        }
+      } else {
+        alert('Erro ao remover brinquedo');
+      }
+    } catch (error) {
+      console.error('Erro ao remover brinquedo:', error);
+      alert('Erro ao remover brinquedo');
     }
   };
 
@@ -1257,6 +1277,31 @@ export default function AdminLocacoes() {
                   />
                 </div>
 
+                {/* Brinquedos */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Brinquedos da Locação</label>
+                  <div className="space-y-2 mb-4">
+                    {locacaoSelecionada.locacao_item?.map((item: any, index: number) => (
+                      <div key={item.id || index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                        <span className="text-sm font-medium">{item.brinquedo_nome || 'Brinquedo não informado'}</span>
+                        <button
+                          onClick={() => handleRemoverBrinquedo(item.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setMostrarAdicionarBrinquedo(true)}
+                    className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Adicionar Brinquedo
+                  </button>
+                </div>
+
                 {/* Resumo */}
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h4 className="font-semibold text-gray-900 mb-2">Resumo Financeiro</h4>
@@ -1291,6 +1336,89 @@ export default function AdminLocacoes() {
                       setMostrarModalEdicao(false);
                       setMostrarDrawer(true);
                     }}
+                    className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para Adicionar Brinquedo */}
+        {mostrarAdicionarBrinquedo && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+                <h2 className="text-xl font-bold text-gray-900">Adicionar Brinquedo</h2>
+                <button
+                  onClick={() => setMostrarAdicionarBrinquedo(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Selecione o Brinquedo</label>
+                  <select
+                    id="brinquedoSelect"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
+                  >
+                    <option value="">Selecione...</option>
+                    {brinquedos.map((brinquedo) => (
+                      <option key={brinquedo.id} value={brinquedo.id}>
+                        {brinquedo.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <button
+                    onClick={async () => {
+                      const select = document.getElementById('brinquedoSelect') as HTMLSelectElement;
+                      const brinquedoId = select.value;
+                      if (!brinquedoId || !locacaoSelecionada) return;
+
+                      try {
+                        const brinquedo = brinquedos.find((b: any) => b.id === brinquedoId);
+                        const response = await fetch('/api/admin/locacao-itens', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            locacao_id: locacaoSelecionada.id,
+                            brinquedo_id: brinquedoId,
+                            brinquedo_nome: brinquedo?.nome,
+                          }),
+                        });
+
+                        if (response.ok) {
+                          alert('Brinquedo adicionado com sucesso!');
+                          setMostrarAdicionarBrinquedo(false);
+                          fetchData();
+                          // Atualizar locação selecionada
+                          const updatedLocacoes = await fetch('/api/admin/locacoes').then(r => r.json());
+                          const updated = updatedLocacoes.find((l: any) => l.id === locacaoSelecionada.id);
+                          if (updated) {
+                            setLocacaoSelecionada(updated);
+                          }
+                        } else {
+                          alert('Erro ao adicionar brinquedo');
+                        }
+                      } catch (error) {
+                        console.error('Erro ao adicionar brinquedo:', error);
+                        alert('Erro ao adicionar brinquedo');
+                      }
+                    }}
+                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                  >
+                    Adicionar
+                  </button>
+                  <button
+                    onClick={() => setMostrarAdicionarBrinquedo(false)}
                     className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
                   >
                     Cancelar
