@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Phone, Mail, MapPin, Camera, Send } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ScrollAnimation from '@/components/ScrollAnimation';
 
 export default function Contato() {
   const [formData, setFormData] = useState({
@@ -66,7 +67,8 @@ export default function Contato() {
       <div className="max-w-[1440px] mx-auto px-6 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Informações de Contato */}
-          <div className="lg:col-span-1 space-y-6">
+          <ScrollAnimation direction="left" delay={0.1}>
+            <div className="lg:col-span-1 space-y-6">
             <div className="bg-white rounded-2xl shadow-soft p-6">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-primary-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -138,9 +140,11 @@ export default function Contato() {
               </div>
             </div>
           </div>
+          </ScrollAnimation>
 
           {/* Formulário */}
-          <div className="lg:col-span-2">
+          <ScrollAnimation direction="right" delay={0.2}>
+            <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-soft p-8">
               <h2 className="text-2xl font-bold text-secondary-gray-900 mb-6">Envie sua Mensagem</h2>
 
@@ -238,6 +242,7 @@ export default function Contato() {
               </div>
             </div>
           </div>
+          </ScrollAnimation>
         </div>
       </div>
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ScrollAnimation from '@/components/ScrollAnimation';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthModal from '@/components/AuthModal';
 
@@ -225,14 +226,18 @@ export default function Depoimentos() {
             ))}
           </div>
         ) : avaliacoes.length === 0 ? (
-          <div className="text-center py-12">
+          <ScrollAnimation direction="up" delay={0.1}>
+            <div className="text-center py-12">
             <p className="text-gray-500 text-lg">Nenhum depoimento disponível no momento.</p>
             <p className="text-gray-400 mt-2">Seja o primeiro a compartilhar sua experiência!</p>
           </div>
+          </ScrollAnimation>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {avaliacoes.map((avaliacao) => (
-              <div key={avaliacao.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+          <ScrollAnimation direction="up" delay={0.1}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {avaliacoes.map((avaliacao, index) => (
+                <ScrollAnimation key={avaliacao.id} direction="up" delay={index * 0.05}>
+                  <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-center mb-4">
                   <div className="flex text-yellow-400">
                     {[...Array(5)].map((_, i) => (
@@ -271,8 +276,10 @@ export default function Depoimentos() {
                   </div>
                 </div>
               </div>
+                </ScrollAnimation>
             ))}
           </div>
+        </ScrollAnimation>
         )}
       </div>
 

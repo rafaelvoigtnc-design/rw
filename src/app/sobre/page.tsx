@@ -2,6 +2,7 @@
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ScrollAnimation from '@/components/ScrollAnimation';
 import { Heart, Shield, Clock, Users, Target, Eye } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -10,17 +11,10 @@ export default function Sobre() {
 
   useEffect(() => {
     fetch('/api/conteudo?pagina=sobre&chave=foto_equipe')
-      .then(res => {
-        console.log('Response status:', res.status);
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
-        console.log('Dados recebidos:', data);
         if (data && data.valor) {
-          console.log('Foto da equipe definida:', data.valor);
           setFotoEquipe(data.valor);
-        } else {
-          console.log('Sem foto da equipe nos dados');
         }
       })
       .catch(error => console.error('Erro ao buscar foto da equipe:', error));
@@ -57,8 +51,9 @@ export default function Sobre() {
 
       <div className="max-w-[1440px] mx-auto px-6 py-16">
         {/* Nossa História */}
-        <section className="mb-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <ScrollAnimation direction="left" delay={0.1}>
+          <section className="mb-20">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="bg-white rounded-2xl shadow-soft p-8">
               <h2 className="text-3xl font-bold text-secondary-gray-900 mb-6">Nossa História</h2>
               <div className="space-y-4 text-secondary-gray-700 leading-relaxed">
@@ -91,9 +86,11 @@ export default function Sobre() {
             )}
           </div>
         </section>
+        </ScrollAnimation>
 
         {/* Missão e Visão */}
-        <section className="mb-20">
+        <ScrollAnimation direction="up" delay={0.2}>
+          <section className="mb-20">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-white rounded-2xl shadow-soft p-8 hover:-translate-y-1 transition-all duration-300">
               <div className="w-16 h-16 bg-primary-blue-100 rounded-2xl flex items-center justify-center mb-6">
@@ -116,9 +113,11 @@ export default function Sobre() {
             </div>
           </div>
         </section>
+        </ScrollAnimation>
 
         {/* Nossos Valores */}
-        <section className="mb-20">
+        <ScrollAnimation direction="up" delay={0.3}>
+          <section className="mb-20">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-secondary-gray-900 mb-4">Nossos Valores</h2>
             <p className="text-lg text-secondary-gray-600">
@@ -157,22 +156,25 @@ export default function Sobre() {
                 iconColor: 'text-green-600',
               },
             ].map((item, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-2xl shadow-soft p-6 text-center hover:-translate-y-2 transition-all duration-300"
-              >
-                <div className={`w-16 h-16 ${item.color} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
-                  <item.icon className={`w-8 h-8 ${item.iconColor}`} />
+              <ScrollAnimation key={index} direction="up" delay={index * 0.05}>
+                <div
+                  className="bg-white rounded-2xl shadow-soft p-6 text-center hover:-translate-y-2 transition-all duration-300"
+                >
+                  <div className={`w-16 h-16 ${item.color} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+                    <item.icon className={`w-8 h-8 ${item.iconColor}`} />
+                  </div>
+                  <h3 className="text-xl font-bold text-secondary-gray-900 mb-3">{item.title}</h3>
+                  <p className="text-secondary-gray-600 text-sm">{item.description}</p>
                 </div>
-                <h3 className="text-xl font-bold text-secondary-gray-900 mb-3">{item.title}</h3>
-                <p className="text-secondary-gray-600 text-sm">{item.description}</p>
-              </div>
+              </ScrollAnimation>
             ))}
           </div>
         </section>
+        </ScrollAnimation>
 
         {/* CTA Section */}
-        <section className="bg-gradient-to-r from-primary-green-500 to-primary-blue-500 rounded-2xl p-12 text-center">
+        <ScrollAnimation direction="up" delay={0.4}>
+          <section className="bg-gradient-to-r from-primary-green-500 to-primary-blue-500 rounded-2xl p-12 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
             Pronto para criar memórias inesquecíveis?
           </h2>

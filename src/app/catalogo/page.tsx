@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Search, SlidersHorizontal, X, Star } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ScrollAnimation from '@/components/ScrollAnimation';
 import Link from 'next/link';
 
 interface Brinquedo {
@@ -148,7 +149,7 @@ export default function Catalogo() {
                 </button>
               </div>
             ) : (
-              <>
+              <ScrollAnimation direction="up" delay={0.1}>
                 <div className="flex items-center justify-between mb-4 md:mb-6">
                   <p className="text-sm md:text-base text-secondary-gray-600">
                     {brinquedos.length} brinquedo{brinquedos.length !== 1 ? 's' : ''} encontrado{brinquedos.length !== 1 ? 's' : ''}
@@ -157,57 +158,56 @@ export default function Catalogo() {
 
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {brinquedos.map((brinquedo, index) => (
-                    <div
-                      key={brinquedo.id}
-                      className="group hover:-translate-y-2 transition-all duration-300"
-                    >
-                      <Link href={`/brinquedos/${brinquedo.id}`}>
-                        <div className="bg-white rounded-2xl shadow-soft overflow-hidden hover:shadow-medium transition-all duration-300">
-                          <div className="relative h-40 md:h-56 overflow-hidden bg-gray-100">
-                            {brinquedo.fotos && brinquedo.fotos.length > 0 ? (
-                              <img
-                                src={brinquedo.fotos[0]}
-                                alt={brinquedo.nome}
-                                className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <span className="text-secondary-gray-400 text-xs md:text-sm">Sem foto</span>
-                              </div>
-                            )}
-                            
-                            {brinquedo.avaliacao_media && (
-                              <div className="absolute top-2 md:top-3 right-2 md:right-3 bg-white/90 backdrop-blur-sm px-1.5 md:px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                                <Star className="w-3 h-3 md:w-4 md:h-4 text-primary-yellow-500 fill-current" />
-                                <span className="text-xs md:text-sm font-semibold text-secondary-gray-900">
-                                  {brinquedo.avaliacao_media.toFixed(1)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
+                    <ScrollAnimation key={brinquedo.id} direction="up" delay={index * 0.05}>
+                      <div className="group hover:-translate-y-2 transition-all duration-300">
+                        <Link href={`/brinquedos/${brinquedo.id}`}>
+                          <div className="bg-white rounded-2xl shadow-soft overflow-hidden hover:shadow-medium transition-all duration-300">
+                            <div className="relative h-40 md:h-56 overflow-hidden bg-gray-100">
+                              {brinquedo.fotos && brinquedo.fotos.length > 0 ? (
+                                <img
+                                  src={brinquedo.fotos[0]}
+                                  alt={brinquedo.nome}
+                                  className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <span className="text-secondary-gray-400 text-xs md:text-sm">Sem foto</span>
+                                </div>
+                              )}
+                              
+                              {brinquedo.avaliacao_media && (
+                                <div className="absolute top-2 md:top-3 right-2 md:right-3 bg-white/90 backdrop-blur-sm px-1.5 md:px-2 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                                  <Star className="w-3 h-3 md:w-4 md:h-4 text-primary-yellow-500 fill-current" />
+                                  <span className="text-xs md:text-sm font-semibold text-secondary-gray-900">
+                                    {brinquedo.avaliacao_media.toFixed(1)}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
 
-                          <div className="p-3 md:p-5">
-                            <h3 className="text-sm md:text-lg font-bold text-secondary-gray-900 mb-1 md:mb-2 line-clamp-2 group-hover:text-primary-blue-600 transition-colors">
-                              {brinquedo.nome}
-                            </h3>
-                            
-                            <p className="text-[10px] md:text-sm text-secondary-gray-500 mb-2 md:mb-4">
-                              Faixa etária: {brinquedo.faixa_etaria}
-                            </p>
+                            <div className="p-3 md:p-5">
+                              <h3 className="text-sm md:text-lg font-bold text-secondary-gray-900 mb-1 md:mb-2 line-clamp-2 group-hover:text-primary-blue-600 transition-colors">
+                                {brinquedo.nome}
+                              </h3>
+                              
+                              <p className="text-[10px] md:text-sm text-secondary-gray-500 mb-2 md:mb-4">
+                                Faixa etária: {brinquedo.faixa_etaria}
+                              </p>
 
-                            <button
-                              className="w-full bg-primary-blue-500 text-white py-2 md:py-3 rounded-xl text-xs md:text-base font-semibold hover:bg-primary-blue-600 transition-colors flex items-center justify-center gap-1 md:gap-2 hover:scale-102 transition-transform"
-                            >
-                              <span className="hidden md:inline">Ver Detalhes</span>
-                              <span className="md:hidden">Detalhes</span>
-                            </button>
+                              <button
+                                className="w-full bg-primary-blue-500 text-white py-2 md:py-3 rounded-xl text-xs md:text-base font-semibold hover:bg-primary-blue-600 transition-colors flex items-center justify-center gap-1 md:gap-2 hover:scale-102 transition-transform"
+                              >
+                                <span className="hidden md:inline">Ver Detalhes</span>
+                                <span className="md:hidden">Detalhes</span>
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      </Link>
-                    </div>
+                        </Link>
+                      </div>
+                    </ScrollAnimation>
                   ))}
                 </div>
-              </>
+              </ScrollAnimation>
             )}
           </div>
         </div>
