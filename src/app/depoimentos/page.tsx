@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import ScrollAnimation from '@/components/ScrollAnimation';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthModal from '@/components/AuthModal';
 
@@ -98,7 +97,6 @@ export default function Depoimentos() {
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
       <Navbar />
-      
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary-yellow-400 via-primary-orange-400 to-primary-pink-500 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -232,9 +230,8 @@ export default function Depoimentos() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {avaliacoes.map((avaliacao, index) => (
-              <ScrollAnimation key={avaliacao.id} direction="up" delay={index * 0.05}>
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            {avaliacoes.map((avaliacao) => (
+              <div key={avaliacao.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
                   <div className="flex items-center mb-4">
                     <div className="flex text-yellow-400">
                       {[...Array(5)].map((_, i) => (
@@ -272,7 +269,7 @@ export default function Depoimentos() {
                     </p>
                   </div>
                 </div>
-              </ScrollAnimation>
+              </div>
             ))}
           </div>
         )}
